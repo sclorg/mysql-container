@@ -8,12 +8,18 @@ declare -a VERSIONS=(5.5)
 OS=$1
 VERSION=$2
 
+function docker_build {
+  TAG=$1
+  DOCKERFILE=$2
 
-function build_rhel {
-  mv Dockerfile Dockerfile.centos7
-  mv Dockerfile.rhel7 Dockerfile
-  trap "mv Dockerfile Dockerfile.rhel7 && mv Dockerfile.centos7 Dockerfile" RETURN
-  docker build -t ${IMAGE_NAME} .
+  if [ -n "$DOCKERFILE" -a "$DOCKERFILE" != "Dockerfile" ]; then
+    # Swap Dockerfiles and setup a trap restoring them
+    mv Dockerfile Dockerfile.centos7
+    mv "${DOCKERFILE}" Dockerfile
+    trap "mv Dockerfile ${DOCKERFILE} && mv Dockerfile.centos7 Dockerfile" ERR RETURN
+  fi
+
+  docker build -t ${TAG} . && trap - ERR
 }
 
 if [ -z ${VERSION} ]; then
@@ -31,9 +37,9 @@ for dir in ${dirs}; do
   pushd ${dir} > /dev/null
 
   if [ "$OS" == "rhel7" ]; then
-    build_rhel
+    docker_build ${IMAGE_NAME} Dockerfile.rhel7
   else
-    docker build -t ${IMAGE_NAME} .
+    docker_build ${IMAGE_NAME}
   fi
 
   popd > /dev/null
