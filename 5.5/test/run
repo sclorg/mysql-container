@@ -1,0 +1,69 @@
+#!/bin/bash -e
+#
+# Test the MySQL image.
+#
+# IMAGE_NAME specifies a name of the candidate image used for testing.
+# The image has to be available before this script is executed.
+#
+
+set nounset
+
+IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
+
+get_container_ip() {
+	docker inspect --format='{{.NetworkSettings.IPAddress}}' $CONTAINER_ID
+}
+
+mysql_cmd() {
+	mysql --host $(get_container_ip) -uuser -ppass "$@" db
+}
+
+cleanup() {
+	CONTAINER=$1 ; shift
+	echo "Cleaning up..."
+	docker stop $CONTAINER >/dev/null
+	docker rm $CONTAINER >/dev/null
+	echo "Done."
+}
+
+test_connection() {
+	echo "  Testing MySQL connection to $(get_container_ip)..."
+	local max_attempts=10
+	local sleep_time=1
+	local attempt=1
+	while [ $attempt -le $max_attempts ]; do
+		echo "    Trying to connect..."
+		set +e
+		mysql_cmd <<< "SELECT 1;" >/dev/null 2>&1
+		status=$?
+		set -e
+		if [ $status -eq 0 ]; then
+			echo "  Success!"
+			return 0
+		fi
+		attempt=$(( $attempt + 1 ))
+		sleep $sleep_time
+	done
+	echo "  Giving up: Failed to connect"
+	return 1
+}
+
+test_mysql() {
+	echo "  Testing MySQL"
+	mysql_cmd <<< "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));"
+	mysql_cmd <<< "INSERT INTO tbl VALUES ('foo1', 'bar1');"
+	mysql_cmd <<< "INSERT INTO tbl VALUES ('foo2', 'bar2');"
+	mysql_cmd <<< "INSERT INTO tbl VALUES ('foo3', 'bar3');"
+	mysql_cmd <<< "SELECT * FROM tbl;" >/dev/null
+	mysql_cmd <<< "DROP TABLE tbl;"
+	echo "  Success!"
+}
+
+
+CONTAINER_ID=$(docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db $IMAGE_NAME)
+trap "cleanup '$CONTAINER_ID'" EXIT
+
+echo "Created container $CONTAINER_ID"
+test_connection
+test_mysql
+echo "Done. All tests successful."

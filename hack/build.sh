@@ -8,6 +8,7 @@ declare -a VERSIONS=(5.5)
 OS=$1
 VERSION=$2
 
+# TODO: Remove once docker 1.5 is in usage (support for named Dockerfiles)
 function docker_build {
   TAG=$1
   DOCKERFILE=$2
