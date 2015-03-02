@@ -1,6 +1,7 @@
 #!/bin/bash -e
 # $1 - Specifies distribution - RHEL7/CentOS7
 # $2 - Specifies MySQL version - 5.5
+# TEST_MODE - If set, build a candidate image and test it
 
 # Array of all versions of MySQL
 declare -a VERSIONS=(5.5)
@@ -33,6 +34,9 @@ fi
 
 for dir in ${dirs}; do
   IMAGE_NAME=openshift/mysql-${dir//./}-${OS}
+  if [ -v TEST_MODE ]; then
+	  IMAGE_NAME="${IMAGE_NAME}-candidate"
+  fi
   echo ">>>> Building ${IMAGE_NAME}"
 
   pushd ${dir} > /dev/null
@@ -41,6 +45,10 @@ for dir in ${dirs}; do
     docker_build ${IMAGE_NAME} Dockerfile.rhel7
   else
     docker_build ${IMAGE_NAME}
+  fi
+
+  if [ -v TEST_MODE ]; then
+    IMAGE_NAME=${IMAGE_NAME} test/run
   fi
 
   popd > /dev/null

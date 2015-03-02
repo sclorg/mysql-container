@@ -15,3 +15,6 @@ endif
 build:
 	hack/build.sh $(OS) $(VERSION)
 
+.PHONY: test
+test:
+	TEST_MODE=true hack/build.sh $(OS) $(VERSION)
