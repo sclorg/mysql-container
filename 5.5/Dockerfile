@@ -8,6 +8,7 @@ FROM centos:centos7
 #  * $MYSQL_USER - Database user name
 #  * $MYSQL_PASSWORD - User's password
 #  * $MYSQL_DATABASE - Name of the database to create
+#  * $MYSQL_ROOT_PASSWORD - MySQL root user password (optional)
 
 # Image metadata
 ENV MYSQL_VERSION           = "5.5" \
