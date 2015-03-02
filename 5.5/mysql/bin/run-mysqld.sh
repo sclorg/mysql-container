@@ -12,10 +12,10 @@ test -z "$MYSQL_USER" && usage
 test -z "$MYSQL_PASSWORD" && usage
 test -z "$MYSQL_DATABASE" && usage
 
-if [ ! -d '/var/lib/mysql/data' ]; then
+if [ ! -d '/var/lib/mysql' ]; then
 
 	echo 'Running mysql_install_db ...'
-	scl enable mysql55 "mysql_install_db --user=mysql --datadir=/var/lib/mysql/data"
+	scl enable mysql55 "mysql_install_db --user=mysql --datadir=/var/lib/mysql"
 	echo 'Finished mysql_install_db'
 
 	# These statements _must_ be on individual lines, and _must_ end with
