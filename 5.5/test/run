@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 #
 # Test the MySQL image.
 #
@@ -6,45 +6,61 @@
 # The image has to be available before this script is executed.
 #
 
-set nounset
+set -exo nounset
+shopt -s nullglob
 
 IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
 
+CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
+
+cleanup() {
+	for cidfile in $CIDFILE_DIR/* ; do
+		CONTAINER=$(cat $cidfile)
+
+		echo "Stopping and removing container $CONTAINER..."
+		docker stop $CONTAINER
+		docker rm $CONTAINER
+		rm $cidfile
+		echo "Done."
+	done
+	rmdir $CIDFILE_DIR
+}
+trap cleanup EXIT
+
+get_cid () {
+	local id="$1" ; shift || return 1
+	echo $(cat "$CIDFILE_DIR/$id")
+}
+
 get_container_ip() {
-	docker inspect --format='{{.NetworkSettings.IPAddress}}' $CONTAINER_ID
+	local id="$1" ; shift
+	docker inspect --format='{{.NetworkSettings.IPAddress}}' $(get_cid "$id")
 }
 
 mysql_cmd() {
-	mysql --host $(get_container_ip) -uuser -ppass "$@" db
-}
-
-cleanup() {
-	CONTAINER=$1 ; shift
-	echo "Cleaning up..."
-	docker stop $CONTAINER >/dev/null
-	docker rm $CONTAINER >/dev/null
-	echo "Done."
+	docker run --entrypoint=scl $IMAGE_NAME enable mysql55 -- mysql --host $CONTAINER_IP -u$USER -p$PASS "$@" db
 }
 
 test_connection() {
-	echo "  Testing MySQL connection to $(get_container_ip)..."
-	local max_attempts=10
-	local sleep_time=1
-	local attempt=1
-	while [ $attempt -le $max_attempts ]; do
+	local name=$1 ; shift
+	ip=$(get_container_ip $name)
+	echo "  Testing MySQL connection to $ip..."
+	local max_attempts=20
+	local sleep_time=2
+	for i in $(seq $max_attempts); do
 		echo "    Trying to connect..."
 		set +e
-		mysql_cmd <<< "SELECT 1;" >/dev/null 2>&1
+		mysql_cmd <<< "SELECT 1;"
 		status=$?
 		set -e
 		if [ $status -eq 0 ]; then
 			echo "  Success!"
 			return 0
 		fi
-		attempt=$(( $attempt + 1 ))
 		sleep $sleep_time
 	done
-	echo "  Giving up: Failed to connect"
+	echo "  Giving up: Failed to connect. Logs:"
+	docker logs $(get_cid $name)
 	return 1
 }
 
@@ -54,16 +70,32 @@ test_mysql() {
 	mysql_cmd <<< "INSERT INTO tbl VALUES ('foo1', 'bar1');"
 	mysql_cmd <<< "INSERT INTO tbl VALUES ('foo2', 'bar2');"
 	mysql_cmd <<< "INSERT INTO tbl VALUES ('foo3', 'bar3');"
-	mysql_cmd <<< "SELECT * FROM tbl;" >/dev/null
+	mysql_cmd <<< "SELECT * FROM tbl;"
 	mysql_cmd <<< "DROP TABLE tbl;"
 	echo "  Success!"
 }
 
+create_container() {
+	local name=$1 ; shift
+	cidfile="$CIDFILE_DIR/$name"
+	# create container with a cidfile in a directory for cleanup
+	docker run --cidfile $cidfile -d "$@" $IMAGE_NAME
+	echo "Created container $(cat $cidfile)"
+}
 
-CONTAINER_ID=$(docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db $IMAGE_NAME)
-trap "cleanup '$CONTAINER_ID'" EXIT
+run_tests() {
+	local name=$1 ; shift
+	envs="-e MYSQL_USER=$USER -e MYSQL_PASSWORD=$PASS -e MYSQL_DATABASE=db"
+	if [ -v ROOT_PASS ]; then
+		envs="$envs -e MYSQL_ROOT_PASSWORD=$ROOT_PASS"
+	fi
+	create_container $name $envs
+	CONTAINER_IP=$(get_container_ip $name)
+	test_connection $name
+	test_mysql $name
+}
 
-echo "Created container $CONTAINER_ID"
-test_connection
-test_mysql
-echo "Done. All tests successful."
+# Tests.
+
+USER=user PASS=pass run_tests no_root
+USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
