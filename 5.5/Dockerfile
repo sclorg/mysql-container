@@ -10,10 +10,10 @@ FROM centos:centos7
 #  * $MYSQL_DATABASE - Name of the database to create
 
 # Image metadata
-ENV MYSQL_VERSION           = "5.5" \
-    IMAGE_DESCRIPTION       = "MySQL 5.5" \
-    IMAGE_TAGS              = "mysql,mysql55" \
-    IMAGE_EXPOSE_SERVICES   = "3306:mysql"
+ENV MYSQL_VERSION           5.5
+ENV IMAGE_DESCRIPTION       MySQL 5.5
+ENV IMAGE_TAGS              mysql,mysql55
+ENV IMAGE_EXPOSE_SERVICES   3306:mysql
 
 MAINTAINER  Martin Nagy <mnagy@redhat.com>
 EXPOSE 3306
