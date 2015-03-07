@@ -38,7 +38,7 @@ get_container_ip() {
 }
 
 mysql_cmd() {
-	docker run --entrypoint=scl $IMAGE_NAME enable mysql55 -- mysql --host $CONTAINER_IP -u$USER -p$PASS "$@" db
+	docker run --rm --entrypoint=scl $IMAGE_NAME enable mysql55 -- mysql --host $CONTAINER_IP -u$USER -p$PASS "$@" db
 }
 
 test_connection() {
