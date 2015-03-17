@@ -26,9 +26,8 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install hostname mysql55 && \
     yum clean all
 
+COPY run-mysqld.sh /usr/local/bin/
 COPY mysql /opt/openshift/
-ENV PATH /opt/openshift/bin:$PATH
-WORKDIR /opt/openshift
 
 VOLUME ["/var/lib/mysql"]
 
