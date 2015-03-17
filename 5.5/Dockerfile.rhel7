@@ -28,7 +28,13 @@ RUN yum install -y yum-utils hostname && \
     yum clean all
 
 COPY mysql /opt/openshift/
-ENV PATH /opt/openshift/bin:$PATH
+
+# TODO: There is a bug in rhel7.1 image where the PATH variable is not exported
+# properly as Docker image metadata, which causes the $PATH variable do not
+# expand properly.
+#ENV PATH /opt/openshift/bin:$PATH
+ENV PATH /opt/openshift/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
 WORKDIR /opt/openshift
 
 VOLUME ["/var/lib/mysql"]
