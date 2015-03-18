@@ -18,13 +18,14 @@ ENV IMAGE_EXPOSE_SERVICES   3306:mysql
 MAINTAINER  Martin Nagy <mnagy@redhat.com>
 EXPOSE 3306
 
-RUN groupadd -g 27 -o -r mysql && \
-    useradd -M -N -g mysql -o -r -d /var/lib/mysql -s /sbin/nologin -c "MySQL Server" -u 27 mysql
-
+# This image must forever use UID 27 for mysql user so our volumes are
+# safe in the future. This should *never* change, the last test is there
+# to make sure of that.
 RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/mysql55/epel-7-x86_64/download/rhscl-mysql55-epel-7-x86_64.noarch.rpm && \
     yum -y --setopt=tsflags=nodocs install hostname mysql55 && \
-    yum clean all
+    yum clean all && \
+    test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
 COPY run-mysqld.sh /usr/local/bin/
 COPY mysql /opt/openshift/
