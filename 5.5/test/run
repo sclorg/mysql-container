@@ -83,6 +83,18 @@ create_container() {
 	echo "Created container $(cat $cidfile)"
 }
 
+assert_login_access() {
+	local USER=$1 ; shift
+	local PASS=$1 ; shift
+	local SUCCESS=$1 ; shift
+
+	if $SUCCESS; then
+		mysql_cmd <<< "SELECT 1;" && echo "    $USER($PASS) access granted as expected"
+	else
+		mysql_cmd <<< "SELECT 1;" || echo "    $USER($PASS) access denied as expected"
+	fi
+}
+
 run_tests() {
 	local name=$1 ; shift
 	envs="-e MYSQL_USER=$USER -e MYSQL_PASSWORD=$PASS -e MYSQL_DATABASE=db"
@@ -92,6 +104,17 @@ run_tests() {
 	create_container $name $envs
 	CONTAINER_IP=$(get_container_ip $name)
 	test_connection $name
+	echo "  Testing login accesses"
+	assert_login_access $USER $PASS true
+	assert_login_access $USER "${PASS}_foo" false
+	if [ -v ROOT_PASS ]; then
+		assert_login_access root $ROOT_PASS true
+		assert_login_access root "${ROOT_PASS}_foo" false
+	else
+		assert_login_access root "foo" false
+		assert_login_access root "" false
+	fi
+	echo "  Success!"
 	test_mysql $name
 }
 

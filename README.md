@@ -64,9 +64,11 @@ present, `mysqld` is executed and will run as PID 1. You can stop the
 detached container by running `docker stop <CONTAINER ID>`.
 
 ### MySQL root user
-The root user has no password set by default. You can set it by setting
-`MYSQL_ROOT_PASSWORD` environment variable when initializing your
-database.
+The root user has no password set by default, only allowing local
+connections. You can set it by setting `MYSQL_ROOT_PASSWORD` environment
+variable when initializing your container. This will allow you to login
+to the root account remotely. Local connections will still not require
+password.
 
 ## Software Collections
 We use [Software Collections](https://www.softwarecollections.org/) to

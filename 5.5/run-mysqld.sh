@@ -85,10 +85,11 @@ if [ ! -d '/var/lib/mysql/mysql' ]; then
 	EOSQL
 
 	if [ -v root_pass ]; then
-		mysqladmin --socket=/tmp/mysql.sock password "${root_pass}" flush-privileges shutdown
-	else
-		mysqladmin --socket=/tmp/mysql.sock shutdown
+		mysql --socket=/tmp/mysql.sock <<-EOSQL
+			GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${root_pass}';
+		EOSQL
 	fi
+	mysqladmin --socket=/tmp/mysql.sock flush-privileges shutdown
 fi
 
 exec /opt/rh/mysql55/root/usr/libexec/mysqld \
