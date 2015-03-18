@@ -27,9 +27,8 @@ RUN yum install -y yum-utils hostname && \
     yum install -y --setopt=tsflags=nodocs mysql55 && \
     yum clean all
 
+COPY run-mysqld.sh /usr/local/bin/
 COPY mysql /opt/openshift/
-ENV PATH /opt/openshift/bin:$PATH
-WORKDIR /opt/openshift
 
 VOLUME ["/var/lib/mysql"]
 
