@@ -63,10 +63,7 @@ function wait_for_mysql {
 if [ ! -d '/var/lib/mysql/mysql' ]; then
 
 	echo 'Running mysql_install_db'
-	mysql_install_db --user=mysql --datadir=/var/lib/mysql
-	# TODO: Not needed with --user=mysql. However, we should
-	#       strive to make this script runnable without root privileges
-	#chown -R mysql:mysql /var/lib/mysql
+	mysql_install_db --datadir=/var/lib/mysql
 
 	# Now start mysqld and add appropriate users.
 	echo 'Starting mysqld to create users'
@@ -76,20 +73,24 @@ if [ ! -d '/var/lib/mysql/mysql' ]; then
 	mysql_pid=$!
 	wait_for_mysql $mysql_pid
 
-	mysqladmin --socket=/tmp/mysql.sock -f drop test
-	mysqladmin --socket=/tmp/mysql.sock create "${mysql_db}"
-	mysql --socket=/tmp/mysql.sock <<-EOSQL
+	# Set common flags.
+	mysql_flags="-u root --socket=/tmp/mysql.sock"
+	admin_flags="--defaults-file=/opt/openshift/etc/my.cnf $mysql_flags"
+
+	mysqladmin $admin_flags -f drop test
+	mysqladmin $admin_flags create "${mysql_db}"
+	mysql $mysql_flags <<-EOSQL
 		CREATE USER '${mysql_user}'@'%' IDENTIFIED BY '${mysql_pass}';
 		GRANT ALL ON \`${mysql_db}\`.* TO '${mysql_user}'@'%' ;
 		FLUSH PRIVILEGES ;
 	EOSQL
 
 	if [ -v root_pass ]; then
-		mysql --socket=/tmp/mysql.sock <<-EOSQL
+		mysql $mysql_flags <<-EOSQL
 			GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${root_pass}';
 		EOSQL
 	fi
-	mysqladmin --socket=/tmp/mysql.sock flush-privileges shutdown
+	mysqladmin $admin_flags flush-privileges shutdown
 fi
 
 exec /opt/rh/mysql55/root/usr/libexec/mysqld \
