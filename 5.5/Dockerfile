@@ -8,6 +8,7 @@ FROM centos:centos7
 #  * $MYSQL_USER - Database user name
 #  * $MYSQL_PASSWORD - User's password
 #  * $MYSQL_DATABASE - Name of the database to create
+#  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
 # Image metadata
 ENV MYSQL_VERSION           5.5
@@ -25,11 +26,14 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/mysql55/epel-7-x86_64/download/rhscl-mysql55-epel-7-x86_64.noarch.rpm && \
     yum -y --setopt=tsflags=nodocs install hostname mysql55 && \
     yum clean all && \
+    mkdir -p /var/lib/mysql && chown mysql.mysql /var/lib/mysql && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
 COPY run-mysqld.sh /usr/local/bin/
 COPY mysql /opt/openshift/
 
 VOLUME ["/var/lib/mysql"]
+
+USER mysql
 
 ENTRYPOINT ["run-mysqld.sh"]

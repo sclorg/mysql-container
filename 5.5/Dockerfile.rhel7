@@ -8,6 +8,7 @@ FROM rhel7
 #  * $MYSQL_USER - Database user name
 #  * $MYSQL_PASSWORD - User's password
 #  * $MYSQL_DATABASE - Name of the database to create
+#  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
 # Image metadata
 ENV MYSQL_VERSION           5.5
@@ -26,11 +27,14 @@ RUN yum install -y yum-utils hostname && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum install -y --setopt=tsflags=nodocs mysql55 && \
     yum clean all && \
+    mkdir -p /var/lib/mysql && chown mysql.mysql /var/lib/mysql && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
 COPY run-mysqld.sh /usr/local/bin/
 COPY mysql /opt/openshift/
 
 VOLUME ["/var/lib/mysql"]
+
+USER mysql
 
 ENTRYPOINT ["run-mysqld.sh"]

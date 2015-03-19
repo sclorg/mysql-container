@@ -19,13 +19,18 @@ cleanup() {
 
 		echo "Stopping and removing container $CONTAINER..."
 		docker stop $CONTAINER
+		exit_status=$(docker inspect -f '{{.State.ExitCode}}' $CONTAINER)
+		if [ "$exit_status" != "0" ]; then
+			echo "Dumping logs for $CONTAINER"
+			docker logs $CONTAINER
+		fi
 		docker rm $CONTAINER
 		rm $cidfile
 		echo "Done."
 	done
 	rmdir $CIDFILE_DIR
 }
-trap cleanup EXIT
+trap cleanup EXIT SIGINT
 
 get_cid () {
 	local id="$1" ; shift || return 1
@@ -38,7 +43,7 @@ get_container_ip() {
 }
 
 mysql_cmd() {
-	docker run --rm --entrypoint=scl $IMAGE_NAME enable mysql55 -- mysql --host $CONTAINER_IP -u$USER -p$PASS "$@" db
+	docker run --rm --entrypoint=scl $IMAGE_NAME enable mysql55 -- mysql --host $CONTAINER_IP -u$USER -p"$PASS" "$@" db
 }
 
 test_connection() {
