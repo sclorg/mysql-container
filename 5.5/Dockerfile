@@ -30,7 +30,7 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
 COPY run-mysqld.sh /usr/local/bin/
-COPY mysql /opt/openshift/
+COPY contrib /opt/openshift/
 
 VOLUME ["/var/lib/mysql"]
 
