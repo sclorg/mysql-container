@@ -1,11 +1,25 @@
-#!/bin/bash -e
+#!/bin/bash
+
+# For SCL enablement
+source $HOME/.bashrc
+
+set -eu
+
+# Data directory where MySQL database files live. The data subdirectory is here
+# because .bashrc lives in /var/lib/mysql/ and we don't want a volume to
+# override it.
+MYSQL_DATADIR=/var/lib/mysql/data
+MYSQL_DEFAULTS_FILE=/opt/openshift/etc/my.cnf
 
 # Be paranoid and stricter than we should be.
 # https://dev.mysql.com/doc/refman/5.5/en/identifiers.html
 mysql_identifier_regex='^[a-zA-Z0-9_]+$'
 mysql_password_regex='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
 
-function usage {
+function usage() {
+	if [ $# == 2 ]; then
+		echo "error: $1"
+	fi
 	echo "You must specify following environment variables:"
 	echo "  \$MYSQL_USER (regex: '$mysql_identifier_regex')"
 	echo "  \$MYSQL_PASSWORD (regex: '$mysql_password_regex')"
@@ -15,38 +29,24 @@ function usage {
 	exit 1
 }
 
-function valid_mysql_identifier {
-	local var="$1" ; shift
-	[[ "${var}" =~ $mysql_identifier_regex ]]
+function check_env_vars() {
+	[[ "$MYSQL_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL username"
+	[ ${#MYSQL_USER} -le 16 ] || usage "MySQL username too long (maximum 16 characters)"
+	[[ "$MYSQL_PASSWORD" =~ $mysql_password_regex   ]] || usage "Invalid password"
+	[[ "$MYSQL_DATABASE" =~ $mysql_identifier_regex ]] || usage "Invalid database name"
+	[ ${#MYSQL_DATABASE} -le 64 ] || usage "Database name too long (maximum 64 characters)"
+	if [ -v MYSQL_ROOT_PASSWORD ]; then
+		[[ "$MYSQL_ROOT_PASSWORD" =~ $mysql_password_regex ]] || usage "Invalid root password"
+	fi
 }
-
-function valid_mysql_password {
-	local var="$1" ; shift
-	[[ "${var}" =~ $mysql_password_regex ]]
-}
-
-valid_mysql_identifier "$MYSQL_USER"     || usage
-valid_mysql_password   "$MYSQL_PASSWORD" || usage
-valid_mysql_identifier "$MYSQL_DATABASE" || usage
 
 # Make sure env variables don't propagate to mysqld process.
-mysql_user="$MYSQL_USER" ; unset MYSQL_USER
-mysql_pass="$MYSQL_PASSWORD" ; unset MYSQL_PASSWORD
-mysql_db="$MYSQL_DATABASE" ; unset MYSQL_DATABASE
-
-# Root password.
-if [ "$MYSQL_ROOT_PASSWORD" ]; then
-	valid_mysql_password "$MYSQL_ROOT_PASSWORD" || usage
-	root_pass="$MYSQL_ROOT_PASSWORD"
-fi
-unset MYSQL_ROOT_PASSWORD
-
-# SCL in CentOS/RHEL 7 doesn't support --exec, we need to do it ourselves
-# The '|| exit 1' is here so -e doesn't propagate into scl_source.
-source scl_source enable mysql55 || exit 1
+function unset_env_vars() {
+	unset MYSQL_USER MYSQL_PASSWORD MYSQL_DATABASE MYSQL_ROOT_PASSWORD
+}
 
 # Poll until MySQL responds to our ping.
-function wait_for_mysql {
+function wait_for_mysql() {
 	pid=$1 ; shift
 
 	while [ true ]; do
@@ -60,39 +60,47 @@ function wait_for_mysql {
 	done
 }
 
-if [ ! -d '/var/lib/mysql/mysql' ]; then
+if [ "$1" = "mysqld" -a ! -d "$MYSQL_DATADIR/mysql" ]; then
+
+	shift
+	check_env_vars
 
 	echo 'Running mysql_install_db'
-	mysql_install_db --datadir=/var/lib/mysql
+	mysql_install_db --datadir=$MYSQL_DATADIR
 
 	# Now start mysqld and add appropriate users.
 	echo 'Starting mysqld to create users'
 	/opt/rh/mysql55/root/usr/libexec/mysqld \
-		--defaults-file=/opt/openshift/etc/my.cnf \
+		--defaults-file=$MYSQL_DEFAULTS_FILE \
 		--skip-networking --socket=/tmp/mysql.sock &
 	mysql_pid=$!
 	wait_for_mysql $mysql_pid
 
 	# Set common flags.
 	mysql_flags="-u root --socket=/tmp/mysql.sock"
-	admin_flags="--defaults-file=/opt/openshift/etc/my.cnf $mysql_flags"
+	admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
 
 	mysqladmin $admin_flags -f drop test
-	mysqladmin $admin_flags create "${mysql_db}"
+	mysqladmin $admin_flags create "${MYSQL_DATABASE}"
 	mysql $mysql_flags <<-EOSQL
-		CREATE USER '${mysql_user}'@'%' IDENTIFIED BY '${mysql_pass}';
-		GRANT ALL ON \`${mysql_db}\`.* TO '${mysql_user}'@'%' ;
+		CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+		GRANT ALL ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%' ;
 		FLUSH PRIVILEGES ;
 	EOSQL
 
-	if [ -v root_pass ]; then
+	if [ -v MYSQL_ROOT_PASSWORD ]; then
 		mysql $mysql_flags <<-EOSQL
-			GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${root_pass}';
+			GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 		EOSQL
 	fi
 	mysqladmin $admin_flags flush-privileges shutdown
+
+	unset_env_vars
+
+	exec /opt/rh/mysql55/root/usr/libexec/mysqld \
+		--defaults-file=$MYSQL_DEFAULTS_FILE \
+		"$@" 2>&1
 fi
 
-exec /opt/rh/mysql55/root/usr/libexec/mysqld \
-	--defaults-file=/opt/openshift/etc/my.cnf \
-	"$@" 2>&1
+unset_env_vars
+exec "$@"
