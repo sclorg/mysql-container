@@ -30,6 +30,10 @@ function usage() {
 }
 
 function check_env_vars() {
+	if ! [[ -v MYSQL_USER && -v MYSQL_PASSWORD && -v MYSQL_DATABASE ]]; then
+		usage
+	fi
+
 	[[ "$MYSQL_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL username"
 	[ ${#MYSQL_USER} -le 16 ] || usage "MySQL username too long (maximum 16 characters)"
 	[[ "$MYSQL_PASSWORD" =~ $mysql_password_regex   ]] || usage "Invalid password"
