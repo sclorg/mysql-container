@@ -13,7 +13,7 @@ IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
 
 CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
 
-cleanup() {
+function cleanup() {
 	for cidfile in $CIDFILE_DIR/* ; do
 		CONTAINER=$(cat $cidfile)
 
@@ -32,21 +32,21 @@ cleanup() {
 }
 trap cleanup EXIT SIGINT
 
-get_cid () {
+function get_cid() {
 	local id="$1" ; shift || return 1
 	echo $(cat "$CIDFILE_DIR/$id")
 }
 
-get_container_ip() {
+function get_container_ip() {
 	local id="$1" ; shift
 	docker inspect --format='{{.NetworkSettings.IPAddress}}' $(get_cid "$id")
 }
 
-mysql_cmd() {
-	docker run --rm --entrypoint=scl $IMAGE_NAME enable mysql55 -- mysql --host $CONTAINER_IP -u$USER -p"$PASS" "$@" db
+function mysql_cmd() {
+	docker run --rm $IMAGE_NAME mysql --host $CONTAINER_IP -u$USER -p"$PASS" "$@" db
 }
 
-test_connection() {
+function test_connection() {
 	local name=$1 ; shift
 	ip=$(get_container_ip $name)
 	echo "  Testing MySQL connection to $ip..."
@@ -69,7 +69,7 @@ test_connection() {
 	return 1
 }
 
-test_mysql() {
+function test_mysql() {
 	echo "  Testing MySQL"
 	mysql_cmd <<< "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));"
 	mysql_cmd <<< "INSERT INTO tbl VALUES ('foo1', 'bar1');"
@@ -80,7 +80,7 @@ test_mysql() {
 	echo "  Success!"
 }
 
-create_container() {
+function create_container() {
 	local name=$1 ; shift
 	cidfile="$CIDFILE_DIR/$name"
 	# create container with a cidfile in a directory for cleanup
@@ -88,19 +88,58 @@ create_container() {
 	echo "Created container $(cat $cidfile)"
 }
 
-assert_login_access() {
+function assert_login_access() {
 	local USER=$1 ; shift
 	local PASS=$1 ; shift
-	local SUCCESS=$1 ; shift
+	local success=$1 ; shift
 
-	if $SUCCESS; then
+	if $success; then
 		mysql_cmd <<< "SELECT 1;" && echo "    $USER($PASS) access granted as expected"
 	else
 		mysql_cmd <<< "SELECT 1;" || echo "    $USER($PASS) access denied as expected"
 	fi
 }
 
-run_tests() {
+# Make sure the invocation of docker run fails.
+function assert_container_creation_fails() {
+
+	# Time the docker run command. It should fail. If it doesn't fail,
+	# mysqld will keep running so we kill it with SIGKILL to make sure
+	# timeout returns a non-zero value.
+	set +e
+	timeout -s 9 --preserve-status 60s docker run --rm "$@" $IMAGE_NAME
+	ret=$?
+	set -e
+
+	# Timeout will exit with a high number.
+	if [ $ret -gt 30 ]; then
+		return 1
+	fi
+}
+
+function try_image_invalid_combinations() {
+	assert_container_creation_fails "$@"
+	assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass "$@"
+	assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_DATABASE=db "$@"
+	assert_container_creation_fails -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db "$@"
+}
+
+function run_container_creation_tests() {
+	echo "  Testing image entrypoint usage"
+	try_image_invalid_combinations
+	try_image_invalid_combinations  -e MYSQL_ROOT_PASSWORD=root_pass
+
+	VERY_LONG_DB_NAME="very_long_database_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	assert_container_creation_fails -e MYSQL_USER=\$invalid -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
+	assert_container_creation_fails -e MYSQL_USER=very_long_username -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
+	assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD="\"" -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
+	assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=\$invalid -e MYSQL_ROOT_PASSWORD=root_pass
+	assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=$VERY_LONG_DB_NAME -e MYSQL_ROOT_PASSWORD=root_pass
+	assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD="\""
+	echo "  Success!"
+}
+
+function run_tests() {
 	local name=$1 ; shift
 	envs="-e MYSQL_USER=$USER -e MYSQL_PASSWORD=$PASS -e MYSQL_DATABASE=db"
 	if [ -v ROOT_PASS ]; then
@@ -125,5 +164,6 @@ run_tests() {
 
 # Tests.
 
+run_container_creation_tests
 USER=user PASS=pass run_tests no_root
 USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
