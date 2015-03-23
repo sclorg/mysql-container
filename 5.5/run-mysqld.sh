@@ -64,9 +64,7 @@ function wait_for_mysql() {
 	done
 }
 
-if [ "$1" = "mysqld" -a ! -d "$MYSQL_DATADIR/mysql" ]; then
-
-	shift
+function initialize_database() {
 	check_env_vars
 
 	echo 'Running mysql_install_db'
@@ -98,6 +96,15 @@ if [ "$1" = "mysqld" -a ! -d "$MYSQL_DATADIR/mysql" ]; then
 		EOSQL
 	fi
 	mysqladmin $admin_flags flush-privileges shutdown
+}
+
+if [ "$1" = "mysqld" ]; then
+
+	shift
+
+	if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
+		initialize_database
+	fi
 
 	unset_env_vars
 
