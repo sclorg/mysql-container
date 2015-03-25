@@ -6,10 +6,17 @@ source $HOME/.bashrc
 set -eu
 
 # Data directory where MySQL database files live. The data subdirectory is here
-# because .bashrc lives in /var/lib/mysql/ and we don't want a volume to
-# override it.
-MYSQL_DATADIR=/var/lib/mysql/data
-MYSQL_DEFAULTS_FILE=/opt/openshift/etc/my.cnf
+# because .bashrc and my.cnf both live in /var/lib/mysql/ and we don't want a
+# volume to override it.
+export MYSQL_DATADIR=/var/lib/mysql/data
+
+# Configuration settings.
+export MYSQL_DEFAULTS_FILE=$HOME/my.cnf
+export MYSQL_LOWER_CASE_TABLE_NAMES=${MYSQL_LOWER_CASE_TABLE_NAMES:-0}
+export MYSQL_MAX_CONNECTIONS=${MYSQL_MAX_CONNECTIONS:-151}
+export MYSQL_FT_MIN_WORD_LEN=${MYSQL_FT_MIN_WORD_LEN:-4}
+export MYSQL_FT_MAX_WORD_LEN=${MYSQL_FT_MAX_WORD_LEN:-20}
+export MYSQL_AIO=${MYSQL_AIO:-1}
 
 # Be paranoid and stricter than we should be.
 # https://dev.mysql.com/doc/refman/5.5/en/identifiers.html
@@ -26,10 +33,20 @@ function usage() {
 	echo "  \$MYSQL_DATABASE (regex: '$mysql_identifier_regex')"
 	echo "Optional:"
 	echo "  \$MYSQL_ROOT_PASSWORD (regex: '$mysql_password_regex')"
+	echo "Settings:"
+	echo "  \$MYSQL_LOWER_CASE_TABLE_NAMES (default: 0)"
+	echo "  \$MYSQL_MAX_CONNECTIONS (default: 151)"
+	echo "  \$MYSQL_FT_MIN_WORD_LEN (default: 4)"
+	echo "  \$MYSQL_FT_MAX_WORD_LEN (default: 20)"
+	echo "  \$MYSQL_AIO (default: 1)"
 	exit 1
 }
 
 function check_env_vars() {
+	if ! [[ -v MYSQL_USER && -v MYSQL_PASSWORD && -v MYSQL_DATABASE ]]; then
+		usage
+	fi
+
 	[[ "$MYSQL_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL username"
 	[ ${#MYSQL_USER} -le 16 ] || usage "MySQL username too long (maximum 16 characters)"
 	[[ "$MYSQL_PASSWORD" =~ $mysql_password_regex   ]] || usage "Invalid password"
@@ -60,9 +77,7 @@ function wait_for_mysql() {
 	done
 }
 
-if [ "$1" = "mysqld" -a ! -d "$MYSQL_DATADIR/mysql" ]; then
-
-	shift
+function initialize_database() {
 	check_env_vars
 
 	echo 'Running mysql_install_db'
@@ -94,6 +109,18 @@ if [ "$1" = "mysqld" -a ! -d "$MYSQL_DATADIR/mysql" ]; then
 		EOSQL
 	fi
 	mysqladmin $admin_flags flush-privileges shutdown
+}
+
+# New config is generated every time a container is created.
+envsubst < ${MYSQL_DEFAULTS_FILE}.template > $MYSQL_DEFAULTS_FILE
+
+if [ "$1" = "mysqld" ]; then
+
+	shift
+
+	if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
+		initialize_database
+	fi
 
 	unset_env_vars
 

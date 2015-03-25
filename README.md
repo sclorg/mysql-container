@@ -34,6 +34,16 @@ The image recognizes following environment variables that you can set during ini
 |  `MYSQL_DATABASE`      | Database name                             |
 |  `MYSQL_ROOT_PASSWORD` | Password for the root user (optional)     |
 
+Following environment variables influence MySQL configuration file. They are all optional.
+
+|    Variable name                |    Description                                                    |    Default
+| :------------------------------ | ----------------------------------------------------------------- | -------------------------------
+|  `MYSQL_LOWER_CASE_TABLE_NAMES` | Sets how the table names are stored and compared                  |  0
+|  `MYSQL_MAX_CONNECTIONS`        | The maximum permitted number of simultaneous client connections   |  151
+|  `MYSQL_FT_MIN_WORD_LEN`        | The minimum length of the word to be included in a FULLTEXT index |  4
+|  `MYSQL_FT_MAX_WORD_LEN`        | The maximum length of the word to be included in a FULLTEXT index |  20
+|  `MYSQL_AIO`                    | Controls the `innodb_use_native_aio` setting value in case the native AIO is broken. See http://help.directadmin.com/item.php?id=529 |  1
+
 You can also set following mount points by passing `-v /host:/container` flag to docker.
 
 |  Volume mount point      | Description          |

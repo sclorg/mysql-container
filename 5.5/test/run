@@ -139,6 +139,25 @@ function run_container_creation_tests() {
 	echo "  Success!"
 }
 
+function test_config_option() {
+	local env_var=$1 ; shift
+	local setting=$1 ; shift
+	local value=$1 ; shift
+
+	# If $value is a string, it needs to be in simple quotes ''.
+	# If nothing is found, grep returns 1 and test fails.
+	docker run --rm -e $env_var=${value//\'/} $IMAGE_NAME cat /var/lib/mysql/my.cnf | grep -q "$setting = $value"
+}
+
+function run_configuration_tests() {
+	echo "  Testing image configuration settings"
+	test_config_option MYSQL_LOWER_CASE_TABLE_NAMES lower_case_table_names 1
+	test_config_option MYSQL_MAX_CONNECTIONS max_connections 1337
+	test_config_option MYSQL_FT_MIN_WORD_LEN ft_min_word_len 8
+	test_config_option MYSQL_FT_MAX_WORD_LEN ft_max_word_len 15
+	echo "  Success!"
+}
+
 function run_tests() {
 	local name=$1 ; shift
 	envs="-e MYSQL_USER=$USER -e MYSQL_PASSWORD=$PASS -e MYSQL_DATABASE=db"
@@ -165,5 +184,6 @@ function run_tests() {
 # Tests.
 
 run_container_creation_tests
+run_configuration_tests
 USER=user PASS=pass run_tests no_root
 USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
