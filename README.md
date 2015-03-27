@@ -17,6 +17,15 @@ make build TARGET=rhel7
 
 *  **CentOS7 based image**
 
+
+This image is available on DockerHub. To download it use:
+
+```console
+docker pull openshift/mysql-55-centos7
+```
+
+To build MySQL image from scratch use:
+
 ```console
 git clone https://github.com/openshift/mysql.git
 cd mysql
