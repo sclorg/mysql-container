@@ -23,7 +23,7 @@ Choose between CentOS7 or RHEL7 based image:
 
 *  **RHEL7 based image**
 
-    To build a RHEL7-based image, you need to run Docker build on properly
+    To build a RHEL7-based image, you need to run Docker build on a properly
     subscribed RHEL machine.
 
     ```
@@ -87,7 +87,7 @@ Usage
 ---------------------------------
 
 We will assume that you are using the `openshift/mysql-55-centos7` image.
-Suppose that you want to set only mandatory environment variables and not store
+If you want to set only mandatory environment variables and not store
 the database in a host directory, you need to execute the following command:
 
 ```
@@ -125,7 +125,7 @@ User can choose between testing MySQL based on RHEL or CentOS image.
 
 *  **RHEL based image**
 
-    To test a rhel7-based MySQL image, you need to run the test on properly
+    To test a rhel7-based MySQL image, you need to run the test on a properly
     subscribed RHEL machine.
 
     ```
