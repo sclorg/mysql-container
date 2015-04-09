@@ -28,17 +28,17 @@ function usage() {
 		echo "error: $1"
 	fi
 	echo "You must specify following environment variables:"
-	echo "  \$MYSQL_USER (regex: '$mysql_identifier_regex')"
-	echo "  \$MYSQL_PASSWORD (regex: '$mysql_password_regex')"
-	echo "  \$MYSQL_DATABASE (regex: '$mysql_identifier_regex')"
+	echo "  MYSQL_USER (regex: '$mysql_identifier_regex')"
+	echo "  MYSQL_PASSWORD (regex: '$mysql_password_regex')"
+	echo "  MYSQL_DATABASE (regex: '$mysql_identifier_regex')"
 	echo "Optional:"
-	echo "  \$MYSQL_ROOT_PASSWORD (regex: '$mysql_password_regex')"
+	echo "  MYSQL_ROOT_PASSWORD (regex: '$mysql_password_regex')"
 	echo "Settings:"
-	echo "  \$MYSQL_LOWER_CASE_TABLE_NAMES (default: 0)"
-	echo "  \$MYSQL_MAX_CONNECTIONS (default: 151)"
-	echo "  \$MYSQL_FT_MIN_WORD_LEN (default: 4)"
-	echo "  \$MYSQL_FT_MAX_WORD_LEN (default: 20)"
-	echo "  \$MYSQL_AIO (default: 1)"
+	echo "  MYSQL_LOWER_CASE_TABLE_NAMES (default: 0)"
+	echo "  MYSQL_MAX_CONNECTIONS (default: 151)"
+	echo "  MYSQL_FT_MIN_WORD_LEN (default: 4)"
+	echo "  MYSQL_FT_MAX_WORD_LEN (default: 20)"
+	echo "  MYSQL_AIO (default: 1)"
 	exit 1
 }
 
