@@ -1,0 +1,122 @@
+{
+  "kind": "Config",
+  "apiVersion": "v1beta1",
+  "id": "mysql-replica-example",
+  "items":[
+    {
+      "kind": "Service",
+      "apiVersion": "v1beta2",
+      "id": "mysql-master",
+      "portalIP": "None",
+      "labels": {
+        "name": "mysql-master"
+      },
+      "port": 3306,
+      "selector": {
+        "name": "mysql-master"
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1beta2",
+      "id": "mysql-slave",
+      "portalIP": "None",
+      "labels": {
+        "name": "mysql-slave"
+      },
+      "port": 3306,
+      "selector": {
+        "name": "mysql-slave"
+      }
+    },
+    {
+      "kind": "ReplicationController",
+      "apiVersion": "v1beta2",
+      "id": "mysql-master",
+      "metadata": {
+        "name": "mysql-master",
+        "labels": {
+          "name":"mysql-master"
+        }
+      },
+      "desiredState": {
+        "replicas": 1,
+        "replicaSelector": {
+          "name": "mysql-master"
+        },
+        "podTemplate": {
+          "labels": {
+            "name": "mysql-master"
+          },
+          "desiredState": {
+            "manifest": {
+              "containers":[
+                {
+                  "name":  "server",
+                  "image": "openshift/mysql-55-centos7",
+                  "command": ["mysqld-master"],
+                  "env": [
+                    { "name": "MYSQL_MASTER_USER", "value": "master" },
+                    { "name": "MYSQL_MASTER_PASSWORD", "value": "master" },
+                    { "name": "MYSQL_USER", "value": "user" },
+                    { "name": "MYSQL_PASSWORD", "value": "user" },
+                    { "name": "MYSQL_DATABASE", "value": "userdb" },
+                    { "name": "MYSQL_ROOT_PASSWORD", "value": "root" }
+                  ],
+                  "ports":[
+                    {
+                      "containerPort": 3306
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "kind": "ReplicationController",
+      "apiVersion": "v1beta2",
+      "id": "mysql-slave",
+      "metadata": {
+        "name": "mysql-slave",
+        "labels": {
+          "name":"mysql-slave"
+        }
+      },
+      "desiredState": {
+        "replicas": 3,
+        "replicaSelector": {
+          "name": "mysql-slave"
+        },
+        "podTemplate": {
+          "labels": {
+            "name": "mysql-slave"
+          },
+          "desiredState": {
+            "manifest": {
+              "containers":[
+                {
+                  "name":  "server",
+                  "image": "openshift/mysql-55-centos7",
+                  "command": ["mysqld-slave"],
+                  "env": [
+                    { "name": "MYSQL_MASTER_USER", "value": "master" },
+                    { "name": "MYSQL_MASTER_PASSWORD", "value": "master" },
+                    { "name": "MYSQL_DATABASE", "value": "userdb" }
+                  ],
+                  "ports":[
+                    {
+                      "containerPort": 3306
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}
