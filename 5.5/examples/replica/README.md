@@ -1,5 +1,10 @@
 # MySQL Replication Example
 
+**WARNING:**
+
+**This is only a Proof-Of-Concept example and it is not meant to be used in any
+production. Use at your own risk.**
+
 ## What is MySQL replication?
 
 Replication enables data from one MySQL database server (the master) to be
