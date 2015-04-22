@@ -33,9 +33,13 @@ COPY run-*.sh /usr/local/bin/
 
 COPY contrib /var/lib/mysql/
 
+RUN chmod o+w -R /var/lib/mysql
+
 VOLUME ["/var/lib/mysql/data"]
 
 USER mysql
+
+ENV HOME /var/lib/mysql
 
 ENTRYPOINT ["run-mysqld.sh"]
 CMD ["mysqld"]
