@@ -11,13 +11,17 @@ FROM centos:centos7
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
 # Image metadata
-ENV MYSQL_VERSION           5.5
-ENV IMAGE_DESCRIPTION       MySQL 5.5
-ENV IMAGE_TAGS              mysql,mysql55
-ENV IMAGE_EXPOSE_SERVICES   3306:mysql
+ENV MYSQL_VERSION=5.5 \
+    IMAGE_DESCRIPTION="MySQL 5.5" \
+    IMAGE_TAGS=mysql,mysql55 \
+    IMAGE_EXPOSE_SERVICES=3306:mysql \
+    HOME=/var/lib/mysql
 
 MAINTAINER  Martin Nagy <mnagy@redhat.com>
 EXPOSE 3306
+
+COPY run-*.sh /usr/local/bin/
+COPY contrib /var/lib/mysql/
 
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
@@ -27,19 +31,12 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install gettext hostname bind-utils mysql55 && \
     yum clean all && \
     mkdir -p /var/lib/mysql/data && chown mysql.mysql /var/lib/mysql/data && \
-    test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
-
-COPY run-*.sh /usr/local/bin/
-
-COPY contrib /var/lib/mysql/
-
-RUN chmod o+w -R /var/lib/mysql
+    test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)" && \
+    chmod o+w -R /var/lib/mysql
 
 VOLUME ["/var/lib/mysql/data"]
 
 USER mysql
-
-ENV HOME /var/lib/mysql
 
 ENTRYPOINT ["run-mysqld.sh"]
 CMD ["mysqld"]
