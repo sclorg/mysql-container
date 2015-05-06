@@ -10,14 +10,16 @@ FROM centos:centos7
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
-# Image metadata
+MAINTAINER  Martin Nagy <mnagy@redhat.com>
+
 ENV MYSQL_VERSION=5.5 \
-    IMAGE_DESCRIPTION="MySQL 5.5" \
-    IMAGE_TAGS=mysql,mysql55 \
-    IMAGE_EXPOSE_SERVICES=3306:mysql \
     HOME=/var/lib/mysql
 
-MAINTAINER  Martin Nagy <mnagy@redhat.com>
+LABEL k8s.io/description="MySQL is a multi-user, multi-threaded SQL database server" \
+      k8s.io/display-name="MySQL 5.5" \
+      openshift.io/expose-services="3306:mysql" \
+      openshift.io/tags="database,mysql,mysql55"
+
 EXPOSE 3306
 
 COPY run-*.sh /usr/local/bin/
