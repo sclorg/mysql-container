@@ -136,5 +136,5 @@ mysql> SHOW SLAVE HOSTS;
 You can add more slaves if you want, using the following `osc` command.
 
 ```
-$ osc update rc mysql-slave --patch='{ "apiVersion": "v1beta1", "desiredState": { "replicas": 4 }}'
+$ osc resize rc mysql-slave --replicas=4
 ```
