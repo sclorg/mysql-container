@@ -38,7 +38,7 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
 
 VOLUME ["/var/lib/mysql/data"]
 
-USER mysql
+USER 27
 
 ENTRYPOINT ["run-mysqld.sh"]
 CMD ["mysqld"]
