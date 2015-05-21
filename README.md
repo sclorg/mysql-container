@@ -82,6 +82,9 @@ You can also set following mount points by passing `-v /host:/container` flag to
 | :----------------------- | -------------------- |
 |  `/var/lib/mysql/data`   | MySQL data directory |
 
+**Notice: When mouting directory from host into the container, ensure that the mounted
+directory has the appropriate permissions and that the owner and group of the directory
+matches the user UID or name which is running inside the container.**
 
 Usage
 ---------------------------------
