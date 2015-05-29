@@ -132,14 +132,14 @@ User can choose between testing MySQL based on RHEL or CentOS image.
     subscribed RHEL machine.
 
     ```
-    $ cd mongodb
+    $ cd mysql
     $ make test TARGET=rhel7 VERSION=5.5
     ```
 
 *  **CentOS based image**
 
     ```
-    $ cd mongodb
+    $ cd mysql
     $ make test VERSION=5.5
     ```
 
