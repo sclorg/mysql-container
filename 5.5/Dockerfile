@@ -13,7 +13,8 @@ FROM centos:centos7
 MAINTAINER  Martin Nagy <mnagy@redhat.com>
 
 ENV MYSQL_VERSION=5.5 \
-    HOME=/var/lib/mysql
+    HOME=/var/lib/mysql \
+    BASH_ENV=/var/lib/mysql/.bashrc
 
 LABEL k8s.io/description="MySQL is a multi-user, multi-threaded SQL database server" \
       k8s.io/display-name="MySQL 5.5" \
