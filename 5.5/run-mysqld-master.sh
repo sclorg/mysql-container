@@ -2,7 +2,6 @@
 #
 # This is an entrypoint that runs the MySQL server in the 'master' mode.
 #
-source ${HOME}/.bashrc
 source ${HOME}/common.sh
 
 set -eu

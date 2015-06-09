@@ -1,6 +1,5 @@
 #!/bin/bash
 
-source $HOME/.bashrc
 source $HOME/common.sh
 set -eu
 

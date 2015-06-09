@@ -101,6 +101,11 @@ function assert_login_access() {
   fi
 }
 
+function assert_local_access() {
+  local id="$1" ; shift
+  docker exec $(get_cid "$id") bash -c mysql <<< "SELECT 1;"
+}
+
 # Make sure the invocation of docker run fails.
 function assert_container_creation_fails() {
 
@@ -178,6 +183,7 @@ function run_tests() {
     assert_login_access root "foo" false
     assert_login_access root "" false
   fi
+  assert_local_access $name
   echo "  Success!"
   test_mysql $name
 }
