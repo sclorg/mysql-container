@@ -13,8 +13,7 @@ FROM rhel7
 MAINTAINER  Martin Nagy <mnagy@redhat.com>
 
 ENV MYSQL_VERSION=5.5 \
-    HOME=/var/lib/mysql \
-    BASH_ENV=/var/lib/mysql/.bashrc
+    HOME=/var/lib/mysql
 
 LABEL k8s.io/description="MySQL is a multi-user, multi-threaded SQL database server" \
       k8s.io/display-name="MySQL 5.5" \
@@ -37,6 +36,14 @@ RUN yum install -y yum-utils gettext hostname && \
     mkdir -p /var/lib/mysql/data && chown mysql.mysql /var/lib/mysql/data && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)" && \
     chmod o+w -R /var/lib/mysql
+
+# When bash is started non-interactively, to run a shell script, for example it
+# looks for this variable and source the content of this file. This will enable
+# the SCL for all scripts without need to do 'scl enable'.
+ENV BASH_ENV=/var/lib/mysql/scl_enable \
+    ENV=/var/lib/mysql/scl_enable \
+    PROMPT_COMMAND=". /var/lib/mysql/scl_enable"
+
 
 VOLUME ["/var/lib/mysql/data"]
 
