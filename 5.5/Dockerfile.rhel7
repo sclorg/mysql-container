@@ -21,6 +21,12 @@ LABEL k8s.io/description="MySQL is a multi-user, multi-threaded SQL database ser
       openshift.io/expose-services="3306:mysql" \
       openshift.io/tags="database,mysql,mysql55"
 
+# Labels consumed by Red Hat build service
+LABEL Component="mysql55" \
+      Name="openshift3/mysql-55-rhel7" \
+      Version="5.5" \
+      Release="1"
+
 EXPOSE 3306
 
 COPY run-*.sh /usr/local/bin/
