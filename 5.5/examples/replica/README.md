@@ -133,7 +133,7 @@ mysql> SHOW SLAVE HOSTS;
 
 ```
 
-You can add more slaves if you want, using the following `osc` command.
+You can add more slaves if you want, using the following `oc` command.
 
 ```
 $ oc scale rc mysql-slave --replicas=4
