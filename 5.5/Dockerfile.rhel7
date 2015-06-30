@@ -20,6 +20,11 @@ LABEL k8s.io/description="MySQL is a multi-user, multi-threaded SQL database ser
       openshift.io/expose-services="3306:mysql" \
       openshift.io/tags="database,mysql,mysql55"
 
+LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database server" \
+      io.k8s.display-name="MySQL 5.5" \
+      io.openshift.expose-services="3306:mysql" \
+      io.openshift.tags="database,mysql,mysql55"
+
 # Labels consumed by Red Hat build service
 LABEL Component="mysql55" \
       Name="openshift3/mysql-55-rhel7" \
