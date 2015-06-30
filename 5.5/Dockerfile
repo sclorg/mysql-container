@@ -15,10 +15,10 @@ MAINTAINER  Martin Nagy <mnagy@redhat.com>
 ENV MYSQL_VERSION=5.5 \
     HOME=/var/lib/mysql
 
-LABEL k8s.io/description="MySQL is a multi-user, multi-threaded SQL database server" \
-      k8s.io/display-name="MySQL 5.5" \
-      openshift.io/expose-services="3306:mysql" \
-      openshift.io/tags="database,mysql,mysql55"
+LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database server" \
+      io.k8s.display-name="MySQL 5.5" \
+      io.openshift.expose-services="3306:mysql" \
+      io.openshift.tags="database,mysql,mysql55"
 
 EXPOSE 3306
 
