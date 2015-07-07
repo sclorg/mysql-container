@@ -8,12 +8,12 @@ admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
 
 if [ "$1" == "mysqld-master" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
   shift
-  exec /usr/local/bin/run-mysqld-master.sh $@
+  exec /usr/local/bin/run-mysqld-master.sh "$@"
 fi
 
 if [ "$1" == "mysqld-slave" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
   shift
-  exec /usr/local/bin/run-mysqld-slave.sh $@
+  exec /usr/local/bin/run-mysqld-slave.sh "$@"
 fi
 
 if [ "$1" == "mysqld" ]; then
