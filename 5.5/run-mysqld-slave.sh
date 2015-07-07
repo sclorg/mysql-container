@@ -35,4 +35,4 @@ EOSQL
 mysqladmin $admin_flags flush-privileges shutdown
 unset_env_vars
 exec /opt/rh/mysql55/root/usr/libexec/mysqld --defaults-file=$MYSQL_DEFAULTS_FILE \
-  --report-host=$(hostname -i) $@ 2>&1
+  --report-host=$(hostname -i) "$@" 2>&1

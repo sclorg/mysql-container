@@ -32,4 +32,4 @@ EOSQL
 # Restart the MySQL server with public IP bindings
 mysqladmin $admin_flags flush-privileges shutdown
 unset_env_vars
-exec /opt/rh/mysql55/root/usr/libexec/mysqld --defaults-file=$MYSQL_DEFAULTS_FILE $@ 2>&1
+exec /opt/rh/mysql55/root/usr/libexec/mysqld --defaults-file=$MYSQL_DEFAULTS_FILE "$@" 2>&1
