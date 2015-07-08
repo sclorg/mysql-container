@@ -47,6 +47,23 @@
   ],
   "objects": [
     {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-master"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "512Mi"
+          }
+        }
+      }
+    },
+    {
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
@@ -133,6 +150,14 @@
             }
           },
           "spec": {
+            "volumes": [
+              {
+                "name": "mysql-master-data",
+                "persistentVolumeClaim": {
+                  "claimName": "mysql-master"
+                }
+              }
+            ],
             "containers": [
               {
                 "name": "server",
@@ -170,6 +195,12 @@
                   {
                     "name": "MYSQL_ROOT_PASSWORD",
                     "value": "${MYSQL_ROOT_PASSWORD}"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "mysql-master-data",
+                    "mountPath": "/var/lib/mysql/data"
                   }
                 ],
                 "resources": {},

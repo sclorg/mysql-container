@@ -70,19 +70,21 @@ function wait_for_mysql() {
   done
 }
 
+function start_local_mysql() {
+  # Now start mysqld and add appropriate users.
+  echo 'Starting local mysqld server ...'
+  /opt/rh/mysql55/root/usr/libexec/mysqld \
+    --defaults-file=$MYSQL_DEFAULTS_FILE \
+    --skip-networking --socket=/tmp/mysql.sock &
+  mysql_pid=$!
+  wait_for_mysql $mysql_pid
+}
+
 # Initialize the MySQL database (create user accounts and the initial database)
 function initialize_database() {
   echo 'Running mysql_install_db ...'
   mysql_install_db --datadir=$MYSQL_DATADIR
-
-  # Now start mysqld and add appropriate users.
-  echo 'Starting mysqld to create users ...'
-  /opt/rh/mysql55/root/usr/libexec/mysqld \
-    --defaults-file=$MYSQL_DEFAULTS_FILE \
-    --skip-networking --socket=/tmp/mysql.sock &
-
-  mysql_pid=$!
-  wait_for_mysql $mysql_pid
+  start_local_mysql
 
   [ -v MYSQL_DISABLE_CREATE_DB ] && return
 

@@ -19,8 +19,15 @@ See: https://dev.mysql.com/doc/refman/5.5/en/replication.html
 
 ## How does this example work?
 
-The provided JSON file (`mysql_replica.json`) contains a `Config` resource that
+The provided JSON file (`mysql_replica.json`) contains a `Template` resource that
 groups the Kubernetes and OpenShift resources which are meant to be created.
+This template will start with one MySQL master server and one slave server.
+
+## Persistent storage
+
+In order to provide the persistent storage for the MySQL master server, the administrator
+of OpenShift needs to create a PersistentVolume that you can claim. This example requires a PersistentVolume of size 512m be available.
+To learn more about how to create PersistentVolume, refer to [OpenShift documentation](https://docs.openshift.org/latest/admin_guide/persistent_storage_nfs.html)
 
 ### Service 'mysql-master'
 
