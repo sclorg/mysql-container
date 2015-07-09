@@ -89,6 +89,61 @@ function create_container() {
   echo "Created container $(cat $cidfile)"
 }
 
+function run_change_password_test() {
+  local tmpdir=$(mktemp -d)
+  mkdir "${tmpdir}/data" && chmod -R a+rwx "${tmpdir}"
+
+  # Create MySQL container with persistent volume and set the initial password
+  create_container "testpass1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
+  CONTAINER_IP=$(get_container_ip testpass1) USER=user PASS=foo test_connection "testpass1"
+  docker stop $(get_cid testpass1)
+
+  # Create second container with changed password
+  create_container "testpass2" -e MYSQL_USER=user -e MYSQL_PASSWORD=bar \
+    -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
+  CONTAINER_IP=$(get_container_ip testpass2) USER=user PASS=bar test_connection "testpass2"
+
+  # The old password should not work anymore
+  set +e
+  CONTAINER_IP=$(get_container_ip testpass2) USER=user PASS=foo \
+    mysql_cmd -e "SELECT 1;" && return 1
+  set -e
+}
+
+function run_replication_test() {
+  local cluster_args="-e MYSQL_MASTER_USER=master -e MYSQL_MASTER_PASSWORD=master"
+  local max_attempts=30
+
+  # Run the MySQL master
+  docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=db \
+    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master
+  master_ip=$(get_container_ip master.cid)
+
+  # Run the MySQL slave
+  docker run $cluster_args -e MYSQL_MASTER_IP=${master_ip} \
+    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave
+  slave_ip=$(get_container_ip slave.cid)
+
+  # Now wait till the MASTER will see the SLAVE
+  for i in $(seq $max_attempts); do
+    set +e
+    result=$(CONTAINER_IP=${master_ip} USER=root PASS=root \
+      mysql_cmd -e "SHOW SLAVE HOSTS;" | grep ${slave_ip})
+    set -e
+    if [[ ! -z "${result}" ]]; then
+      echo "${slave_ip} successfully registered as SLAVE for ${master_ip}"
+      break
+    fi
+    if [[ "${i}" == "${max_attempts}" ]]; then
+      echo "The ${slave_ip} failed to register in MASTER"
+      return 1
+    fi
+    sleep 1
+  done
+}
+
 function assert_login_access() {
   local USER=$1 ; shift
   local PASS=$1 ; shift
@@ -231,6 +286,7 @@ function run_tests() {
 # Tests.
 
 run_container_creation_tests
+
 # FIXME: Disabled because the configuration files are not processed when running
 #        commands like 'cat'. To have the my.cnf processed you have to run one of the
 #        valid entrypoints.
@@ -242,3 +298,9 @@ USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
 # Test with arbitrary uid for the container
 CONTAINER_ARGS="-u 12345" USER=user PASS=pass run_tests no_root_altuid
 CONTAINER_ARGS="-u 12345" USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root_altuid
+
+# Test the password change
+run_change_password_test
+
+# Replication tests
+run_replication_test
