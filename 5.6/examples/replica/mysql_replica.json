@@ -1,0 +1,295 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "mysql-replication-example",
+    "creationTimestamp": null,
+    "annotations": {
+      "description": "MySQL Replication Example",
+      "iconClass": "icon-database",
+      "tags": "database,mysql,replication"
+    }
+  },
+  "parameters": [
+    {
+      "name": "MYSQL_MASTER_USER",
+      "description": "The username used for master-slave replication",
+      "value": "master"
+    },
+    {
+      "name": "MYSQL_MASTER_PASSWORD",
+      "description": "The password for the MySQL master user",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{12}"
+    },
+    {
+      "name": "MYSQL_USER",
+      "description": "The username that clients will use to connect to MySQL server",
+      "value": "user"
+    },
+    {
+      "name": "MYSQL_PASSWORD",
+      "description": "The password for the MySQL master user",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{12}"
+    },
+    {
+      "name": "MYSQL_DATABASE",
+      "description": "The name of the database that will be created",
+      "value": "userdb"
+    },
+    {
+      "name": "MYSQL_ROOT_PASSWORD",
+      "description": "The password for the MySQL adminitrator",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{12}"
+    }
+  ],
+  "objects": [
+    {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-master"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "512Mi"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-master",
+        "labels": {
+          "name": "mysql-master"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 3306,
+            "targetPort": 3306,
+            "nodePort": 0
+          }
+        ],
+        "selector": {
+          "name": "mysql-master"
+        },
+        "portalIP": "None",
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-slave",
+        "labels": {
+          "name": "mysql-slave"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 3306,
+            "targetPort": 3306,
+            "nodePort": 0
+          }
+        ],
+        "selector": {
+          "name": "mysql-slave"
+        },
+        "portalIP": "None",
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-master",
+        "creationTimestamp": null
+      },
+      "spec": {
+        "strategy": {
+          "type": "Recreate",
+          "resources": {}
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "name": "mysql-master"
+        },
+        "template": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "name": "mysql-master"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "mysql-master-data",
+                "persistentVolumeClaim": {
+                  "claimName": "mysql-master"
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "server",
+                "image": "openshift/mysql-56-centos7",
+                "command": [
+                  "run-mysqld-master.sh"
+                ],
+                "ports": [
+                  {
+                    "containerPort": 3306,
+                    "protocol": "TCP"
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "MYSQL_MASTER_USER",
+                    "value": "${MYSQL_MASTER_USER}"
+                  },
+                  {
+                    "name": "MYSQL_MASTER_PASSWORD",
+                    "value": "${MYSQL_MASTER_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_USER",
+                    "value": "${MYSQL_USER}"
+                  },
+                  {
+                    "name": "MYSQL_PASSWORD",
+                    "value": "${MYSQL_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_DATABASE",
+                    "value": "${MYSQL_DATABASE}"
+                  },
+                  {
+                    "name": "MYSQL_ROOT_PASSWORD",
+                    "value": "${MYSQL_ROOT_PASSWORD}"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "mysql-master-data",
+                    "mountPath": "/var/lib/mysql/data"
+                  }
+                ],
+                "resources": {},
+                "terminationMessagePath": "/dev/termination-log",
+                "imagePullPolicy": "IfNotPresent",
+                "securityContext": {
+                  "capabilities": {},
+                  "privileged": false
+                }
+              }
+            ],
+            "restartPolicy": "Always",
+            "dnsPolicy": "ClusterFirst"
+          }
+        }
+      },
+      "status": {}
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-slave",
+        "creationTimestamp": null
+      },
+      "spec": {
+        "strategy": {
+          "type": "Recreate",
+          "resources": {}
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "name": "mysql-slave"
+        },
+        "template": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "name": "mysql-slave"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "server",
+                "image": "openshift/mysql-56-centos7",
+                "command": [
+                  "run-mysqld-slave.sh"
+                ],
+                "ports": [
+                  {
+                    "containerPort": 3306,
+                    "protocol": "TCP"
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "MYSQL_MASTER_USER",
+                    "value": "${MYSQL_MASTER_USER}"
+                  },
+                  {
+                    "name": "MYSQL_MASTER_PASSWORD",
+                    "value": "${MYSQL_MASTER_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_DATABASE",
+                    "value": "${MYSQL_DATABASE}"
+                  }
+                ],
+                "resources": {},
+                "terminationMessagePath": "/dev/termination-log",
+                "imagePullPolicy": "IfNotPresent",
+                "securityContext": {
+                  "capabilities": {},
+                  "privileged": false
+                }
+              }
+            ],
+            "restartPolicy": "Always",
+            "dnsPolicy": "ClusterFirst"
+          }
+        }
+      },
+      "status": {}
+    }
+  ]
+}

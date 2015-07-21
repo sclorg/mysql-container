@@ -9,7 +9,7 @@
 set -exo nounset
 shopt -s nullglob
 
-IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
+IMAGE_NAME=${IMAGE_NAME-openshift/mysql-56-centos7-candidate}
 
 CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
 
@@ -269,7 +269,7 @@ function run_tests() {
   CONTAINER_IP=$(get_container_ip $name)
   test_connection $name
   echo "  Testing scl usage"
-  test_scl_usage $name 'mysql --version' '5.5'
+  test_scl_usage $name 'mysql --version' '5.6'
   echo "  Testing login accesses"
   assert_login_access $USER $PASS true
   assert_login_access $USER "${PASS}_foo" false

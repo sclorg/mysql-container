@@ -9,6 +9,7 @@ Versions
 ---------------
 MySQL versions currently provided are:
 * mysql-5.5
+* mysql-5.6
 
 RHEL versions currently supported are:
 * RHEL7
@@ -48,9 +49,12 @@ Choose either the CentOS7 or RHEL7 based image:
     $ make build VERSION=5.5
     ```
 
+For using other versions of mysql, just replace the `5.5` value by particular version
+in the commands above.
+
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
-on all provided versions of MySQL. Since we are currently providing only version `5.5`,
-you can omit this parameter.**
+on all provided versions of MySQL, which must be specified in  `VERSIONS` variable.
+This variable must be set to a list with possible versions (subdirectories).**
 
 
 Environment variables and volumes
@@ -143,6 +147,9 @@ Users can choose between testing MySQL based on a RHEL or CentOS image.
     $ make test VERSION=5.5
     ```
 
+For using other versions of mysql, just replace the `5.5` value by particular version
+in the commands above.
+
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
-on all provided versions of MySQL. Since we are currently providing only version `5.5`,
-you can omit this parameter.**
+on all provided versions of MySQL, which must be specified in  `VERSIONS` variable.
+This variable must be set to a list with possible versions (subdirectories).**
