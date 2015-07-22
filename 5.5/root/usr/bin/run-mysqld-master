@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# This is an entrypoint that runs the MySQL server in the 'master' mode.
+#
+source /usr/share/cont-layer/mysql/common.sh
+
+set -eu
+
+validate_replication_variables
+validate_variables
+
+# Generate the unique 'server-id' for this master
+export MYSQL_SERVER_ID=$(server_id)
+echo "The 'master' server-id is ${MYSQL_SERVER_ID}"
+
+# Generate the unique 'server-id' for this master
+export MYSQL_SERVER_ID=$(server_id)
+echo "The 'slave' server-id is ${MYSQL_SERVER_ID}"
+
+# Check whether the server supports GTID
+if ${MYSQL_PREFIX}/libexec/mysqld --help --verbose 2>&1 | grep -e '^gtid-mode' &>/dev/null ; then
+  export MYSQL_GTID_SUPPORT=1
+  echo "GTID support is available"
+else
+  export MYSQL_GTID_SUPPORT=0
+  echo "GTID support is unavailable"
+fi
+
+# Process the MySQL configuration files
+envsubst < /usr/share/cont-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
+envsubst < /usr/share/cont-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
+envsubst < /usr/share/cont-layer/mysql/my-master.cnf.template > /etc/my.cnf.d/master.cnf
+
+# Set GTID settings if we run version that supports GTID
+if [ $MYSQL_GTID_SUPPORT -eq 1 ] ; then
+  envsubst < /usr/share/cont-layer/mysql/my-repl-gtid.cnf.template > /etc/my.cnf.d/gtid.cnf
+fi
+
+# Initialize MySQL database if this is the first time this containr runs and there
+# are no existing data. In other case just start the local mysql to allow editing
+# configuration
+start_with_initialize_database
+
+# Setup the 'master' replication on the MySQL server
+# Grant REPLICATION CLIENT so slave can get master status
+mysql $mysql_flags <<EOSQL
+  GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '${MYSQL_MASTER_USER}'@'%' IDENTIFIED BY '${MYSQL_MASTER_PASSWORD}';
+  FLUSH PRIVILEGES;
+EOSQL
+
+# Restart the MySQL server with public IP bindings
+mysqladmin $admin_flags flush-privileges shutdown
+unset_env_vars
+exec ${MYSQL_PREFIX}/libexec/mysqld "$@" 2>&1

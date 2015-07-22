@@ -1,0 +1,20 @@
+#!/bin/bash
+
+source /usr/share/cont-layer/mysql/common.sh
+
+set -eu
+
+validate_variables
+
+envsubst < /usr/share/cont-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
+envsubst < /usr/share/cont-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
+
+start_with_initialize_database
+
+cont_source_hooks pre-start mysql
+
+mysqladmin $admin_flags flush-privileges shutdown
+
+unset_env_vars
+exec ${MYSQL_PREFIX}/libexec/mysqld "$@" 2>&1
+

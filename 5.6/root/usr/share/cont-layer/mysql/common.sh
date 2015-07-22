@@ -1,9 +1,14 @@
 #!/bin/bash
 
+. "/usr/share/cont-lib/cont-lib.sh"
+
 # Data directory where MySQL database files live. The data subdirectory is here
 # because .bashrc and my.cnf both live in /var/lib/mysql/ and we don't want a
 # volume to override it.
 export MYSQL_DATADIR=/var/lib/mysql/data
+
+# Get prefix rather than hard-code it
+export MYSQL_PREFIX=$(which mysqld_safe|sed -e 's|/bin/mysqld_safe$||')
 
 # Configuration settings.
 export MYSQL_DEFAULTS_FILE=$HOME/my.cnf
@@ -12,6 +17,11 @@ export MYSQL_MAX_CONNECTIONS=${MYSQL_MAX_CONNECTIONS:-151}
 export MYSQL_FT_MIN_WORD_LEN=${MYSQL_FT_MIN_WORD_LEN:-4}
 export MYSQL_FT_MAX_WORD_LEN=${MYSQL_FT_MAX_WORD_LEN:-20}
 export MYSQL_AIO=${MYSQL_AIO:-1}
+
+export CONT_PROJECT="mysql"
+
+mysql_flags="-u root --socket=/tmp/mysql.sock"
+admin_flags="$mysql_flags"
 
 # Be paranoid and stricter than we should be.
 # https://dev.mysql.com/doc/refman/5.5/en/identifiers.html
@@ -73,22 +83,27 @@ function wait_for_mysql() {
 function start_local_mysql() {
   # Now start mysqld and add appropriate users.
   echo 'Starting local mysqld server ...'
-  /opt/rh/mysql55/root/usr/libexec/mysqld \
-    --defaults-file=$MYSQL_DEFAULTS_FILE \
+  ${MYSQL_PREFIX}/libexec/mysqld \
     --skip-networking --socket=/tmp/mysql.sock "$@" &
   mysql_pid=$!
   wait_for_mysql $mysql_pid
 }
 
 # Initialize the MySQL database (create user accounts and the initial database)
-function initialize_database() {
+function start_with_initialize_database() {
+  if [ -d "$MYSQL_DATADIR/mysql" ]; then
+    start_local_mysql
+    return
+  fi
+
   echo 'Running mysql_install_db ...'
-  mysql_install_db --datadir=$MYSQL_DATADIR
+  mysql_install_db --rpm --datadir=$MYSQL_DATADIR
   start_local_mysql "$@"
 
   [ -v MYSQL_DISABLE_CREATE_DB ] && return
 
-  mysqladmin $admin_flags -f drop test
+  # ignore error (test db does not exists)
+  mysqladmin $admin_flags -f drop test || :
   mysqladmin $admin_flags create "${MYSQL_DATABASE}"
 
 mysql $mysql_flags <<EOSQL
@@ -102,6 +117,8 @@ mysql $mysql_flags <<EOSQL
     GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 EOSQL
   fi
+
+  cont_source_hooks post-init mysql
 }
 
 # The 'server_id' number for slave needs to be within 1-4294967295 range.
@@ -150,6 +167,7 @@ function validate_replication_variables() {
     echo "  MYSQL_MASTER_USER"
     echo "  MYSQL_MASTER_PASSWORD"
     echo
+    exit 1
   fi
   [[ "$MYSQL_MASTER_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL master username"
   [ ${#MYSQL_MASTER_USER} -le 16 ] || usage "MySQL master username too long (maximum 16 characters)"

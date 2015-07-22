@@ -163,7 +163,7 @@
                 "name": "server",
                 "image": "openshift/mysql-55-centos7",
                 "command": [
-                  "run-mysqld-master.sh"
+                  "run-mysqld-master"
                 ],
                 "ports": [
                   {
@@ -253,7 +253,7 @@
                 "name": "server",
                 "image": "openshift/mysql-55-centos7",
                 "command": [
-                  "run-mysqld-slave.sh"
+                  "run-mysqld-slave"
                 ],
                 "ports": [
                   {
