@@ -1,16 +1,4 @@
 [mysqld]
-user = mysql
-
-datadir = ${MYSQL_DATADIR}
-basedir = /opt/rh/rh-mysql56/root/usr
-plugin-dir = /opt/rh/rh-mysql56/root/usr/lib64/mysql/plugin
-
-# Disabling symbolic-links is recommended to prevent assorted security risks
-symbolic-links = 0
-
-# http://www.percona.com/blog/2008/05/31/dns-achilles-heel-mysql-installation/
-skip_name_resolve
-
 #
 # Settings configured by the user
 #

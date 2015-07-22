@@ -1,3 +1,3 @@
 # This will make scl collection binaries work out of box.
 unset BASH_ENV PROMPT_COMMAND ENV
-source scl_source enable rh-mysql56
+source scl_source enable $MYSQL_SCL

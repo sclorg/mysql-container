@@ -1,0 +1,9 @@
+All shell scripts with extention .sh will be sourced and thus executed before
+the first start of container (i.e. the container is started with empty data
+directory).
+
+At the time these scripts are executed, the daemon runs on localhost only.
+
+In order to perform some action (for example creating new databases,
+users or initialize the database according to your needs on the first start
+of the container), put shell scripts with .sh extensios into this directory.
