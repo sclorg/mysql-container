@@ -82,10 +82,9 @@ function test_mysql() {
 
 function create_container() {
   local name=$1 ; shift
-  local cargs=${CONTAINER_ARGS:-}
   cidfile="$CIDFILE_DIR/$name"
   # create container with a cidfile in a directory for cleanup
-  docker run $cargs --cidfile $cidfile -d "$@" $IMAGE_NAME
+  docker run ${DOCKER_ARGS:-} --cidfile $cidfile -d "$@" $IMAGE_NAME ${CONTAINER_ARGS:-}
   echo "Created container $(cat $cidfile)"
 }
 
@@ -294,12 +293,15 @@ run_container_creation_tests
 #        valid entrypoints.
 # run_configuration_tests
 
+# Set lower buffer pool size to avoid running out of memory.
+export CONTAINER_ARGS="mysqld --innodb_buffer_pool_size=10485760"
+
 # Normal tests
 USER=user PASS=pass run_tests no_root
 USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
 # Test with arbitrary uid for the container
-CONTAINER_ARGS="-u 12345" USER=user PASS=pass run_tests no_root_altuid
-CONTAINER_ARGS="-u 12345" USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root_altuid
+DOCKER_ARGS="-u 12345" USER=user PASS=pass run_tests no_root_altuid
+DOCKER_ARGS="-u 12345" USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root_altuid
 
 # Test the password change
 run_change_password_test
