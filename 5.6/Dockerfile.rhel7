@@ -27,7 +27,7 @@ LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database ser
 
 # Labels consumed by Red Hat build service
 LABEL Component="rh-mysql56" \
-      Name="openshift3/mysql-56-rhel7" \
+      Name="rhscl/rh-mysql56-rhel7" \
       Version="5.6" \
       Release="1"
 
