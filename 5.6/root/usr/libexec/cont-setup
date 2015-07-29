@@ -46,11 +46,9 @@ if [ "$MYSQL_CONFIG_FILE" != "/etc/my.cnf" ] ; then
 fi
 
 # setup directory for data
-for dir in /var/lib/mysql{,/data} ; do
-    mkdir -p $dir
-    chown -R mysql:mysql $dir
-    restorecon -R $dir
-done
+mkdir -p /var/lib/mysql
+chown -R mysql:mysql /var/lib/mysql
+restorecon -R /var/lib/mysql
 
 # in order to support running container as arbitrary UID,
 # making the files that are expected to be written world-writable
