@@ -10,8 +10,6 @@ FROM rhel7
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
-MAINTAINER  Martin Nagy <mnagy@redhat.com>
-
 ENV MYSQL_VERSION=5.5 \
     HOME=/var/lib/mysql
 
@@ -26,10 +24,11 @@ LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database ser
       io.openshift.tags="database,mysql,mysql55"
 
 # Labels consumed by Red Hat build service
-LABEL Component="mysql55" \
+LABEL BZComponent="mysql55-docker" \
       Name="openshift3/mysql-55-rhel7" \
       Version="5.5" \
-      Release="1"
+      Release="1" \
+      Architecture="x86_64"
 
 EXPOSE 3306
 
