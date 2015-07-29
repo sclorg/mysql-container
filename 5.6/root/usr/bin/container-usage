@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /usr/share/cont-layer/mysql/common.sh
+source /usr/share/container-layer/mysql/common.sh
 
-cat /usr/share/cont-docs/*.txt 2>/dev/null | envsubst
+cat /usr/share/container-docs/*.txt 2>/dev/null | envsubst
 

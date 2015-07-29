@@ -34,14 +34,14 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable
 # the SCL for all scripts without need to do 'scl enable'.
-ENV BASH_ENV=/usr/share/cont-lib/cont-env.sh \
-    ENV=/usr/share/cont-lib/cont-env.sh \
-    PROMPT_COMMAND=". /usr/share/cont-lib/cont-env.sh" \
+ENV BASH_ENV=/usr/share/container-lib/container-env.sh \
+    ENV=/usr/share/container-lib/container-env.sh \
+    PROMPT_COMMAND=". /usr/share/container-lib/container-env.sh" \
     MYSQL_SCL=mysql55
 
 ADD root /
 
-RUN /usr/libexec/cont-setup
+RUN /usr/libexec/container-setup
 
 VOLUME ["/var/lib/mysql/data"]
 

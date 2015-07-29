@@ -2,7 +2,7 @@
 #
 # This is an entrypoint that runs the MySQL server in the 'slave' mode.
 #
-source /usr/share/cont-layer/mysql/common.sh
+source /usr/share/container-layer/mysql/common.sh
 
 set -eu
 
@@ -22,13 +22,13 @@ else
 fi
 
 # Process the MySQL configuration files
-envsubst < /usr/share/cont-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
-envsubst < /usr/share/cont-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
-envsubst < /usr/share/cont-layer/mysql/my-slave.cnf.template > /etc/my.cnf.d/slave.cnf
+envsubst < /usr/share/container-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
+envsubst < /usr/share/container-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
+envsubst < /usr/share/container-layer/mysql/my-slave.cnf.template > /etc/my.cnf.d/slave.cnf
 
 # Set GTID settings if we run version that supports GTID
 if [ $MYSQL_GTID_SUPPORT -eq 1 ] ; then
-  envsubst < /usr/share/cont-layer/mysql/my-repl-gtid.cnf.template > /etc/my.cnf.d/gtid.cnf
+  envsubst < /usr/share/container-layer/mysql/my-repl-gtid.cnf.template > /etc/my.cnf.d/gtid.cnf
 fi
 
 # Initialize MySQL database and wait for the MySQL master to accept connections

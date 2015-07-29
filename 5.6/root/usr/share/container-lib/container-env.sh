@@ -1,4 +1,4 @@
-. /usr/share/cont-lib/cont-lib.sh
+. /usr/share/container-lib/container-lib.sh
 
 cont_debug "changing environment variables"
 
