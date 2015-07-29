@@ -1,13 +1,13 @@
 #!/bin/bash
 
-source /usr/share/cont-layer/mysql/common.sh
+source /usr/share/container-layer/mysql/common.sh
 
 set -eu
 
 validate_variables
 
-envsubst < /usr/share/cont-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
-envsubst < /usr/share/cont-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
+envsubst < /usr/share/container-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
+envsubst < /usr/share/container-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
 
 start_with_initialize_database
 

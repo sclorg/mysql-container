@@ -13,8 +13,8 @@ __cont_source_scripts()
 # CONT_SOURCE_HOOKS HOOKDIR [PROJECT]
 # -----------------------------------
 # Source '*.sh' files from the following directories (in this order):
-#   a. /usr/share/cont-layer/PROJECT/HOOK/
-#   b. /usr/share/cont-volume/PROJECT/HOOK/
+#   a. /usr/share/container-layer/PROJECT/HOOK/
+#   b. /usr/share/container-volume/PROJECT/HOOK/
 #
 # The PROJECT argument is optional because it may be set globally by
 # $CONT_PROJECT environment variable.  The need for PROJECT argument is
@@ -30,7 +30,7 @@ cont_source_hooks()
     test -z "$hook" && return
     test -n "$2" && project="$2"
 
-    for dir in /usr/share/cont-layer /usr/share/cont-volume; do
+    for dir in /usr/share/container-layer /usr/share/container-volume; do
         dir="$dir/$project/$hook"
         cont_debug2 "loading scripts from $dir"
         __cont_source_scripts "$dir"
@@ -96,4 +96,4 @@ cont_store_env()
 export CONT_PROJECT=${CONT_PROJECT:-''}
 export CONT_DEBUG=${CONT_DEBUG:-''}
 
-__cont_source_scripts "/usr/share/cont-lib/autoload"
+__cont_source_scripts "/usr/share/container-lib/autoload"

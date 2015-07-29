@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. "/usr/share/cont-lib/cont-lib.sh"
+. "/usr/share/container-lib/container-lib.sh"
 
 # Data directory where MySQL database files live. The data subdirectory is here
 # because .bashrc and my.cnf both live in /var/lib/mysql/ and we don't want a
