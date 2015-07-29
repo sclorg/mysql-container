@@ -46,7 +46,7 @@ if [ "$MYSQL_CONFIG_FILE" != "/etc/my.cnf" ] ; then
 fi
 
 # setup directory for data
-mkdir -p /var/lib/mysql
+mkdir -p /var/lib/mysql/data
 chown -R mysql:mysql /var/lib/mysql
 restorecon -R /var/lib/mysql
 
