@@ -3,8 +3,8 @@
 # This is an entrypoint that runs the MySQL server in the 'master' mode.
 #
 source ${HOME}/common.sh
-
 set -eu
+shift
 
 mysql_flags="-u root --socket=/tmp/mysql.sock"
 admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
@@ -24,9 +24,9 @@ envsubst < $HOME/my-master.cnf.template > $MYSQL_DEFAULTS_FILE
 # are no existing data. In other case just start the local mysql to allow editing
 # configuration
 if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
-  initialize_database
+  initialize_database "$@"
 else
-  start_local_mysql
+  start_local_mysql "$@"
 fi
 
 # Set the password for MySQL user and root everytime this container is started.

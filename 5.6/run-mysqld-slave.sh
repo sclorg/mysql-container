@@ -3,8 +3,8 @@
 # This is an entrypoint that runs the MySQL server in the 'slave' mode.
 #
 source ${HOME}/common.sh
-
 set -eu
+shift
 
 mysql_flags="-u root --socket=/tmp/mysql.sock"
 admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
@@ -23,7 +23,7 @@ envsubst < $HOME/my-slave.cnf.template > $MYSQL_DEFAULTS_FILE
 # This will also disable the database and user creation (the data will be
 # fetched from the 'master' server).
 export MYSQL_DISABLE_CREATE_DB=1
-initialize_database
+initialize_database "$@"
 wait_for_mysql_master
 
 mysql $mysql_flags <<EOSQL

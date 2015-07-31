@@ -2,28 +2,27 @@
 
 source $HOME/common.sh
 set -eu
+cmd="$1"; shift
 
 mysql_flags="-u root --socket=/tmp/mysql.sock"
 admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
 
-if [ "$1" == "mysqld-master" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
-  shift
+if [ "$cmd" == "mysqld-master" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
   exec /usr/local/bin/run-mysqld-master.sh "$@"
 fi
 
-if [ "$1" == "mysqld-slave" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
-  shift
+if [ "$cmd" == "mysqld-slave" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
   exec /usr/local/bin/run-mysqld-slave.sh "$@"
 fi
 
-if [ "$1" == "mysqld" ]; then
+if [ "$cmd" == "mysqld" ]; then
   validate_variables
   envsubst < ${MYSQL_DEFAULTS_FILE}.template > $MYSQL_DEFAULTS_FILE
 
   if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
-    initialize_database
+    initialize_database "$@"
   else
-    start_local_mysql
+    start_local_mysql "$@"
   fi
 
 # Set the password for MySQL user and root everytime this container is started.
@@ -41,10 +40,9 @@ fi
 
   mysqladmin $admin_flags flush-privileges shutdown
 
-  shift
   unset_env_vars
   exec /opt/rh/rh-mysql56/root/usr/libexec/mysqld --defaults-file=$MYSQL_DEFAULTS_FILE "$@" 2>&1
 fi
 
 unset_env_vars
-exec "$@"
+exec $cmd "$@"
