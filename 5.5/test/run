@@ -117,12 +117,14 @@ function run_replication_test() {
   # Run the MySQL master
   docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=db \
-    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master
+    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master \
+    --innodb_buffer_pool_size=5242880
   master_ip=$(get_container_ip master.cid)
 
   # Run the MySQL slave
   docker run $cluster_args -e MYSQL_MASTER_IP=${master_ip} \
-    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave
+    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave \
+    --innodb_buffer_pool_size=5242880
   slave_ip=$(get_container_ip slave.cid)
 
   # Now wait till the MASTER will see the SLAVE

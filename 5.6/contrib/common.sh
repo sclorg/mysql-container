@@ -75,7 +75,7 @@ function start_local_mysql() {
   echo 'Starting local mysqld server ...'
   /opt/rh/rh-mysql56/root/usr/libexec/mysqld \
     --defaults-file=$MYSQL_DEFAULTS_FILE \
-    --skip-networking --socket=/tmp/mysql.sock &
+    --skip-networking --socket=/tmp/mysql.sock "$@" &
   mysql_pid=$!
   wait_for_mysql $mysql_pid
 }
@@ -85,7 +85,7 @@ function initialize_database() {
   echo 'Running mysql_install_db ...'
   # Using --rpm since we need mysql_install_db behaves as in RPM
   mysql_install_db --rpm --datadir=$MYSQL_DATADIR
-  start_local_mysql
+  start_local_mysql "$@"
 
   [ -v MYSQL_DISABLE_CREATE_DB ] && return
 
