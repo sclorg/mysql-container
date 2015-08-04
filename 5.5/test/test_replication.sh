@@ -6,6 +6,7 @@ TIME_SEC=1000
 TIME_MIN=$((60 * $TIME_SEC))
 HOST_DOCKER_IP=$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')
 OPENSHIFT_CONFIG_DIR="/tmp/openshift-config"
+OPENSHIFT_NODE_CONFIG="node-`hostname`/node-config.yaml"
 
 # time_now return the time since the epoch in millis
 function time_now()
@@ -55,7 +56,7 @@ function setup_dns() {
   docker run --rm -i --privileged --net=host \
     -v $OPENSHIFT_CONFIG_DIR:/config \
     openshift/origin start --write-config=/config
-  sudo sed -i "s/dnsIP: .*/dnsIP: $HOST_DOCKER_IP/" $OPENSHIFT_CONFIG_DIR/node-openshiftdev.local/node-config.yaml
+  sudo sed -i "s/dnsIP: .*/dnsIP: $HOST_DOCKER_IP/" $OPENSHIFT_CONFIG_DIR/$OPENSHIFT_NODE_CONFIG
 }
 
 # Start openshift. We're using local generated config file that has DNS updated.
@@ -67,7 +68,7 @@ function start_openshift() {
     -v /var/lib/openshift/openshift.local.volumes:/var/lib/openshift/openshift.local.volumes \
     openshift/origin start \
       --master-config=/var/lib/openshift/openshift.local.config/master/master-config.yaml \
-      --node-config=/var/lib/openshift/openshift.local.config/node-openshiftdev.local/node-config.yaml \
+      --node-config=/var/lib/openshift/openshift.local.config/$OPENSHIFT_NODE_CONFIG \
       --loglevel=5
 }
 
