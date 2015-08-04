@@ -51,6 +51,9 @@ function setup_dns() {
     sed -i "1inameserver $HOST_DOCKER_IP" /etc/resolv.conf
   fi
 
+  cat /etc/resolv.conf
+  exit 1
+
   sudo rm -rf $OPENSHIFT_CONFIG_DIR
   # Generate openshift config file and edit the node config with DNS pointing to us.
   docker run --rm -i --privileged --net=host \
