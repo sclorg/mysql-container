@@ -48,11 +48,10 @@ function setup_dns() {
   # Make ourselves the default resolver. This is needes so FQDNs such as
   # "pod-name.namespace.svc.cluster.local" can be resolved.
   if ! grep -q $HOST_DOCKER_IP /etc/resolv.conf; then
-    sed -i "1inameserver $HOST_DOCKER_IP" /etc/resolv.conf
+    sudo sed -i "1inameserver $HOST_DOCKER_IP" /etc/resolv.conf
   fi
 
   cat /etc/resolv.conf
-  exit 1
 
   sudo rm -rf $OPENSHIFT_CONFIG_DIR
   # Generate openshift config file and edit the node config with DNS pointing to us.
