@@ -74,6 +74,10 @@ function start_openshift() {
       --loglevel=5
 }
 
+function dump_logs() {
+  docker logs openshift-origin
+}
+
 #
 # Helper functions to run commands inside of the OpenShift Docker container.
 #
@@ -112,12 +116,8 @@ cat examples/replica/mysql_replica.json | run_interactive "oc process -f - | oc 
 
 # Wait until master and slave are up.
 #set +x
-sleep 30
-dig "mysql-master.replication.svc.cluster.local"
-dig "@${HOST_DOCKER_IP}" "mysql-master.replication.svc.cluster.local"
-dig "mysql-master.replication.svc.cluster.local."
-dig "@${HOST_DOCKER_IP}" "mysql-master.replication.svc.cluster.local."
 echo "Waiting for MySQL Master and Replica to come online"
+trap dump_logs ERR
 wait_for_url_timed "mysql-master.replication.svc.cluster.local:3306" "" 5*TIME_MIN >/dev/null
 wait_for_url_timed "mysql-slave.replication.svc.cluster.local:3306" "" 1*TIME_MIN >/dev/null
 set -x
