@@ -86,10 +86,10 @@ function initialize_database() {
   mysql_install_db --datadir=$MYSQL_DATADIR
   start_local_mysql "$@"
 
-  [ -v MYSQL_DISABLE_CREATE_DB ] && return
-
   mysqladmin $admin_flags -f drop test
   mysqladmin $admin_flags create "${MYSQL_DATABASE}"
+
+  [ -v MYSQL_DISABLE_CREATE_DB ] && return
 
 mysql $mysql_flags <<EOSQL
     CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
