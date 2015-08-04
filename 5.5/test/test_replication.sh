@@ -111,7 +111,7 @@ cat examples/replica/mysql_replica.json | run_interactive "oc process -f - | oc 
 # Wait until master and slave are up.
 set +x
 echo "Waiting for MySQL Master and Replica to come online"
-wait_for_url_timed "mysql-master.replication.svc.cluster.local:3306" "" 3*TIME_MIN >/dev/null
+wait_for_url_timed "mysql-master.replication.svc.cluster.local:3306" "" 5*TIME_MIN >/dev/null
 wait_for_url_timed "mysql-slave.replication.svc.cluster.local:3306" "" 1*TIME_MIN >/dev/null
 set -x
 
