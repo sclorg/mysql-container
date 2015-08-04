@@ -4,7 +4,6 @@
 #
 source ${HOME}/common.sh
 set -eu
-shift
 
 mysql_flags="-u root --socket=/tmp/mysql.sock"
 admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
