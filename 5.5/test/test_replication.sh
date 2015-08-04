@@ -52,7 +52,7 @@ function setup_dns() {
 
   sudo rm -rf $OPENSHIFT_CONFIG_DIR
   # Generate openshift config file and edit the node config with DNS pointing to us.
-  docker run --rm -ti --privileged --net=host \
+  docker run --rm -i --privileged --net=host \
     -v $OPENSHIFT_CONFIG_DIR:/config \
     openshift/origin start --write-config=/config
   sudo sed -i "s/dnsIP: .*/dnsIP: $HOST_DOCKER_IP/" $OPENSHIFT_CONFIG_DIR/node-openshiftdev.local/node-config.yaml
