@@ -6,14 +6,15 @@
 # The image has to be available before this script is executed.
 #
 
-# Replication tests with OpenShift
-exec "test/test_replication.sh"
-
 set -exo nounset
 shopt -s nullglob
 
 export IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
 export CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
+
+# Replication tests with OpenShift
+exec "test/test_replication.sh"
+
 source "test/common.sh"
 trap cleanup EXIT SIGINT
 

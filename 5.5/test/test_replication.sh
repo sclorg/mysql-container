@@ -101,6 +101,12 @@ function get_pod_name() {
   run "oc get pods | grep $name | cut -f 1 -d ' '" | head -n 1
 }
 
+
+# Used for substituting the image name in the template.
+function substitute_image() {
+  sed -e "s|openshift/mysql-55-centos7|${IMAGE_NAME:-openshift/mysql-55-centos7}|"
+}
+
 # Main
 setup_dns
 start_openshift
@@ -125,7 +131,7 @@ run "oc patch scc privileged -p '{\"users\":[\"system:serviceaccount:openshift-i
 cat examples/replica/nfs-pv-provider.json | run_interactive "oc process -f - | oc create -f -"
 
 # Now create MySQL replica scenario.
-cat examples/replica/mysql_replica.json | run_interactive "oc process -f - | oc create -f -"
+cat examples/replica/mysql_replica.json | substitute_image | run_interactive "oc process -f - | oc create -f -"
 
 # Wait until master and slave are up.
 set +x
@@ -153,9 +159,9 @@ EOF
 
 sleep 2
 
-# FIXME: Should log in as normal user, doesn't work right now.
 # Verify that values are replicated in slave.
 SLAVE_POD_NAME=$(get_pod_name mysql-slave)
+# FIXME: Should log in as normal user, doesn't work right now.
 run "oc exec $SLAVE_POD_NAME -- /bin/bash -c 'mysql -uroot ${MYSQL_DATABASE} -e \"SELECT * FROM tbl;\"'" | grep -q foo1
 
 echo "All tests finished successfully, cleaning up"
