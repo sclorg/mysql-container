@@ -74,8 +74,15 @@ function start_openshift() {
       --loglevel=5
 }
 
-function dump_logs() {
+function dump_openshift_logs() {
   docker logs openshift-origin
+}
+
+function dump_pod_logs() {
+  echo "Dumping MySQL master logs:"
+  run "oc logs $(get_pod_name mysql-master)"
+  echo "Dumping MySQL slave logs:"
+  run "oc logs $(get_pod_name mysql-slave)"
 }
 
 #
@@ -89,11 +96,15 @@ function run_interactive() {
   docker exec -i openshift-origin /bin/bash -c "$@"
 }
 
+function get_pod_name() {
+  name=$1; shift
+  run "oc get pods | grep $name | cut -f 1 -d ' '" | head -n 1
+}
 
 # Main
 setup_dns
 start_openshift
-# FIXME
+# FIXME: Make sure our testing vagrant box has this package installed
 yum -y install nfs-utils
 set +x
 echo "Waiting for OpenShift to start ..."
@@ -117,11 +128,12 @@ cat examples/replica/nfs-pv-provider.json | run_interactive "oc process -f - | o
 cat examples/replica/mysql_replica.json | run_interactive "oc process -f - | oc create -f -"
 
 # Wait until master and slave are up.
-#set +x
-echo "Waiting for MySQL Master and Replica to come online"
-trap dump_logs ERR
+set +x
+echo "Waiting for MySQL Master and Replica to come online ..."
+trap dump_openshift_logs ERR
 wait_for_url_timed "mysql-master.replication.svc.cluster.local:3306" "" 5*TIME_MIN >/dev/null
 wait_for_url_timed "mysql-slave.replication.svc.cluster.local:3306" "" 1*TIME_MIN >/dev/null
+trap - ERR
 set -x
 
 # Get environment variables from master, so we know the passwords.
@@ -130,6 +142,8 @@ export $(run "oc env --list dc mysql-master | grep -v '^#'")
 #
 # Tests start here.
 #
+
+trap dump_pod_logs ERR
 
 # Create table in master.
 run_interactive "mysql -h mysql-master.replication.svc.cluster.local -u${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE}" <<EOF
@@ -141,7 +155,9 @@ sleep 2
 
 # FIXME: Should log in as normal user, doesn't work right now.
 # Verify that values are replicated in slave.
-SLAVE_POD_NAME=$(run "oc get pods | grep mysql-slave | cut -f 1 -d ' '" | head -n 1)
+SLAVE_POD_NAME=$(get_pod_name mysql-slave)
 run "oc exec $SLAVE_POD_NAME -- /bin/bash -c 'mysql -uroot ${MYSQL_DATABASE} -e \"SELECT * FROM tbl;\"'" | grep -q foo1
 
-echo "All tests finished successfully"
+echo "All tests finished successfully, cleaning up"
+run "oc delete all --all"
+trap - ERR
