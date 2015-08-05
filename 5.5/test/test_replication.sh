@@ -93,6 +93,8 @@ function run_interactive() {
 # Main
 setup_dns
 start_openshift
+# FIXME
+yum -y install nfs-utils
 set +x
 echo "Waiting for OpenShift to start ..."
 wait_for_url_timed "https://${HOST_DOCKER_IP}:8443/healthz" "" 90*TIME_SEC >/dev/null
