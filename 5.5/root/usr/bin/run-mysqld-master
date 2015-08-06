@@ -2,7 +2,9 @@
 #
 # This is an entrypoint that runs the MySQL server in the 'master' mode.
 #
-source /usr/share/container-layer/mysql/common.sh
+. "/usr/share/container-lib/container-lib.sh"
+
+cont_source_hooks include mysql
 
 set -eu
 

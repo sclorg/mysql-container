@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source /usr/share/container-layer/mysql/common.sh
+. "/usr/share/container-lib/container-lib.sh"
+
+cont_source_hooks include mysql
 
 set -eu
 
