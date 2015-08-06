@@ -1,0 +1,7 @@
+You must specify following environment variables:
+  MYSQL_USER (regex: '$mysql_identifier_regex')
+  MYSQL_PASSWORD (regex: '$mysql_password_regex')
+  MYSQL_DATABASE (regex: '$mysql_identifier_regex')
+Optional:"
+  MYSQL_ROOT_PASSWORD (regex: '$mysql_password_regex')
+

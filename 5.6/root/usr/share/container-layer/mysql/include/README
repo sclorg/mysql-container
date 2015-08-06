@@ -1,0 +1,8 @@
+All shell scripts with extention .sh will be sourced and thus executed in the
+beginning of the commands like run-mysqld, ...
+
+Files in this directory contain usually functions or variables definition
+that are supposed to be used in other scripts used in the image.
+
+In order to have some variables defined in other scripts used in the image,
+put shell scripts with .sh extensios into this directory.

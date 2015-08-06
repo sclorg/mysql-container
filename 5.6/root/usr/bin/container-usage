@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source /usr/share/container-layer/mysql/common.sh
+. "/usr/share/container-lib/container-lib.sh"
+
+cont_source_hooks include mysql
 
 cat /usr/share/container-docs/*.txt 2>/dev/null | envsubst
-

@@ -1,0 +1,2 @@
+Place *.txt files here if you want to extend usage message for the container.
+Shell variables in these files will be expanded using `envsubst` utility.
