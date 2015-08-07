@@ -8,16 +8,16 @@ cont_source_hooks include mysql
 
 set -eu
 
+# Define server role for this container
+export MYSQL_REPLICATION_ROLE=master
+
+cont_source_hooks pre-init mysql
+
 validate_replication_variables
-validate_variables
 
 # Generate the unique 'server-id' for this master
 export MYSQL_SERVER_ID=$(server_id)
 echo "The 'master' server-id is ${MYSQL_SERVER_ID}"
-
-# Generate the unique 'server-id' for this master
-export MYSQL_SERVER_ID=$(server_id)
-echo "The 'slave' server-id is ${MYSQL_SERVER_ID}"
 
 # Check whether the server supports GTID
 if ${MYSQL_PREFIX}/libexec/mysqld --help --verbose 2>&1 | grep -e '^gtid-mode' &>/dev/null ; then
@@ -29,8 +29,6 @@ else
 fi
 
 # Process the MySQL configuration files
-envsubst < /usr/share/container-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
-envsubst < /usr/share/container-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
 envsubst < /usr/share/container-layer/mysql/my-master.cnf.template > /etc/my.cnf.d/master.cnf
 
 # Set GTID settings if we run version that supports GTID

@@ -6,10 +6,10 @@ cont_source_hooks include mysql
 
 set -eu
 
-validate_variables
+# Define server role for this container
+export MYSQL_REPLICATION_ROLE=single
 
-envsubst < /usr/share/container-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
-envsubst < /usr/share/container-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
+cont_source_hooks pre-init mysql
 
 start_with_initialize_database
 

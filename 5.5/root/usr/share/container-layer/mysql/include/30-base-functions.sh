@@ -4,8 +4,9 @@ admin_flags="$mysql_flags"
 
 
 function usage() {
-  [ $# == 2 ] && echo "error: $1"
+  [ $# == 1 ] && echo "error: $1"
   cat /usr/share/container-layer/mysql/usage/*.txt 2>/dev/null | envsubst
+  cat /usr/share/container-volume/mysql/usage/*.txt 2>/dev/null | envsubst
   exit 1
 }
 
@@ -68,21 +69,27 @@ function start_with_initialize_database() {
 
   # ignore error (test db does not exists)
   mysqladmin $admin_flags -f drop test || :
-  mysqladmin $admin_flags create "${MYSQL_DATABASE}"
-
-mysql $mysql_flags <<EOSQL
-    CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
-    GRANT ALL ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%' ;
-    FLUSH PRIVILEGES ;
-EOSQL
-
-  if [ -v MYSQL_ROOT_PASSWORD ]; then
-mysql $mysql_flags <<EOSQL
-    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-EOSQL
-  fi
 
   cont_source_hooks post-init mysql
+}
+
+get_mysql_replication_role() {
+  echo "$MYSQL_REPLICATION_ROLE"
+}
+
+mysql_replication_role_is_single() {
+  test "$(get_mysql_replication_role)" == "single"
+  return $?
+}
+
+mysql_replication_role_is_master() {
+  test "$(get_mysql_replication_role)" == "master"
+  return $?
+}
+
+mysql_replication_role_is_slave() {
+  test "$(get_mysql_replication_role)" == "slave"
+  return $?
 }
 
 
