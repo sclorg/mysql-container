@@ -1,22 +1,36 @@
-#!/bin/bash
-#
-# Test the MySQL image.
+# Test helper functions.
 #
 # IMAGE_NAME specifies the name of the candidate image used for testing.
 # The image has to be available before this script is executed.
 #
 
-set -exo nounset
-shopt -s nullglob
+function cleanup() {
+  for cidfile in $CIDFILE_DIR/* ; do
+    CONTAINER=$(cat $cidfile)
 
-export IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
-export CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
+    echo "Stopping and removing container $CONTAINER..."
+    docker stop $CONTAINER
+    exit_status=$(docker inspect -f '{{.State.ExitCode}}' $CONTAINER)
+    if [ "$exit_status" != "0" ]; then
+      echo "Dumping logs for $CONTAINER"
+      docker logs $CONTAINER
+    fi
+    docker rm $CONTAINER
+    rm $cidfile
+    echo "Done."
+  done
+  rmdir $CIDFILE_DIR
+}
 
-# Replication tests with OpenShift
-exec "test/test_replication.sh"
+function get_cid() {
+  local id="$1" ; shift || return 1
+  echo $(cat "$CIDFILE_DIR/$id")
+}
 
-source "test/common.sh"
-trap cleanup EXIT SIGINT
+function get_container_ip() {
+  local id="$1" ; shift
+  docker inspect --format='{{.NetworkSettings.IPAddress}}' $(get_cid "$id")
+}
 
 function mysql_cmd() {
   docker run --rm $IMAGE_NAME mysql --host $CONTAINER_IP -u$USER -p"$PASS" "$@" db
@@ -93,14 +107,12 @@ function run_replication_test() {
   # Run the MySQL master
   docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=db \
-    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master \
-    --innodb_buffer_pool_size=5242880
+    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master
   master_ip=$(get_container_ip master.cid)
 
   # Run the MySQL slave
   docker run $cluster_args -e MYSQL_MASTER_IP=${master_ip} \
-    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave \
-    --innodb_buffer_pool_size=5242880
+    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave
   slave_ip=$(get_container_ip slave.cid)
 
   # Now wait till the MASTER will see the SLAVE
@@ -209,6 +221,21 @@ test_scl_usage() {
     echo "ERROR[/bin/bash -c "${run_cmd}"] Expected '${expected}', got '${out}'"
     return 1
   fi
+  # out=$(docker run --rm -i ${IMAGE_NAME} /bin/bash -i <<< "${run_cmd}")
+  # if ! echo "${out}" | grep -q "${expected}"; then
+  #   echo "ERROR[-i /bin/bash -c "${run_cmd}"] Expected '${expected}', got '${out}'"
+  #   return 1
+  # fi
+  # out=$(docker run --rm -i ${IMAGE_NAME} /bin/bash -l <<< "${run_cmd}")
+  # if ! echo "${out}" | grep -q "${expected}"; then
+  #   echo "ERROR[-i /bin/bash -l "${run_cmd}"] Expected '${expected}', got '${out}'"
+  #   return 1
+  # fi
+  # out=$(docker run --rm -i ${IMAGE_NAME} /bin/sh -ic "${run_cmd}")
+  # if ! echo "${out}" | grep -q "${expected}"; then
+  #   echo "ERROR[/bin/sh -c "${run_cmd}"] Expected '${expected}', got '${out}'"
+  #   return 1
+  # fi
   out=$(docker exec $(get_cid $name) /bin/bash -c "${run_cmd}" 2>&1)
   if ! echo "${out}" | grep -q "${expected}"; then
     echo "ERROR[exec /bin/bash -c "${run_cmd}"] Expected '${expected}', got '${out}'"
@@ -257,7 +284,7 @@ run_container_creation_tests
 # run_configuration_tests
 
 # Set lower buffer pool size to avoid running out of memory.
-export CONTAINER_ARGS="mysqld --innodb_buffer_pool_size=5242880"
+export CONTAINER_ARGS="mysqld --innodb_buffer_pool_size=10485760"
 
 # Normal tests
 USER=user PASS=pass run_tests no_root
@@ -271,3 +298,6 @@ run_change_password_test
 
 # Replication tests
 run_replication_test
+
+# Replication tests with OpenShift
+./test_replication.sh
