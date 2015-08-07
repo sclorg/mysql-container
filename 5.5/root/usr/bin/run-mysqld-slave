@@ -8,6 +8,11 @@ cont_source_hooks include mysql
 
 set -eu
 
+# Define server role for this container
+export MYSQL_REPLICATION_ROLE=slave
+
+cont_source_hooks pre-init mysql
+
 validate_replication_variables
 
 # Generate the unique 'server-id' for this master
@@ -24,8 +29,6 @@ else
 fi
 
 # Process the MySQL configuration files
-envsubst < /usr/share/container-layer/mysql/my-base.cnf.template > /etc/my.cnf.d/base.cnf
-envsubst < /usr/share/container-layer/mysql/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
 envsubst < /usr/share/container-layer/mysql/my-slave.cnf.template > /etc/my.cnf.d/slave.cnf
 
 # Set GTID settings if we run version that supports GTID
