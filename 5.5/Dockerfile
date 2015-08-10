@@ -25,15 +25,11 @@ EXPOSE 3306
 COPY run-*.sh /usr/local/bin/
 COPY contrib /var/lib/mysql/
 
-# This image must forever use UID 27 for mysql user so our volumes are
-# safe in the future. This should *never* change, the last test is there
-# to make sure of that.
 RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/mysql55/epel-7-x86_64/download/rhscl-mysql55-epel-7-x86_64.noarch.rpm && \
     yum -y --setopt=tsflags=nodocs install gettext hostname bind-utils mysql55 && \
     yum clean all && \
     mkdir -p /var/lib/mysql/data && chown mysql.mysql /var/lib/mysql/data && \
-    test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)" && \
     chmod o+w -R /var/lib/mysql
 
 # When bash is started non-interactively, to run a shell script, for example it
@@ -45,7 +41,11 @@ ENV BASH_ENV=/var/lib/mysql/scl_enable \
 
 VOLUME ["/var/lib/mysql/data"]
 
-USER 27
+# uid 1001 represents an arbitrary user with no special permissions in the image.  Using it here
+# allows us to ensure the image is not relying on any permissions of a particular user when run,
+# which would cause problems when the image is run on OpenShift as OpenShift by default runs images
+# with a randomized uid, not the uid specified in the image.
+USER 1001
 
 ENTRYPOINT ["run-mysqld.sh"]
 CMD ["mysqld"]
