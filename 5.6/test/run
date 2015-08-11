@@ -271,6 +271,88 @@ function run_tests() {
   test_mysql $name
 }
 
+test_platform_layer_configuration() {
+  local layered_image="${IMAGE_NAME}-layered"
+  echo "  Testing configuration added in layered image $layered_image"
+  cat >log.cnf <<EOF
+[mysqld]
+general_log=ON
+EOF
+
+  cat >Dockerfile <<EOF
+FROM $IMAGE_NAME
+ADD log.cnf /etc/my.cnf.d/
+EOF
+
+  docker build -t "$layered_image" .
+  local IMAGE_NAME="$layered_image"
+  create_container "testlayered1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db
+  CONTAINER_IP=$(get_container_ip testlayered1) USER=user PASS=foo test_connection "testlayered1"
+  CONTAINER_IP=$(get_container_ip testlayered1) USER=user PASS=foo mysql_cmd -e "SHOW VARIABLES LIKE 'general_log' \G" | grep 'Value.*ON' && echo "    Setting general_log is ON as expected"
+  docker stop $(get_cid testlayered1)
+  rm -rf ./*
+}
+
+test_platform_layer_functionality() {
+  local layered_image="${IMAGE_NAME}-layered"
+  echo "  Testing functionality added in layered image $layered_image"
+  cat >60_content_admin_create.sh <<'EOF'
+mysql $mysql_flags <<EOSQL
+    CREATE USER '${MYSQL_CONTENT_ADMIN_USER}'@'%' IDENTIFIED BY '${MYSQL_CONTENT_ADMIN_PASSWORD}';
+    GRANT INSERT, SELECT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_CONTENT_ADMIN_USER}'@'%' ;
+    FLUSH PRIVILEGES ;
+EOSQL
+EOF
+
+  cat >60_usage_content_admin.txt <<'EOF'
+Content admin user:
+  MYSQL_CONTENT_ADMIN_USER (max 16 characters)
+  MYSQL_CONTENT_ADMIN_PASSWORD
+EOF
+  cat >60_content_admin_password.sh <<'EOF'
+mysql $mysql_flags <<EOSQL
+  SET PASSWORD FOR '${MYSQL_CONTENT_ADMIN_USER}'@'%' = PASSWORD('${MYSQL_CONTENT_ADMIN_PASSWORD}');
+EOSQL
+EOF
+
+  cat >60_verify_content_admin.sh <<'EOF'
+if ! [[ -v MYSQL_CONTENT_ADMIN_USER && -v MYSQL_CONTENT_ADMIN_PASSWORD ]]; then
+    usage
+fi
+
+[ ${#MYSQL_CONTENT_ADMIN_USER} -le 16 ] || usage "MySQL username for MYSQL_CONTENT_ADMIN_USER too long (maximum 16 characters)"
+EOF
+
+  cat >Dockerfile <<EOF
+FROM $IMAGE_NAME
+USER 0
+ADD 60_content_admin_create.sh /usr/share/container-layer/mysql/post-init/
+ADD 60_content_admin_password.sh /usr/share/container-layer/mysql/pre-start/
+ADD 60_verify_content_admin.sh /usr/share/container-layer/mysql/pre-init/
+ADD 60_usage_content_admin.txt /usr/share/container-layer/mysql/usage/
+USER 27
+EOF
+
+  docker build -t "$layered_image" .
+  local IMAGE_NAME="$layered_image"
+  create_container "testlayered2" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -e MYSQL_CONTENT_ADMIN_USER=contentuser -e MYSQL_CONTENT_ADMIN_PASSWORD=pass2
+  CONTAINER_IP=$(get_container_ip testlayered2) USER=user PASS=foo test_connection "testlayered2"
+  CONTAINER_IP=$(get_container_ip testlayered2) assert_login_access contentuser pass2 true
+  docker stop $(get_cid testlayered2)
+  rm -rf ./*
+}
+
+run_platform_tests() {
+  working_dir=$(mktemp -d /tmp/docker-test-XXXXXX)
+  pushd "$working_dir"
+  test_platform_layer_configuration
+  test_platform_layer_functionality
+  popd
+  rmdir "$working_dir"
+}
+
 # Tests.
 
 run_container_creation_tests
@@ -295,3 +377,6 @@ run_change_password_test
 
 # Replication tests
 run_replication_test
+
+# Tests related to using images outside of PaaS
+run_platform_tests
