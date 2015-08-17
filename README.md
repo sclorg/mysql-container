@@ -149,6 +149,8 @@ ADD mystuff /usr/bin/
 RUN /usr/bin/mystuff
 ```
 
+The rest of the Docker image attributes (like entrypoint) will be unchanged.
+
 ### Example of adding a new configuration file in layered Dockerfile:
 
 To change configuration for the `mysqld` daemon and other utilities running within the container, place your new configuration files with `*.cnf` extention into `/etc/my.cnf.d` directory.
@@ -162,23 +164,23 @@ ADD myconfig.cnf /etc/my.cnf.d/myconfig.cnf
 
 Notice: Read order of configuration files in `/etc/my.cnf.d/` directory is not specified.
 
-### Adjusting database inicialization
+### Adjusting database initialization
 
-Initialization of mysql database during first start of this image is devided into several files in several directories. All directories include files that are read in alphabetical order, and thus file names are usually prefixed with a number.
+Initialization of mysql database during first start of this image is divided into several files in several directories. All directories include files that are read in alphabetical order, and thus file names are usually prefixed with a number.
 
 Concretly there are these directories within the Docker container:
 
-* `/usr/share/container-layer/mysql/pre-init/` -- this directory includes shell scripts with extention `.sh` that will be sourced and thus executed before every inicialization of container (no matter whether the data directory is empty or not). At the time these scripts are executed, the daemon is not yet running. Example of script in this directory is a script that checks arguments specified by user.
+* `/usr/share/container-layer/mysql/pre-init/` -- this directory includes shell scripts with extention `.sh` that will be sourced and thus executed before every initialization of container (no matter whether the data directory is empty or not). At the time these scripts are executed, the daemon is not yet running. Example of script in this directory is a script that checks arguments specified by user.
 * `/usr/share/container-layer/mysql/post-init/` -- this directory includes shell scripts with extention `.sh` that will be sourced and thus executed before the first start of container (i.e. in case the container is started with empty data directory). At the time these scripts are executed, the daemon runs on localhost only and `mysql` utility should use arguments stored in `$mysql_flags` environment variable. This directory usually includes scripts for creating new databases, users or initialize the database according to your needs.
 * `/usr/share/container-layer/mysql/pre-start/` -- this directory includes shell scripts with extention `.sh` that will be sourced and thus executed before every start of container (no matter whether the data directory is empty or not). At the time these scripts are executed, the daemon runs on localhost only and `mysql` utility should use arguments stored in `$mysql_flags` environment variable. Example of script in this directory is a script that allows to change password.
 * `/usr/share/container-layer/mysql/include/` -- this directory includes shell scripts with extention `.sh` that will be sourced and thus executed in the beginning of the commands like run-mysqld. Files in this directory contain usually functions or variables definition that are supposed to be used in other scripts used in the image.
 * `/usr/share/container-layer/mysql/usage/` -- this directory includes text files with extention `.txt` that will be printed as usage message for the container in case wrong arguments are given. Shell variables in these files will be expanded using `envsubst` utility.
 
-Generally, to perform some additional action according to your needs, put appropriate files into these directories in your Dockerfile. See other files in those directories for inspiration.
+Generally, to perform some additional action according to your needs, put appropriate files into these directories in your Dockerfile and build an image from your Dockerfile. See other files in those directories for inspiration.
 
 ### Example of extending the Docker image by creating layered Dockerfile
 
-This example adds posibility to add a new user during database inicialization. The username and password is specified using `MYSQL_CONTENT_ADMIN_USER` and `MYSQL_CONTENT_ADMIN_PASSWORD` environment variables, provided when starting the container the first time.
+This example adds posibility to add a new user during database initialization. The username and password is specified using `MYSQL_CONTENT_ADMIN_USER` and `MYSQL_CONTENT_ADMIN_PASSWORD` environment variables, provided when starting the container the first time.
 
 Since you might need to validate the input provided by user in environment variables, it is possible to do it by droping a shell script appropriate directory, that is sourced in the beginning of the daemon start.
 
@@ -243,7 +245,8 @@ Example of such a feature is creation of one database with specified name and us
 FROM <this-image>
 RUN rm -f /usr/share/container-layer/mysql/post-init/20-base-database.sh \
 /usr/share/container-layer/mysql/pre-start/10-passwords.sh \
-/usr/share/container-layer/mysql/pre-init/10-validate-base-variables.sh
+/usr/share/container-layer/mysql/pre-init/10-validate-base-variables.sh \
+/usr/share/container-layer/mysql/usage/10-base-variables.txt
 ```
 
 Such an image won't require `MYSQL_USER`, `MYSQL_PASSWORD` and `MYSQL_DATABASE` environment variables specified.
@@ -254,7 +257,7 @@ Extending the docker image by volume mounting files
 
 This Docker image allows to adjust functionality even without creating the layered Dockerfile as described above. It is possible to use volume mounting using `-v` option (see `docker-run` man page for details).
 
-In a nutshell, all we need to do is adding the same files, as we added in examples above, just using volume mounting feature of the `docker utility.
+In a nutshell, all we need to do is adding the same files, as we added in examples above, just using volume mounting feature of the `docker utility`.
 
 ### Example of adjusting the configuration of docker image by volume mounting files
 
