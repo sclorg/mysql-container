@@ -1,0 +1,22 @@
+#!/bin/bash
+
+. "/usr/share/container-lib/container-lib.sh"
+
+cont_source_hooks include mysql
+
+set -eu
+
+# Define server role for this container
+export MYSQL_REPLICATION_ROLE=single
+
+cont_source_hooks pre-init mysql
+
+start_with_initialize_database
+
+cont_source_hooks pre-start mysql
+
+mysqladmin $admin_flags flush-privileges shutdown
+
+unset_env_vars
+exec ${MYSQL_PREFIX}/libexec/mysqld "$@" 2>&1
+

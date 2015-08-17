@@ -1,0 +1,4 @@
+For master/slave replication, you have to specify following environment variables:
+  MYSQL_MASTER_USER (regex: '$mysql_identifier_regex')
+  MYSQL_MASTER_PASSWORD (regex: '$mysql_password_regex')
+

@@ -1,0 +1,8 @@
+All shell scripts with extention .sh will be sourced and thus executed before
+every start of container.
+
+At the time these scripts are executed, the daemon runs on localhost only.
+
+In order to perform some action (for example allow users to change password
+on every start of the container), put shell scripts with .sh extensios into
+this directory.

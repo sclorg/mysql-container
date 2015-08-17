@@ -1,0 +1,10 @@
+#!/bin/bash
+
+. /usr/share/container-lib/container-lib.sh
+
+cont_debug "command: $*"
+
+__cont_source_scripts "/usr/share/container-entry"
+
+test -z "$*" && set -- bash
+exec "$@"
