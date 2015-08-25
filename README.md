@@ -122,6 +122,36 @@ your container. This will allow you to login to the root account remotely. Local
 connections will still not require a password.
 
 
+Usage on Atomic host
+---------------------------------
+Systems derived from projectatomic.io usually include `atomic` command that is
+used to run containers except other tasks.
+
+To install a new service `mysql1` based on this image on such a system, run:
+
+```
+$ atomic install -n mysql1 --opt2='-e MYSQL_USER=user` -e MYSQL_PASSWORD=secretpass -e MYSQL_DATABASE=db1 -p 3306:3306' THIS_IMAGE
+```
+
+Then to run the service, use the standard `systemctl` call:
+
+```
+$ systemctl start mysqld1.service
+```
+
+In order to work with that service, you may either connect to exposed port 3306 or run this command to connect locally:
+```
+$ atomic run -n mysql1 THIS_IMAGE bash -c 'mysql'
+```
+
+To stop and uninstall the mysql1 service, run:
+
+```
+$ systemctl stop mysql1.service
+$ atomic uninstall -n mysql1 THIS_IMAGE
+```
+
+
 Test
 ---------------------------------
 
