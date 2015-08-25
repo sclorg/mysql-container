@@ -24,11 +24,11 @@ LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database ser
 LABEL INSTALL docker run -t -i --rm --privileged -u 0:0 -v /:/host --net=host \
       --ipc=host --pid=host -e HOST=/host -e LOGDIR=\${LOGDIR} -e CONFDIR=\${CONFDIR} \
       -e DATADIR=\${DATADIR} -e IMAGE=\${IMAGE} -e NAME=\${NAME} -e OPT1 -e OPT2 -e OPT3 \
-      \${OPT1} \${IMAGE} /usr/share/container-layer/mysql/atomic_install.sh
+      \${OPT1} \${IMAGE} /usr/share/container-layer/mysql/atomic/install.sh
 LABEL UNINSTALL docker run -t -i --rm --privileged -u 0:0 -v /:/host --net=host \
       --ipc=host --pid=host -e HOST=/host -e LOGDIR=\${LOGDIR} -e CONFDIR=\${CONFDIR} \
       -e DATADIR=\${DATADIR} -e IMAGE=\${IMAGE} -e NAME=\${NAME} -e OPT1 -e OPT2 -e OPT3 \
-      \${OPT1} \${IMAGE} /usr/share/container-layer/mysql/atomic_uninstall.sh
+      \${OPT1} \${IMAGE} /usr/share/container-layer/mysql/atomic/uninstall.sh
 LABEL RUN docker run -t -i --rm --name=\${NAME} -e OPT1 -e OPT2 -e OPT3 \${OPT2} \
       \${IMAGE}
 
@@ -36,7 +36,7 @@ EXPOSE 3306
 
 COPY run-*.sh /usr/local/bin/
 COPY contrib /var/lib/mysql/
-COPY atomic-contrib /usr/share/container-layer/mysql/
+COPY atomic-contrib /usr/share/container-layer/mysql/atomic/
 
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
