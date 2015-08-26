@@ -152,11 +152,19 @@ function assert_login_access() {
   local PASS=$1 ; shift
   local success=$1 ; shift
 
-  if $success; then
-    mysql_cmd <<< "SELECT 1;" && echo "    $USER($PASS) access granted as expected"
+  if mysql_cmd <<<'SELECT 1;' ; then
+    if $success ; then
+      echo "    $USER($PASS) access granted as expected"
+      return
+    fi
   else
-    mysql_cmd <<< "SELECT 1;" || echo "    $USER($PASS) access denied as expected"
+    if ! $success ; then
+      echo "    $USER($PASS) access denied as expected"
+      return
+    fi
   fi
+  echo "    $USER($PASS) login assertion failed"
+  exit 1
 }
 
 function assert_local_access() {
