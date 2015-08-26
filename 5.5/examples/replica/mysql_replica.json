@@ -12,6 +12,11 @@
   },
   "parameters": [
     {
+      "name": "MYSQL_MASTER_SERVICE_NAME",
+      "description": "Service name for MySQL master service",
+      "value": "mysql-master"
+    },
+    {
       "name": "MYSQL_MASTER_USER",
       "description": "The username used for master-slave replication",
       "value": "master"
@@ -67,7 +72,7 @@
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mysql-master",
+        "name": "${MYSQL_MASTER_SERVICE_NAME}",
         "labels": {
           "name": "mysql-master"
         }
@@ -262,6 +267,10 @@
                   }
                 ],
                 "env": [
+                  {
+                    "name": "MYSQL_MASTER_SERVICE_NAME",
+                    "value": "${MYSQL_MASTER_SERVICE_NAME}"
+                  },
                   {
                     "name": "MYSQL_MASTER_USER",
                     "value": "${MYSQL_MASTER_USER}"
