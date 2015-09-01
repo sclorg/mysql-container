@@ -104,7 +104,7 @@ $ docker run -d --name mysql_database -e MYSQL_USER=user -e MYSQL_PASSWORD=pass 
 This will create a container named `mysql_database` running MySQL with database
 `db` and user with credentials `user:pass`. Port 3306 will be exposed and mapped
 to the host. If you want your database to be persistent across container executions,
-also add a `-v /host/db/path:/var/lib/mysql/data` argument. This will be the MySQL 
+also add a `-v /host/db/path:/var/lib/mysql/data` argument. This will be the MySQL
 data directory.
 
 If the database directory is not initialized, the entrypoint script will first
@@ -123,6 +123,21 @@ still not require a password.
 
 To disable remote root access, simply unset `MYSQL_ROOT_PASSWORD` and restart
 the container.
+
+
+Changing passwords
+------------------
+
+Since passwords are part of the image configuration, the only supported method
+to change passwords for the database user (`MYSQL_USER`) and root user is by
+changing the environment variables `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD`,
+respectively.
+
+Changing database passwords through SQL statements or any way other than through
+the environment variables aforementioned will cause a mismatch between the
+values stored in the variables and the actual passwords. Whenever a database
+container starts it will reset the passwords to the values stored in the
+environment variables.
 
 
 Test
