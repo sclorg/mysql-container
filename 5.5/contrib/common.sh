@@ -127,32 +127,20 @@ function server_id() {
 }
 
 function wait_for_mysql_master() {
-  local master_addr=""
-  while [ true ]; do
-    master_addr=$(mysql_master_addr)
-    [ ! -z "${master_addr}" ] && break
-    echo "Waiting for MySQL master service ..."
-    sleep 1
-  done
-  echo "Got MySQL master service address: ${master_addr}"
-  while [ true ]; do
-    mysqladmin --host=${master_addr} --user="${MYSQL_MASTER_USER}" \
+  while true; do
+    echo "Waiting for MySQL master (${MYSQL_MASTER_SERVICE_NAME}) to accept connections ..."
+    mysqladmin --host=${MYSQL_MASTER_SERVICE_NAME} --user="${MYSQL_MASTER_USER}" \
       --password="${MYSQL_MASTER_PASSWORD}" ping &>/dev/null && return 0
-    echo "Waiting for MySQL master (${master_addr}) to accept connections ..."
     sleep 1
   done
-}
-
-# mysql_master_addr lookups the 'mysql-master' DNS and get list of the available
-# endpoints. Each endpoint is a MySQL container with the 'master' MySQL running.
-function mysql_master_addr() {
-  echo -n "${MYSQL_MASTER_SERVICE_NAME:-mysql-master}"
 }
 
 function validate_replication_variables() {
-  if ! [[ -v MYSQL_DATABASE && -v MYSQL_MASTER_USER && -v MYSQL_MASTER_PASSWORD  ]]; then
+  if ! [[ -v MYSQL_DATABASE && -v MYSQL_MASTER_USER && -v MYSQL_MASTER_PASSWORD && \
+        ( "${MYSQL_RUNNING_AS_SLAVE:-0}" != "1" || -v MYSQL_MASTER_SERVICE_NAME ) ]]; then
     echo
     echo "For master/slave replication, you have to specify following environment variables:"
+    echo "  MYSQL_MASTER_SERVICE_NAME (slave only)"
     echo "  MYSQL_DATABASE"
     echo "  MYSQL_MASTER_USER"
     echo "  MYSQL_MASTER_PASSWORD"
