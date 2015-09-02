@@ -117,9 +117,12 @@ or if it was already present, `mysqld` is executed and will run as PID 1. You ca
 MySQL root user
 ---------------------------------
 The root user has no password set by default, only allowing local connections.
-You can set it by setting the `MYSQL_ROOT_PASSWORD` environment variable when initializing
-your container. This will allow you to login to the root account remotely. Local
-connections will still not require a password.
+You can set it by setting the `MYSQL_ROOT_PASSWORD` environment variable. This
+will allow you to login to the root account remotely. Local connections will
+still not require a password.
+
+To disable remote root access, simply unset `MYSQL_ROOT_PASSWORD` and restart
+the container.
 
 
 Test
