@@ -5,6 +5,8 @@
 source ${HOME}/common.sh
 set -eu
 
+export MYSQL_RUNNING_AS_SLAVE=1
+
 mysql_flags="-u root --socket=/tmp/mysql.sock"
 admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
 
@@ -18,15 +20,13 @@ echo "The 'slave' server-id is ${MYSQL_SERVER_ID}"
 envsubst < $HOME/my.cnf.template > $HOME/my-common.cnf
 envsubst < $HOME/my-slave.cnf.template > $MYSQL_DEFAULTS_FILE
 
-# Initialize MySQL database and wait for the MySQL master to accept connections
-# This will also disable the database and user creation (the data will be
-# fetched from the 'master' server).
-export MYSQL_DISABLE_CREATE_DB=1
+# Initialize MySQL database and wait for the MySQL master to accept
+# connections.
 initialize_database "$@"
 wait_for_mysql_master
 
 # Get binlog file and position from master
-STATUS_INFO=$(mysql --host "$(mysql_master_addr)" "-u${MYSQL_MASTER_USER}" "-p${MYSQL_MASTER_PASSWORD}" -e 'SHOW MASTER STATUS\G')
+STATUS_INFO=$(mysql --host "$MYSQL_MASTER_SERVICE_NAME" "-u${MYSQL_MASTER_USER}" "-p${MYSQL_MASTER_PASSWORD}" replication -e 'SELECT File, Position from replication\G')
 BINLOG_POSITION=$(echo "$STATUS_INFO" | grep 'Position:' | head -n 1 | sed -e 's/^\s*Position: //')
 BINLOG_FILE=$(echo "$STATUS_INFO" | grep 'File:' | head -n 1 | sed -e 's/^\s*File: //')
 
@@ -36,7 +36,7 @@ if [ -z "${BINLOG_FILE}" -o -z "${BINLOG_POSITION}" ] ; then
 fi
 
 mysql $mysql_flags <<EOSQL
-  CHANGE MASTER TO MASTER_HOST='$(mysql_master_addr)',MASTER_USER='${MYSQL_MASTER_USER}', MASTER_PASSWORD='${MYSQL_MASTER_PASSWORD}', MASTER_LOG_FILE='${BINLOG_FILE}', MASTER_LOG_POS=${BINLOG_POSITION};
+  CHANGE MASTER TO MASTER_HOST='${MYSQL_MASTER_SERVICE_NAME}',MASTER_USER='${MYSQL_MASTER_USER}', MASTER_PASSWORD='${MYSQL_MASTER_PASSWORD}', MASTER_LOG_FILE='${BINLOG_FILE}', MASTER_LOG_POS=${BINLOG_POSITION};
   SET GLOBAL SQL_SLAVE_SKIP_COUNTER = 1; SLAVE START;
 EOSQL
 

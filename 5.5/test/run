@@ -111,18 +111,18 @@ function run_change_password_test() {
 }
 
 function run_replication_test() {
-  local cluster_args="-e MYSQL_MASTER_USER=master -e MYSQL_MASTER_PASSWORD=master"
+  local cluster_args="-e MYSQL_MASTER_USER=master -e MYSQL_MASTER_PASSWORD=master -e MYSQL_DATABASE=db"
   local max_attempts=30
 
   # Run the MySQL master
   docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=db \
+    -e MYSQL_ROOT_PASSWORD=root \
     -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master \
     --innodb_buffer_pool_size=5242880
   master_ip=$(get_container_ip master.cid)
 
   # Run the MySQL slave
-  docker run $cluster_args -e MYSQL_MASTER_IP=${master_ip} \
+  docker run $cluster_args -e MYSQL_MASTER_SERVICE_NAME=${master_ip} \
     -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave \
     --innodb_buffer_pool_size=5242880
   slave_ip=$(get_container_ip slave.cid)
@@ -152,11 +152,19 @@ function assert_login_access() {
   local PASS=$1 ; shift
   local success=$1 ; shift
 
-  if $success; then
-    mysql_cmd <<< "SELECT 1;" && echo "    $USER($PASS) access granted as expected"
+  if mysql_cmd <<<'SELECT 1;' ; then
+    if $success ; then
+      echo "    $USER($PASS) access granted as expected"
+      return
+    fi
   else
-    mysql_cmd <<< "SELECT 1;" || echo "    $USER($PASS) access denied as expected"
+    if ! $success ; then
+      echo "    $USER($PASS) access denied as expected"
+      return
+    fi
   fi
+  echo "    $USER($PASS) login assertion failed"
+  exit 1
 }
 
 function assert_local_access() {
