@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. /usr/share/container-layer/mysql/atomic/include.sh
+. /usr/share/container-layer/mysql/atomic/variables.sh
 
 # Create directories on host from spc
 mkdir -p "${HOST}/${data_dir}"

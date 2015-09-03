@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. /usr/share/container-layer/mysql/atomic/include.sh
+. /usr/share/container-layer/mysql/atomic/variables.sh
 
 chroot "${HOST}" /usr/bin/systemctl disable "${service_name}.service"
 chroot "${HOST}" /usr/bin/systemctl stop "${service_name}.service"
