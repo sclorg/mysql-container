@@ -21,7 +21,8 @@ LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database ser
       io.openshift.tags="database,mysql,mysql56,rh-mysql56"
 
 # Support for atomic run/install/uninstall
-LABEL INSTALL="docker run --rm \${IMAGE} cat /usr/share/container-layer/mysql/atomic/install.sh | bash -s --"
+LABEL INSTALL="docker run --rm \"\${IMAGE}\" cat /usr/share/container-layer/mysql/atomic/install.sh | bash -s --" \
+      RUN="bash -c 'docker run --name \"\${NAME}\" \"$@\" \"\${IMAGE}\"' --"
 
 EXPOSE 3306
 
