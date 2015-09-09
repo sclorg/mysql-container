@@ -140,6 +140,38 @@ container starts it will reset the passwords to the values stored in the
 environment variables.
 
 
+Usage on Atomic host
+--------------------
+Systems derived from projectatomic.io usually include the `atomic` command that is
+used to run containers besides other things.
+
+To install a new container `mysql1` based on this image on such a system, run:
+
+```
+$ atomic install -n mysqld1 openshift/mysql-55-centos7 -p 3306:3306 -e MYSQL_USER=user -e MYSQL_PASSWORD=secretpass -e MYSQL_DATABASE=db1 
+```
+
+Then to run the container, run:
+
+```
+$ atomic run mysqld1
+```
+
+In order to work with that container, you may either connect to exposed port 3306
+by external client or run this command to connect locally:
+
+```
+$ atomic run mysqld1 bash -c 'mysql'
+```
+
+To stop and uninstall the mysqld1 service, run:
+
+```
+$ atomic stop mysqld1
+$ atomic uninstall mysqld1
+```
+
+
 Test
 ---------------------------------
 
