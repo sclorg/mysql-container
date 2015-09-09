@@ -20,8 +20,7 @@ LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database ser
       io.openshift.tags="database,mysql,mysql55"
 
 # Support for atomic run/install/uninstall
-LABEL INSTALL="docker run --rm \${IMAGE} cat /usr/share/container-layer/mysql/atomic/install.sh | bash -s --" \
-      RUN="docker start \${NAME}"
+LABEL INSTALL="docker run --rm \${IMAGE} cat /usr/share/container-layer/mysql/atomic/install.sh | bash -s --"
 
 # Labels consumed by Red Hat build service
 LABEL BZComponent="mysql55-docker" \
