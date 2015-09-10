@@ -1,5 +1,4 @@
 FROM rhel7
-MAINTAINER SoftwareCollections.org <sclorg@redhat.com>
 
 # MySQL image for OpenShift.
 #
