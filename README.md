@@ -151,6 +151,13 @@ To install a new container `mysql1` based on this image on such a system, run:
 $ atomic install -n mysqld1 openshift/mysql-55-centos7 -p 3306:3306 -e MYSQL_USER=user -e MYSQL_PASSWORD=secretpass -e MYSQL_DATABASE=db1 
 ```
 
+This creates directory for data at `/var/lib/mysqld1` on host and will be
+mounted as volume for data in the container. Permissions and SELinux context
+is set to default values if the directory does not exist.
+
+All options after image name (starting with `-p` in the example above) are
+passed to the `docker` as arguments.
+
 Then to run the container, run:
 
 ```
