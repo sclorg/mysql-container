@@ -29,14 +29,17 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
     yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/mysql55/epel-7-x86_64/download/rhscl-mysql55-epel-7-x86_64.noarch.rpm && \
     yum -y --setopt=tsflags=nodocs install gettext hostname bind-utils mysql55 && \
     yum clean all && \
-    mkdir -p /var/lib/mysql/data && chown mysql.mysql /var/lib/mysql/data && \
+    mkdir -p /var/lib/mysql/data && chown -R mysql.0 /var/lib/mysql && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
 COPY run-*.sh /usr/local/bin/
 COPY contrib /var/lib/mysql/
 
-# Loosen permission bits to avoid problems running container with arbitrary UID
-RUN chmod -R a+rwx /var/lib/mysql
+# Loosen permission bits for group to avoid problems running container with
+# arbitrary UID
+# When only specifying user, group is 0, that's why /var/lib/mysql must have
+# owner mysql.0; that allows to avoid a+rwx for this dir
+RUN chmod -R g+rwx /var/lib/mysql
 
 # When bash is started non-interactively, to run a shell script, for example it
 # looks for this variable and source the content of this file. This will enable
