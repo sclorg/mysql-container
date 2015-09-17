@@ -87,7 +87,7 @@ function initialize_database() {
   mysql_install_db --rpm --datadir=$MYSQL_DATADIR
   start_local_mysql "$@"
 
-  [ -v MYSQL_DISABLE_CREATE_DB ] && return
+  [ -v MYSQL_RUNNING_AS_SLAVE ] && return
 
   mysqladmin $admin_flags create "${MYSQL_DATABASE}"
 
@@ -115,42 +115,26 @@ function server_id() {
 }
 
 function wait_for_mysql_master() {
-  local master_addr=""
-  while [ true ]; do
-    master_addr=$(mysql_master_addr)
-    [ ! -z "${master_addr}" ] && break
-    echo "Waiting for MySQL master service ..."
-    sleep 1
-  done
-  echo "Got MySQL master service address: ${master_addr}"
-  while [ true ]; do
-    mysqladmin --host=${master_addr} --user="${MYSQL_MASTER_USER}" \
+  while true; do
+    echo "Waiting for MySQL master (${MYSQL_MASTER_SERVICE_NAME}) to accept connections ..."
+    mysqladmin --host=${MYSQL_MASTER_SERVICE_NAME} --user="${MYSQL_MASTER_USER}" \
       --password="${MYSQL_MASTER_PASSWORD}" ping &>/dev/null && return 0
-    echo "Waiting for MySQL master (${master_addr}) to accept connections ..."
     sleep 1
   done
-}
-
-# mysql_master_addr lookups the 'mysql-master' DNS and get list of the available
-# endpoints. Each endpoint is a MySQL container with the 'master' MySQL running.
-function mysql_master_addr() {
-  local service_name=${MYSQL_MASTER_SERVICE_NAME:-mysql-master}
-  local endpoints=$(dig ${service_name} A +search +short 2>/dev/null)
-  # FIXME: This is for debugging (docker run)
-  if [ -v MYSQL_MASTER_IP ]; then
-    endpoints=${MYSQL_MASTER_IP-}
-  fi
-  echo -n "$(echo $endpoints | cut -d ' ' -f 1)"
 }
 
 function validate_replication_variables() {
-  if ! [[ -v MYSQL_MASTER_USER && -v MYSQL_MASTER_PASSWORD  ]]; then
+  if ! [[ -v MYSQL_DATABASE && -v MYSQL_MASTER_USER && -v MYSQL_MASTER_PASSWORD && \
+        ( "${MYSQL_RUNNING_AS_SLAVE:-0}" != "1" || -v MYSQL_MASTER_SERVICE_NAME ) ]]; then
     echo
     echo "For master/slave replication, you have to specify following environment variables:"
+    echo "  MYSQL_MASTER_SERVICE_NAME (slave only)"
+    echo "  MYSQL_DATABASE"
     echo "  MYSQL_MASTER_USER"
     echo "  MYSQL_MASTER_PASSWORD"
     echo
   fi
+  [[ "$MYSQL_DATABASE" =~ $mysql_identifier_regex ]] || usage "Invalid database name"
   [[ "$MYSQL_MASTER_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL master username"
   [ ${#MYSQL_MASTER_USER} -le 16 ] || usage "MySQL master username too long (maximum 16 characters)"
   [[ "$MYSQL_MASTER_PASSWORD" =~ $mysql_password_regex   ]] || usage "Invalid MySQL master password"
