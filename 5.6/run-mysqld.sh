@@ -2,20 +2,21 @@
 
 source $HOME/common.sh
 set -eu
-cmd="$1"; shift
 
 mysql_flags="-u root --socket=/tmp/mysql.sock"
 admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
 
-if [ "$cmd" == "mysqld-master" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
+cmd="$1"; shift
+
+if [ "${cmd}" == "mysqld-master" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
   exec /usr/local/bin/run-mysqld-master.sh "$@"
 fi
 
-if [ "$cmd" == "mysqld-slave" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
+if [ "${cmd}" == "mysqld-slave" ] &&  [ ! -d "${MYSQL_DATADIR}/mysql" ]; then
   exec /usr/local/bin/run-mysqld-slave.sh "$@"
 fi
 
-if [ "$cmd" == "mysqld" ]; then
+if [ "${cmd}" == "mysqld" ]; then
   validate_variables
   envsubst < ${MYSQL_DEFAULTS_FILE}.template > $MYSQL_DEFAULTS_FILE
 
