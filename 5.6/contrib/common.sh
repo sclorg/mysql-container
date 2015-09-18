@@ -26,6 +26,7 @@ function usage() {
   echo "  MYSQL_DATABASE (regex: '$mysql_identifier_regex')"
   echo "Or the following environment variable:"
   echo "  MYSQL_ROOT_PASSWORD (regex: '$mysql_password_regex')"
+  echo "Or both."
   echo "Optional Settings:"
   echo "  MYSQL_LOWER_CASE_TABLE_NAMES (default: 0)"
   echo "  MYSQL_MAX_CONNECTIONS (default: 151)"
