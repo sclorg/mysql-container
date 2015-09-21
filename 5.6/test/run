@@ -197,7 +197,7 @@ function try_image_invalid_combinations() {
 
 function run_container_creation_tests() {
   echo "  Testing image entrypoint usage"
-  assert_container_creation_fails "$@"
+  assert_container_creation_fails
   try_image_invalid_combinations
   try_image_invalid_combinations  -e MYSQL_ROOT_PASSWORD=root_pass
 
