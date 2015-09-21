@@ -190,7 +190,6 @@ function assert_container_creation_fails() {
 }
 
 function try_image_invalid_combinations() {
-  assert_container_creation_fails "$@"
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass "$@"
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_DATABASE=db "$@"
   assert_container_creation_fails -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db "$@"
@@ -198,6 +197,7 @@ function try_image_invalid_combinations() {
 
 function run_container_creation_tests() {
   echo "  Testing image entrypoint usage"
+  assert_container_creation_fails
   try_image_invalid_combinations
   try_image_invalid_combinations  -e MYSQL_ROOT_PASSWORD=root_pass
 
