@@ -15,7 +15,7 @@ even over temporary or intermittent connections such as a dial-up service.
 Depending on the configuration, you can replicate all databases, selected
 databases, or even selected tables within a database.
 
-See: https://dev.mysql.com/doc/refman/5.5/en/replication.html
+See: https://dev.mysql.com/doc/refman/en/replication.html
 
 ## How does this example work?
 

@@ -289,7 +289,7 @@ run_container_creation_tests
 # run_configuration_tests
 
 # Set lower buffer pool size to avoid running out of memory.
-export CONTAINER_ARGS="mysqld --innodb_buffer_pool_size=5242880"
+export CONTAINER_ARGS="run-mysqld --innodb_buffer_pool_size=5242880"
 
 # Normal tests
 USER=user PASS=pass run_tests no_root
