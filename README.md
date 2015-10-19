@@ -1,5 +1,5 @@
-MySQL Docker image
-==================
+MySQL Docker images
+===================
 
 This repository contains Dockerfiles for MySQL images for OpenShift.
 Users can choose between RHEL and CentOS based images.
