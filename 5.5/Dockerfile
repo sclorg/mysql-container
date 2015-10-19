@@ -20,6 +20,10 @@ LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database ser
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql55"
 
+# Support for atomic run/install/uninstall
+LABEL INSTALL="docker run --rm \"\${IMAGE}\" cat /usr/share/container-layer/mysql/atomic/install.sh | bash -s --" \
+      RUN="bash -c 'docker run --name \"\${NAME}\" \"$@\" \"\${IMAGE}\"' --"
+
 EXPOSE 3306
 
 # This image must forever use UID 27 for mysql user so our volumes are
@@ -34,6 +38,7 @@ RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
 
 COPY run-*.sh /usr/local/bin/
 COPY contrib /var/lib/mysql/
+COPY atomic-contrib /usr/share/container-layer/mysql/atomic
 
 # Loosen permission bits for group to avoid problems running container with
 # arbitrary UID
