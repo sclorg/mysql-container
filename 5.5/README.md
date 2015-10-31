@@ -59,7 +59,7 @@ also add a `-v /host/db/path:/var/lib/mysql/data` argument. This will be the MyS
 data directory.
 
 If the database directory is not initialized, the entrypoint script will first
-run [`mysql_install_db`](https://dev.mysql.com/doc/refman/5.5/en/mysql-install-db.html)
+run [`mysql_install_db`](https://dev.mysql.com/doc/refman/en/mysql-install-db.html)
 and setup necessary database users and passwords. After the database is initialized,
 or if it was already present, `mysqld` is executed and will run as PID 1. You can
  stop the detached container by running `docker stop mysql_database`.

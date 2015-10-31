@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -eu
+cmd="$1"; shift
+exec $cmd "$@"
