@@ -52,6 +52,7 @@ ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
 
 ADD root /
 
+RUN rm -rf /etc/my.cnf.d/* 
 RUN /usr/libexec/container-setup
 
 VOLUME ["/var/lib/mysql/data"]
