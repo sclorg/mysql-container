@@ -5,18 +5,13 @@
 source ${CONTAINER_SCRIPTS_PATH}/common.sh
 set -eu
 
-# Just run normal server if the data directory is already initialized
-if [ -d "${MYSQL_DATADIR}/mysql" ]; then
-  exec /usr/bin/run-mysqld "$@"
-fi
-
 export MYSQL_RUNNING_AS_MASTER=1
 
 [ -f ${CONTAINER_SCRIPTS_PATH}/validate_replication_variables.sh ] && . ${CONTAINER_SCRIPTS_PATH}/validate_replication_variables.sh
 [ -f ${CONTAINER_SCRIPTS_PATH}/validate_variables.sh ] && . ${CONTAINER_SCRIPTS_PATH}/validate_variables.sh
 
-# Generate the unique 'server-id' for this master
-export MYSQL_SERVER_ID=$(server_id)
+# The 'server-id' for master needs to be constant
+export MYSQL_SERVER_ID=1
 echo "The 'master' server-id is ${MYSQL_SERVER_ID}"
 
 # Process the MySQL configuration files
