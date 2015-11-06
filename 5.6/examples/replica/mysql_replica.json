@@ -166,7 +166,7 @@
             "containers": [
               {
                 "name": "server",
-                "image": "openshift/mysql-56-centos7",
+                "image": "centos/mysql-56-centos7",
                 "args": [
                   "run-mysqld-master"
                 ],
@@ -256,7 +256,7 @@
             "containers": [
               {
                 "name": "server",
-                "image": "openshift/mysql-56-centos7",
+                "image": "centos/mysql-56-centos7",
                 "args": [
                   "run-mysqld-slave"
                 ],
