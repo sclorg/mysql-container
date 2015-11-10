@@ -18,12 +18,10 @@ function usage() {
 
 function validate_variables() {
   # Check basic sanity of specified variables
-  if [[ -v MYSQL_USER && -v MYSQL_PASSWORD && -v MYSQL_DATABASE ]]; then
+  if [[ -v MYSQL_USER && -v MYSQL_PASSWORD ]]; then
     [[ "$MYSQL_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL username"
     [ ${#MYSQL_USER} -le 16 ] || usage "MySQL username too long (maximum 16 characters)"
     [[ "$MYSQL_PASSWORD" =~ $mysql_password_regex   ]] || usage "Invalid password"
-    [[ "$MYSQL_DATABASE" =~ $mysql_identifier_regex ]] || usage "Invalid database name"
-    [ ${#MYSQL_DATABASE} -le 64 ] || usage "Database name too long (maximum 64 characters)"
     user_specified=1
   fi
 
@@ -32,9 +30,32 @@ function validate_variables() {
     root_specified=1
   fi
 
+  # If MYSQL_USER == "root", we have a special case
+  if [[ "${user_specified:-0}" == "1" && "$MYSQL_USER" == "root" ]]; then
+    if [[ "${root_specified:-0}" == "1" ]]; then
+      usage "When setting MYSQL_USER to 'root' you can only set either MYSQL_PASSWORD or MYSQL_ROOT_PASSWORD"
+    fi
+    # We will now behave as if MYSQL_USER was not specified
+    export MYSQL_ROOT_PASSWORD="$MYSQL_PASSWORD"
+    export -n MYSQL_USER
+    export -n MYSQL_PASSWORD
+    user_specified=0
+    root_specified=1
+  fi
+
   # Either combination of user/pass/db or root password is ok
   if [[ "${user_specified:-0}" == "0" && "${root_specified:-0}" == "0" ]]; then
     usage
+  fi
+
+  # If the root user is not specified, database name is required
+  if [[ "${root_specified:-0}" == "0" ]]; then
+    [ -v MYSQL_DATABASE ] || usage "You need to specify database name or root password"
+  fi
+
+  if [ -v MYSQL_DATABASE ]; then
+    [[ "$MYSQL_DATABASE" =~ $mysql_identifier_regex ]] || usage "Invalid database name"
+    [ ${#MYSQL_DATABASE} -le 64 ] || usage "Database name too long (maximum 64 characters)"
   fi
 
   # Specifically check of incomplete specification
