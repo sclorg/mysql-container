@@ -27,7 +27,7 @@ This template will start with one MySQL master server and one slave server.
 
 In order to provide the persistent storage for the MySQL master server, the administrator
 of OpenShift needs to create a PersistentVolume that you can claim. This example requires a PersistentVolume of size 512m be available.
-To learn more about how to create PersistentVolume, refer to [OpenShift documentation](https://docs.openshift.org/latest/admin_guide/persistent_storage_nfs.html)
+To learn more about how to create PersistentVolume, refer to [OpenShift documentation](https://docs.openshift.org/latest/install_config/persistent_storage/persistent_storage_nfs.html)
 
 ### Service 'mysql-master'
 
