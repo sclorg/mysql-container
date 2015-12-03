@@ -13,17 +13,18 @@ FROM rhel7.2
 ENV MYSQL_VERSION=5.6 \
     HOME=/var/lib/mysql
 
-LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database server" \
+LABEL summary="MySQL is a multi-user, multi-threaded SQL database server" \
+      io.k8s.description="MySQL is a multi-user, multi-threaded SQL database server" \
       io.k8s.display-name="MySQL 5.6" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql56,rh-mysql56"
 
 # Labels consumed by Red Hat build service
-LABEL BZComponent="rh-mysql56-docker" \
-      Name="rhscl/mysql-56-rhel7" \
-      Version="5.6" \
-      Release="1" \
-      Architecture="x86_64"
+LABEL com.redhat.component="rh-mysql56-docker" \
+      name="rhscl/mysql-56-rhel7" \
+      version="5.6" \
+      release="1" \
+      architecture="x86_64"
 
 EXPOSE 3306
 
