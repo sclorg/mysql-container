@@ -25,8 +25,7 @@ EXPOSE 3306
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN rpmkeys --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
-    yum -y --setopt=tsflags=nodocs install https://www.softwarecollections.org/en/scls/rhscl/mysql55/epel-7-x86_64/download/rhscl-mysql55-epel-7-x86_64.noarch.rpm && \
+RUN yum install -y centos-release-scl && \
     yum -y --setopt=tsflags=nodocs install gettext hostname bind-utils mysql55 && \
     yum clean all && \
     mkdir -p /var/lib/mysql/data && chown -R mysql.0 /var/lib/mysql && \
