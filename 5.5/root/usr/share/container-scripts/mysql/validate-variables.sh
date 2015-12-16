@@ -1,5 +1,5 @@
 function usage() {
-  [ $# == 2 ] && echo "error: $1"
+  [ $# == 1 ] && echo "error: $1"
   echo "You must either specify the following environment variables:"
   echo "  MYSQL_USER (regex: '$mysql_identifier_regex')"
   echo "  MYSQL_PASSWORD (regex: '$mysql_password_regex')"
