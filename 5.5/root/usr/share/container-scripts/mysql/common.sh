@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ${CONTAINER_SCRIPTS_PATH}/helpers.sh
+
 # Data directory where MySQL database files live. The data subdirectory is here
 # because .bashrc and my.cnf both live in /var/lib/mysql/ and we don't want a
 # volume to override it.
@@ -24,6 +26,7 @@ admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
 
 # Make sure env variables don't propagate to mysqld process.
 function unset_env_vars() {
+  log_info 'Cleaning up environment variables MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE and MYSQL_ROOT_PASSWORD ...'
   unset MYSQL_USER MYSQL_PASSWORD MYSQL_DATABASE MYSQL_ROOT_PASSWORD
 }
 
@@ -33,18 +36,18 @@ function wait_for_mysql() {
 
   while [ true ]; do
     if [ -d "/proc/$pid" ]; then
-      mysqladmin --socket=/tmp/mysql.sock ping &>/dev/null && return 0
+      mysqladmin --socket=/tmp/mysql.sock ping &>/dev/null && log_info "MySQL started successfully" && return 0
     else
       return 1
     fi
-    echo "Waiting for MySQL to start ..."
+    log_info "Waiting for MySQL to start ..."
     sleep 1
   done
 }
 
+# Start local MySQL server with a defaults file
 function start_local_mysql() {
-  # Now start mysqld and add appropriate users.
-  echo 'Starting local mysqld server ...'
+  log_info 'Starting MySQL server with disabled networking ...'
   ${MYSQL_PREFIX}/libexec/mysqld \
     --defaults-file=$MYSQL_DEFAULTS_FILE \
     --skip-networking --socket=/tmp/mysql.sock "$@" &
@@ -52,16 +55,27 @@ function start_local_mysql() {
   wait_for_mysql $mysql_pid
 }
 
+# Shutdown mysql flushing privileges
+function shutdown_local_mysql() {
+  log_info 'Shutting down MySQL ...'
+  mysqladmin $admin_flags flush-privileges shutdown
+}
+
 # Initialize the MySQL database (create user accounts and the initial database)
 function initialize_database() {
-  echo 'Running mysql_install_db ...'
+  log_info 'Initializing database ...'
+  log_info 'Running mysql_install_db ...'
   # Using --rpm since we need mysql_install_db behaves as in RPM
   mysql_install_db --rpm --datadir=$MYSQL_DATADIR
   start_local_mysql "$@"
 
+  log_info 'Dropping the "test" database ...'
   mysqladmin $admin_flags -f drop test
 
-  [ -v MYSQL_RUNNING_AS_SLAVE ] && return
+  if [ -v MYSQL_RUNNING_AS_SLAVE ]; then
+    log_info 'Initialization finished'
+    return 0
+  fi
 
   if [ -v MYSQL_RUNNING_AS_MASTER ]; then
     # Save master status into a separate database.
@@ -69,6 +83,7 @@ function initialize_database() {
     BINLOG_POSITION=$(echo "$STATUS_INFO" | grep 'Position:' | head -n 1 | sed -e 's/^\s*Position: //')
     BINLOG_FILE=$(echo "$STATUS_INFO" | grep 'File:' | head -n 1 | sed -e 's/^\s*File: //')
 
+    log_info "Creating replication table (status: $BINLOG_FILE:$BINLOG_POSITION) ..."
     mysqladmin $admin_flags create replication
 mysql $admin_flags <<EOSQL
     use replication
@@ -79,15 +94,17 @@ EOSQL
 
   # Do not care what option is compulsory here, just create what is specified
   if [ -v MYSQL_USER ]; then
+    log_info "Creating user specified by MYSQL_USER (${MYSQL_USER}) ..."
 mysql $mysql_flags <<EOSQL
     CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
 EOSQL
   fi
 
   if [ -v MYSQL_DATABASE ]; then
+    log_info "Creating database ${MYSQL_DATABASE} ..."
     mysqladmin $admin_flags create "${MYSQL_DATABASE}"
-
     if [ -v MYSQL_USER ]; then
+    log_info "Granting privileges to user ${MYSQL_USER} for ${MYSQL_DATABASE} ..."
 mysql $mysql_flags <<EOSQL
       GRANT ALL ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%' ;
       FLUSH PRIVILEGES ;
@@ -96,10 +113,12 @@ EOSQL
   fi
 
   if [ -v MYSQL_ROOT_PASSWORD ]; then
+    log_info "Setting password for MySQL root user ..."
 mysql $mysql_flags <<EOSQL
     GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 EOSQL
   fi
+  log_info 'Initialization finished'
 }
 
 # The 'server_id' number for slave needs to be within 1-4294967295 range.
@@ -114,9 +133,9 @@ function server_id() {
 
 function wait_for_mysql_master() {
   while true; do
-    echo "Waiting for MySQL master (${MYSQL_MASTER_SERVICE_NAME}) to accept connections ..."
+    log_info "Waiting for MySQL master (${MYSQL_MASTER_SERVICE_NAME}) to accept connections ..."
     mysqladmin --host=${MYSQL_MASTER_SERVICE_NAME} --user="${MYSQL_MASTER_USER}" \
-      --password="${MYSQL_MASTER_PASSWORD}" ping &>/dev/null && return 0
+      --password="${MYSQL_MASTER_PASSWORD}" ping &>/dev/null && log_info "MySQL master is ready" && return 0
     sleep 1
   done
 }
