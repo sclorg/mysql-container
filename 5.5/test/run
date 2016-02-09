@@ -21,6 +21,8 @@ function cleanup() {
     docker stop $CONTAINER
     exit_status=$(docker inspect -f '{{.State.ExitCode}}' $CONTAINER)
     if [ "$exit_status" != "0" ]; then
+      echo "Inspecting container $CONTAINER"
+      docker inspect $CONTAINER
       echo "Dumping logs for $CONTAINER"
       docker logs $CONTAINER
     fi
