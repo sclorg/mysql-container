@@ -26,7 +26,7 @@ EXPOSE 3306
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum install -y centos-release-scl && \
-    INSTALL_PKGS="gettext hostname bind-utils rh-mysql56" && \
+    INSTALL_PKGS="rsync tar gettext hostname bind-utils rh-mysql56" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
