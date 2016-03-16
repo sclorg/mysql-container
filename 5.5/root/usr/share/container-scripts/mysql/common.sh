@@ -115,7 +115,7 @@ EOSQL
   if [ -v MYSQL_ROOT_PASSWORD ]; then
     log_info "Setting password for MySQL root user ..."
 mysql $mysql_flags <<EOSQL
-    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' WITH GRANT OPTION;
 EOSQL
   fi
   log_info 'Initialization finished'

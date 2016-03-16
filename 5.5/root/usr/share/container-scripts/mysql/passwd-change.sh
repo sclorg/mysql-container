@@ -11,7 +11,7 @@ fi
 if [ -v MYSQL_ROOT_PASSWORD ]; then
   # GRANT will create a user if it doesn't exist and set its password
   mysql $mysql_flags <<EOSQL
-    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' WITH GRANT OPTION;
 EOSQL
 else
   # We do GRANT and DROP USER to emulate a DROP USER IF EXISTS statement
