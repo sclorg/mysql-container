@@ -20,11 +20,11 @@ LABEL summary="MySQL is a multi-user, multi-threaded SQL database server" \
       io.openshift.tags="database,mysql,mysql55"
 
 # Labels consumed by Red Hat build service
-LABEL com.redhat.component="mysql55-docker" \
-      name="openshift3/mysql-55-rhel7" \
-      version="5.5" \
-      release="1" \
-      architecture="x86_64"
+LABEL BZComponent="mysql55-docker" \
+      Name="openshift3/mysql-55-rhel7" \
+      Version="5.5" \
+      Release="1" \
+      Architecture="x86_64"
 
 EXPOSE 3306
 
