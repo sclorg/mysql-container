@@ -44,6 +44,12 @@ Choose either the CentOS7 or RHEL7 based image:
     $ docker pull openshift/mysql-55-centos7
     ```
 
+    or
+
+    ```
+    $ docker pull centos/mysql-56-centos7
+    ```
+
     To build a MySQL image from scratch run:
 
     ```
