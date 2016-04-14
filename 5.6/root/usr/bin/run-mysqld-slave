@@ -2,6 +2,7 @@
 #
 # This is an entrypoint that runs the MySQL server in the 'slave' mode.
 #
+export_vars=$(cgroup-limits); export $export_vars
 source ${CONTAINER_SCRIPTS_PATH}/common.sh
 set -eu
 
@@ -23,6 +24,7 @@ envsubst < ${CONTAINER_SCRIPTS_PATH}/my-base.cnf.template > /etc/my.cnf.d/base.c
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-slave.cnf.template > /etc/my.cnf.d/slave.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-repl-gtid.cnf.template > /etc/my.cnf.d/repl-gtid.cnf
+envsubst < ${CONTAINER_SCRIPTS_PATH}/my-tuning.cnf.template > /etc/my.cnf.d/tuning.cnf
 
 # Initialize MySQL database and wait for the MySQL master to accept
 # connections.

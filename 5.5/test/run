@@ -128,15 +128,15 @@ function run_replication_test() {
   # Run the MySQL master
   docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_ROOT_PASSWORD=root \
-    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master \
-    --innodb_buffer_pool_size=5242880
+    -e MYSQL_INNODB_BUFFER_POOL_SIZE=5M \
+    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master
   local master_ip
   master_ip=$(get_container_ip master.cid)
 
   # Run the MySQL slave
   docker run $cluster_args -e MYSQL_MASTER_SERVICE_NAME=${master_ip} \
-    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave \
-    --innodb_buffer_pool_size=5242880
+    -e MYSQL_INNODB_BUFFER_POOL_SIZE=5M \
+    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave
   local slave_ip
   slave_ip=$(get_container_ip slave.cid)
 
@@ -225,12 +225,13 @@ function run_container_creation_tests() {
 }
 
 function test_config_option() {
-  local configuration="$1"
-  local option_name="$2"
-  local option_value="$3"
+  local container_name="$1"
+  local configuration="$2"
+  local option_name="$3"
+  local option_value="$4"
 
   if ! echo "$configuration" | grep -qx "$option_name[[:space:]]*=[[:space:]]*$option_value"; then
-    local configs="$(docker exec -t config_test bash -c 'set +f; shopt -s nullglob; echo /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/* | paste -s')"
+    local configs="$(docker exec -t "$container_name" bash -c 'set +f; shopt -s nullglob; echo /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/* | paste -s')"
     echo >&2 "FAIL: option '$option_name' should have value '$option_value', but it wasn't found in any of the configuration files ($configs):"
     echo >&2
     echo >&2 "$configuration"
@@ -244,9 +245,11 @@ function test_config_option() {
 function run_configuration_tests() {
   echo "  Testing image configuration settings"
 
+  local container_name=config_test
+
   create_container \
-    config_test \
-    --name config_test \
+    "$container_name" \
+    --name "$container_name" \
     --env MYSQL_USER=config_test_user \
     --env MYSQL_PASSWORD=config_test \
     --env MYSQL_DATABASE=db \
@@ -254,22 +257,63 @@ function run_configuration_tests() {
     --env MYSQL_MAX_CONNECTIONS=1337 \
     --env MYSQL_FT_MIN_WORD_LEN=8 \
     --env MYSQL_FT_MAX_WORD_LEN=15 \
+    --env MYSQL_MAX_ALLOWED_PACKET=10M \
+    --env MYSQL_TABLE_OPEN_CACHE=100 \
+    --env MYSQL_SORT_BUFFER_SIZE=256K \
+    --env MYSQL_KEY_BUFFER_SIZE=16M \
+    --env MYSQL_READ_BUFFER_SIZE=16M \
+    --env MYSQL_INNODB_BUFFER_POOL_SIZE=16M \
+    --env MYSQL_INNODB_LOG_FILE_SIZE=4M \
+    --env MYSQL_INNODB_LOG_BUFFER_SIZE=4M \
+    --env WORKAROUND_DOCKER_BUG_14203=
     #
 
-  test_connection config_test config_test_user config_test
+  test_connection "$container_name" config_test_user config_test
 
   # TODO: this check is far from perfect and could be improved:
   # - we should look for an option in the desired config, not in all of them
   # - we should respect section of the config (now we have duplicated options from a different sections)
   local configuration
-  configuration="$(docker exec -t config_test bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+  configuration="$(docker exec -t "$container_name" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
-  test_config_option "$configuration" lower_case_table_names 1
-  test_config_option "$configuration" max_connections 1337
-  test_config_option "$configuration" ft_min_word_len 8
-  test_config_option "$configuration" ft_max_word_len 15
+  test_config_option "$container_name" "$configuration" lower_case_table_names 1
+  test_config_option "$container_name" "$configuration" max_connections 1337
+  test_config_option "$container_name" "$configuration" ft_min_word_len 8
+  test_config_option "$container_name" "$configuration" ft_max_word_len 15
+  test_config_option "$container_name" "$configuration" max_allowed_packet 10M
+  test_config_option "$container_name" "$configuration" table_open_cache 100
+  test_config_option "$container_name" "$configuration" sort_buffer_size 256K
+  test_config_option "$container_name" "$configuration" key_buffer_size 16M
+  test_config_option "$container_name" "$configuration" read_buffer_size 16M
+  test_config_option "$container_name" "$configuration" innodb_buffer_pool_size 16M
+  test_config_option "$container_name" "$configuration" innodb_log_file_size 4M
+  test_config_option "$container_name" "$configuration" innodb_log_buffer_size 4M
 
-  docker stop config_test >/dev/null
+  docker stop "$container_name" >/dev/null
+
+  echo "  Success!"
+  echo "  Testing image auto-calculated configuration settings"
+
+  container_name=dynamic_config_test
+
+  DOCKER_ARGS='--memory=256m' create_container \
+    "$container_name" \
+    --name "$container_name" \
+    --env MYSQL_USER=config_test_user \
+    --env MYSQL_PASSWORD=config_test \
+    --env MYSQL_DATABASE=db
+
+  test_connection "$container_name" config_test_user config_test
+
+  configuration="$(docker exec -t "$container_name" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+
+  test_config_option "$container_name" "$configuration" key_buffer_size 25M
+  test_config_option "$container_name" "$configuration" read_buffer_size 12M
+  test_config_option "$container_name" "$configuration" innodb_buffer_pool_size 128M
+  test_config_option "$container_name" "$configuration" innodb_log_file_size 38M
+  test_config_option "$container_name" "$configuration" innodb_log_buffer_size 38M
+
+  docker stop "$container_name" >/dev/null
 
   echo "  Success!"
 }
