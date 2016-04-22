@@ -52,7 +52,7 @@ Service endpoints.
 ### ReplicationController 'mysql-master'
 
 This resource defines the `PodTemplate` of the MySQL server that acts as the
-'master'. The Pod uses the `openshift/mysql-56-centos7` image, but it sets the
+'master'. The Pod uses the `centos/mysql-56-centos7` image, but it sets the
 special 'entrypoint' named `mysqld-master`. This will tell the MySQL image to
 configure the MySQL server as the 'master'.
 
