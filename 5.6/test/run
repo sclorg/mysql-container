@@ -26,7 +26,7 @@ function cleanup() {
       echo "Dumping logs for $CONTAINER"
       docker logs $CONTAINER
     fi
-    docker rm $CONTAINER
+    docker rm -v $CONTAINER
     rm $cidfile
     echo "Done."
   done
@@ -215,21 +215,52 @@ function run_container_creation_tests() {
 }
 
 function test_config_option() {
-  local env_var=$1 ; shift
-  local setting=$1 ; shift
-  local value=$1 ; shift
+  local configuration="$1"
+  local option_name="$2"
+  local option_value="$3"
 
-  # If $value is a string, it needs to be in simple quotes ''.
-  # If nothing is found, grep returns 1 and test fails.
-  docker run --rm -e $env_var=${value//\'/} $IMAGE_NAME cat /var/lib/mysql/my.cnf | grep -q "$setting = $value"
+  if ! echo "$configuration" | grep -qx "$option_name[[:space:]]*=[[:space:]]*$option_value"; then
+    local configs="$(docker exec -t config_test bash -c 'set +f; shopt -s nullglob; echo /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/* | paste -s')"
+    echo >&2 "FAIL: option '$option_name' should have value '$option_value', but it wasn't found in any of the configuration files ($configs):"
+    echo >&2
+    echo >&2 "$configuration"
+    echo >&2
+    return 1
+  fi
+
+  return 0
 }
 
 function run_configuration_tests() {
   echo "  Testing image configuration settings"
-  test_config_option MYSQL_LOWER_CASE_TABLE_NAMES lower_case_table_names 1
-  test_config_option MYSQL_MAX_CONNECTIONS max_connections 1337
-  test_config_option MYSQL_FT_MIN_WORD_LEN ft_min_word_len 8
-  test_config_option MYSQL_FT_MAX_WORD_LEN ft_max_word_len 15
+
+  create_container \
+    config_test \
+    --name config_test \
+    --env MYSQL_USER=config_test_user \
+    --env MYSQL_PASSWORD=config_test \
+    --env MYSQL_DATABASE=db \
+    --env MYSQL_LOWER_CASE_TABLE_NAMES=1 \
+    --env MYSQL_MAX_CONNECTIONS=1337 \
+    --env MYSQL_FT_MIN_WORD_LEN=8 \
+    --env MYSQL_FT_MAX_WORD_LEN=15 \
+    #
+
+  CONTAINER_IP="$(get_container_ip config_test)" USER=config_test_user PASS=config_test test_connection config_test
+
+  # TODO: this check is far from perfect and could be improved:
+  # - we should look for an option in the desired config, not in all of them
+  # - we should respect section of the config (now we have duplicated options from a different sections)
+  local configuration
+  configuration="$(docker exec -t config_test bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+
+  test_config_option "$configuration" lower_case_table_names 1
+  test_config_option "$configuration" max_connections 1337
+  test_config_option "$configuration" ft_min_word_len 8
+  test_config_option "$configuration" ft_max_word_len 15
+
+  docker stop config_test >/dev/null
+
   echo "  Success!"
 }
 
@@ -286,10 +317,7 @@ function run_tests() {
 
 run_container_creation_tests
 
-# FIXME: Disabled because the configuration files are not processed when running
-#        commands like 'cat'. To have the my.cnf processed you have to run one of the
-#        valid entrypoints.
-# run_configuration_tests
+run_configuration_tests
 
 # Set lower buffer pool size to avoid running out of memory.
 export CONTAINER_ARGS="run-mysqld --innodb_buffer_pool_size=5242880"
