@@ -14,11 +14,14 @@ IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
 CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
 
 function cleanup() {
+  local cidfile
   for cidfile in $CIDFILE_DIR/* ; do
+    local CONTAINER
     CONTAINER=$(cat $cidfile)
 
     echo "Stopping and removing container $CONTAINER..."
     docker stop $CONTAINER
+    local exit_status
     exit_status=$(docker inspect -f '{{.State.ExitCode}}' $CONTAINER)
     if [ "$exit_status" != "0" ]; then
       echo "Inspecting container $CONTAINER"
@@ -45,22 +48,25 @@ function get_container_ip() {
 }
 
 function mysql_cmd() {
-  docker run --rm $IMAGE_NAME mysql --host $CONTAINER_IP -u$USER -p"$PASS" "$@" db
+  local container_ip="$1"; shift
+  local login="$1"; shift
+  local password="$1"; shift
+  docker run --rm "$IMAGE_NAME" mysql --host "$container_ip" -u"$login" -p"$password" "$@" db
 }
 
 function test_connection() {
   local name=$1 ; shift
+  local login=$1 ; shift
+  local password=$1 ; shift
+  local ip
   ip=$(get_container_ip $name)
   echo "  Testing MySQL connection to $ip..."
   local max_attempts=20
   local sleep_time=2
+  local i
   for i in $(seq $max_attempts); do
     echo "    Trying to connect..."
-    set +e
-    mysql_cmd <<< "SELECT 1;"
-    status=$?
-    set -e
-    if [ $status -eq 0 ]; then
+    if mysql_cmd "$ip" "$login" "$password" <<< 'SELECT 1;'; then
       echo "  Success!"
       return 0
     fi
@@ -72,13 +78,17 @@ function test_connection() {
 }
 
 function test_mysql() {
+  local container_ip="$1"
+  local login="$2"
+  local password="$3"
+
   echo "  Testing MySQL"
-  mysql_cmd <<< "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));"
-  mysql_cmd <<< "INSERT INTO tbl VALUES ('foo1', 'bar1');"
-  mysql_cmd <<< "INSERT INTO tbl VALUES ('foo2', 'bar2');"
-  mysql_cmd <<< "INSERT INTO tbl VALUES ('foo3', 'bar3');"
-  mysql_cmd <<< "SELECT * FROM tbl;"
-  mysql_cmd <<< "DROP TABLE tbl;"
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo1", "bar1");'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo2", "bar2");'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo3", "bar3");'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'SELECT * FROM tbl;'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'DROP TABLE tbl;'
   echo "  Success!"
 }
 
@@ -97,19 +107,18 @@ function run_change_password_test() {
   # Create MySQL container with persistent volume and set the initial password
   create_container "testpass1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
-  CONTAINER_IP=$(get_container_ip testpass1) USER=user PASS=foo test_connection "testpass1"
+  test_connection testpass1 user foo
   docker stop $(get_cid testpass1)
 
   # Create second container with changed password
   create_container "testpass2" -e MYSQL_USER=user -e MYSQL_PASSWORD=bar \
     -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
-  CONTAINER_IP=$(get_container_ip testpass2) USER=user PASS=bar test_connection "testpass2"
+  test_connection testpass2 user bar
 
   # The old password should not work anymore
-  set +e
-  CONTAINER_IP=$(get_container_ip testpass2) USER=user PASS=foo \
-    mysql_cmd -e "SELECT 1;" && return 1
-  set -e
+  if mysql_cmd "$(get_container_ip testpass2)" user foo -e 'SELECT 1;'; then
+    return 1
+  fi
 }
 
 function run_replication_test() {
@@ -121,21 +130,21 @@ function run_replication_test() {
     -e MYSQL_ROOT_PASSWORD=root \
     -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master \
     --innodb_buffer_pool_size=5242880
+  local master_ip
   master_ip=$(get_container_ip master.cid)
 
   # Run the MySQL slave
   docker run $cluster_args -e MYSQL_MASTER_SERVICE_NAME=${master_ip} \
     -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave \
     --innodb_buffer_pool_size=5242880
+  local slave_ip
   slave_ip=$(get_container_ip slave.cid)
 
   # Now wait till the MASTER will see the SLAVE
+  local i
   for i in $(seq $max_attempts); do
-    set +e
-    result=$(CONTAINER_IP=${master_ip} USER=root PASS=root \
-      mysql_cmd -e "SHOW SLAVE HOSTS;" | grep ${slave_ip})
-    set -e
-    if [[ ! -z "${result}" ]]; then
+    result="$(mysql_cmd "$master_ip" root root -e 'SHOW SLAVE HOSTS;' | grep "$slave_ip" || true)"
+    if [[ -n "${result}" ]]; then
       echo "${slave_ip} successfully registered as SLAVE for ${master_ip}"
       break
     fi
@@ -150,11 +159,12 @@ function run_replication_test() {
 }
 
 function assert_login_access() {
+  local container_ip=$1; shift
   local USER=$1 ; shift
   local PASS=$1 ; shift
   local success=$1 ; shift
 
-  if mysql_cmd <<<'SELECT 1;' ; then
+  if mysql_cmd "$container_ip" "$USER" "$PASS" <<< 'SELECT 1;' ; then
     if $success ; then
       echo "    $USER($PASS) access granted as expected"
       return
@@ -202,7 +212,7 @@ function run_container_creation_tests() {
   try_image_invalid_combinations
   try_image_invalid_combinations  -e MYSQL_ROOT_PASSWORD=root_pass
 
-  VERY_LONG_DB_NAME="very_long_database_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  local VERY_LONG_DB_NAME="very_long_database_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass
   assert_container_creation_fails -e MYSQL_USER=\$invalid -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
   assert_container_creation_fails -e MYSQL_USER=very_long_username -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
@@ -246,7 +256,7 @@ function run_configuration_tests() {
     --env MYSQL_FT_MAX_WORD_LEN=15 \
     #
 
-  CONTAINER_IP="$(get_container_ip config_test)" USER=config_test_user PASS=config_test test_connection config_test
+  test_connection config_test config_test_user config_test
 
   # TODO: this check is far from perfect and could be improved:
   # - we should look for an option in the desired config, not in all of them
@@ -270,6 +280,7 @@ test_scl_usage() {
   local expected="$3"
 
   echo "  Testing the image SCL enable"
+  local out
   out=$(docker run --rm ${IMAGE_NAME} /bin/bash -c "${run_cmd}")
   if ! echo "${out}" | grep -q "${expected}"; then
     echo "ERROR[/bin/bash -c "${run_cmd}"] Expected '${expected}', got '${out}'"
@@ -294,23 +305,24 @@ function run_tests() {
     envs="$envs -e MYSQL_ROOT_PASSWORD=$ROOT_PASS"
   fi
   create_container $name $envs
-  CONTAINER_IP=$(get_container_ip $name)
-  test_connection $name
+  test_connection "$name" "$USER" "$PASS"
   echo "  Testing scl usage"
   test_scl_usage $name 'mysql --version' '5.5'
   echo "  Testing login accesses"
-  assert_login_access $USER $PASS true
-  assert_login_access $USER "${PASS}_foo" false
+  local container_ip
+  container_ip=$(get_container_ip $name)
+  assert_login_access "$container_ip" "$USER" "$PASS" true
+  assert_login_access "$container_ip" "$USER" "${PASS}_foo" false
   if [ -v ROOT_PASS ]; then
-    assert_login_access root $ROOT_PASS true
-    assert_login_access root "${ROOT_PASS}_foo" false
+    assert_login_access "$container_ip" root "$ROOT_PASS" true
+    assert_login_access "$container_ip" root "${ROOT_PASS}_foo" false
   else
-    assert_login_access root "foo" false
-    assert_login_access root "" false
+    assert_login_access "$container_ip" root 'foo' false
+    assert_login_access "$container_ip" root '' false
   fi
-  assert_local_access $name
+  assert_local_access "$name"
   echo "  Success!"
-  test_mysql $name
+  test_mysql "$container_ip" "$USER" "$PASS"
 }
 
 # Tests.
