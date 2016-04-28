@@ -2,6 +2,7 @@
 #
 # This is an entrypoint that runs the MySQL server in the 'master' mode.
 #
+export_vars=$(cgroup-limits); export $export_vars
 source ${CONTAINER_SCRIPTS_PATH}/common.sh
 set -eu
 
@@ -21,6 +22,7 @@ log_info 'Processing MySQL configuration files ...'
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-base.cnf.template > /etc/my.cnf.d/base.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-master.cnf.template > /etc/my.cnf.d/master.cnf
+envsubst < ${CONTAINER_SCRIPTS_PATH}/my-tuning.cnf.template > /etc/my.cnf.d/tuning.cnf
 
 if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
   initialize_database "$@"

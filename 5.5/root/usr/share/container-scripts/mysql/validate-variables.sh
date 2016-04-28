@@ -13,6 +13,14 @@ function usage() {
   echo "  MYSQL_FT_MIN_WORD_LEN (default: 4)"
   echo "  MYSQL_FT_MAX_WORD_LEN (default: 20)"
   echo "  MYSQL_AIO (default: 1)"
+  echo "  MYSQL_KEY_BUFFER_SIZE (default: 32M or 10% of available memory)"
+  echo "  MYSQL_MAX_ALLOWED_PACKET (default: 200M)"
+  echo "  MYSQL_TABLE_OPEN_CACHE (default: 400)"
+  echo "  MYSQL_SORT_BUFFER_SIZE (default: 256K)"
+  echo "  MYSQL_READ_BUFFER_SIZE (default: 8M or 5% of available memory)"
+  echo "  MYSQL_INNODB_BUFFER_POOL_SIZE (default: 32M or 50% of available memory)"
+  echo "  MYSQL_INNODB_LOG_FILE_SIZE (default: 8M or 15% of available memory)"
+  echo "  MYSQL_INNODB_LOG_BUFFER_SIZE (default: 8M or 15% of available memory)"
   exit 1
 }
 
