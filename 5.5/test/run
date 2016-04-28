@@ -6,7 +6,8 @@
 # The image has to be available before this script is executed.
 #
 
-set -exo nounset
+set -o errexit
+set -o nounset
 shopt -s nullglob
 
 IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
@@ -20,7 +21,7 @@ function cleanup() {
     CONTAINER=$(cat $cidfile)
 
     echo "Stopping and removing container $CONTAINER..."
-    docker stop $CONTAINER
+    docker stop $CONTAINER >/dev/null
     local exit_status
     exit_status=$(docker inspect -f '{{.State.ExitCode}}' $CONTAINER)
     if [ "$exit_status" != "0" ]; then
@@ -29,7 +30,7 @@ function cleanup() {
       echo "Dumping logs for $CONTAINER"
       docker logs $CONTAINER
     fi
-    docker rm -v $CONTAINER
+    docker rm -v $CONTAINER >/dev/null
     rm $cidfile
     echo "Done."
   done
@@ -96,8 +97,9 @@ function create_container() {
   local name=$1 ; shift
   cidfile="$CIDFILE_DIR/$name"
   # create container with a cidfile in a directory for cleanup
-  docker run ${DOCKER_ARGS:-} --cidfile $cidfile -d "$@" $IMAGE_NAME ${CONTAINER_ARGS:-}
-  echo "Created container $(cat $cidfile)"
+  local container_id
+  container_id="$(docker run ${DOCKER_ARGS:-} --cidfile $cidfile -d "$@" $IMAGE_NAME ${CONTAINER_ARGS:-})"
+  echo "Created container $container_id"
 }
 
 function run_change_password_test() {
@@ -108,7 +110,7 @@ function run_change_password_test() {
   create_container "testpass1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
   test_connection testpass1 user foo
-  docker stop $(get_cid testpass1)
+  docker stop $(get_cid testpass1) >/dev/null
 
   # Create second container with changed password
   create_container "testpass2" -e MYSQL_USER=user -e MYSQL_PASSWORD=bar \
@@ -129,14 +131,14 @@ function run_replication_test() {
   docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_ROOT_PASSWORD=root \
     -e MYSQL_INNODB_BUFFER_POOL_SIZE=5M \
-    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master
+    -d --cidfile ${CIDFILE_DIR}/master.cid $IMAGE_NAME mysqld-master >/dev/null
   local master_ip
   master_ip=$(get_container_ip master.cid)
 
   # Run the MySQL slave
   docker run $cluster_args -e MYSQL_MASTER_SERVICE_NAME=${master_ip} \
     -e MYSQL_INNODB_BUFFER_POOL_SIZE=5M \
-    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave
+    -d --cidfile ${CIDFILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave >/dev/null
   local slave_ip
   slave_ip=$(get_container_ip slave.cid)
 
@@ -190,10 +192,8 @@ function assert_container_creation_fails() {
   # Time the docker run command. It should fail. If it doesn't fail,
   # mysqld will keep running so we kill it with SIGKILL to make sure
   # timeout returns a non-zero value.
-  set +e
-  timeout -s 9 --preserve-status 60s docker run --rm "$@" $IMAGE_NAME
-  ret=$?
-  set -e
+  local ret=0
+  timeout -s 9 --preserve-status 60s docker run --rm "$@" $IMAGE_NAME >/dev/null || ret=$?
 
   # Timeout will exit with a high number.
   if [ $ret -gt 30 ]; then
