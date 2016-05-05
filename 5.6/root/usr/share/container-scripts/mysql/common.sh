@@ -8,7 +8,8 @@ source ${CONTAINER_SCRIPTS_PATH}/helpers.sh
 export MYSQL_DATADIR=/var/lib/mysql/data
 
 # Configuration settings.
-export MYSQL_DEFAULTS_FILE=/etc/my.cnf
+export MYSQL_DEFAULTS_FILE=${MYSQL_DEFAULTS_FILE:-/etc/my.cnf}
+export MYSQL_BINLOG_FORMAT=${MYSQL_BINLOG_FORMAT:-STATEMENT}
 export MYSQL_LOWER_CASE_TABLE_NAMES=${MYSQL_LOWER_CASE_TABLE_NAMES:-0}
 export MYSQL_MAX_CONNECTIONS=${MYSQL_MAX_CONNECTIONS:-151}
 export MYSQL_FT_MIN_WORD_LEN=${MYSQL_FT_MIN_WORD_LEN:-4}
@@ -86,7 +87,7 @@ function shutdown_local_mysql() {
 # Initialize the MySQL database (create user accounts and the initial database)
 function initialize_database() {
   log_info 'Initializing database ...'
-  log_info 'Running mysql_install_db ...'  
+  log_info 'Running mysql_install_db ...'
   # Using --rpm since we need mysql_install_db behaves as in RPM
   mysql_install_db --rpm --datadir=$MYSQL_DATADIR
   start_local_mysql "$@"
@@ -143,5 +144,3 @@ function wait_for_mysql_master() {
     sleep 1
   done
 }
-
-

@@ -8,7 +8,8 @@ source ${CONTAINER_SCRIPTS_PATH}/helpers.sh
 export MYSQL_DATADIR=/var/lib/mysql/data
 
 # Configuration settings.
-export MYSQL_DEFAULTS_FILE=/etc/my.cnf
+export MYSQL_DEFAULTS_FILE=${MYSQL_DEFAULTS_FILE:-/etc/my.cnf}
+export MYSQL_BINLOG_FORMAT=${MYSQL_BINLOG_FORMAT:-STATEMENT}
 export MYSQL_LOWER_CASE_TABLE_NAMES=${MYSQL_LOWER_CASE_TABLE_NAMES:-0}
 export MYSQL_MAX_CONNECTIONS=${MYSQL_MAX_CONNECTIONS:-151}
 export MYSQL_FT_MIN_WORD_LEN=${MYSQL_FT_MIN_WORD_LEN:-4}
@@ -161,5 +162,3 @@ function wait_for_mysql_master() {
     sleep 1
   done
 }
-
-
