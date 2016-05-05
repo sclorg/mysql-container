@@ -114,3 +114,21 @@ values stored in the variables and the actual passwords. Whenever a database
 container starts it will reset the passwords to the values stored in the
 environment variables.
 
+Default my.cnf file
+-------------------
+With environment variables we are able to customize a lot of different parameters
+or configurations for the mysql bootstrap configurations. If you'd prefer to use
+your own configuration file, you can override the `MYSQL_DEFAULTS_FILE` env
+variable with the full path of the file you wish to use. For example, the default
+location is `/etc/my.cnf` but you can change it to `/etc/mysql/my.cnf` by setting
+ `MYSQL_DEFAULTS_FILE=/etc/mysql/my.cnf`
+
+Changing the replication binlog_format
+--------------------------------------
+Some applications may wish to use `row` binlog_formats (for example, those built
+  with change-data-capture in mind). The default replication/binlog format is
+  `statement` but to change it you can set the `MYSQL_BINLOG_FORMAT` environment
+  variable. For example `MYSQL_BINLOG_FORMAT=row`. Now when you run the database
+  with `master` replication turned on (ie, set the Docker/container `cmd` to be
+`run-mysqld-master`) the binlog will emit the actual data for the rows that change
+as opposed to the statements (ie, DML like insert...) that caused the change.
