@@ -2,9 +2,11 @@
 #
 # This is an entrypoint that runs the MySQL server in the 'slave' mode.
 #
-export_vars=$(cgroup-limits); export $export_vars
+
 source ${CONTAINER_SCRIPTS_PATH}/common.sh
 set -eu
+
+export_setting_variables
 
 # Just run normal server if the data directory is already initialized
 if [ -d "${MYSQL_DATADIR}/mysql" ]; then
