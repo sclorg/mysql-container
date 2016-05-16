@@ -9,34 +9,36 @@ export MYSQL_DATADIR=/var/lib/mysql/data
 
 # Configuration settings.
 export MYSQL_DEFAULTS_FILE=${MYSQL_DEFAULTS_FILE:-/etc/my.cnf}
-export MYSQL_BINLOG_FORMAT=${MYSQL_BINLOG_FORMAT:-STATEMENT}
-export MYSQL_LOWER_CASE_TABLE_NAMES=${MYSQL_LOWER_CASE_TABLE_NAMES:-0}
-export MYSQL_MAX_CONNECTIONS=${MYSQL_MAX_CONNECTIONS:-151}
-export MYSQL_FT_MIN_WORD_LEN=${MYSQL_FT_MIN_WORD_LEN:-4}
-export MYSQL_FT_MAX_WORD_LEN=${MYSQL_FT_MAX_WORD_LEN:-20}
-export MYSQL_AIO=${MYSQL_AIO:-1}
-export MYSQL_MAX_ALLOWED_PACKET=${MYSQL_MAX_ALLOWED_PACKET:-200M}
-export MYSQL_TABLE_OPEN_CACHE=${MYSQL_TABLE_OPEN_CACHE:-400}
-export MYSQL_SORT_BUFFER_SIZE=${MYSQL_SORT_BUFFER_SIZE:-256K}
 
-if [ -n "${NO_MEMORY_LIMIT:-}" -o -z "${MEMORY_LIMIT_IN_BYTES:-}" ]; then
-  key_buffer_size='32M'
-  read_buffer_size='8M'
-  innodb_buffer_pool_size='32M'
-  innodb_log_file_size='8M'
-  innodb_log_buffer_size='8M'
-else
-  key_buffer_size="$(python -c "print(int((${MEMORY_LIMIT_IN_BYTES}/(1024*1024))*0.1))")M"
-  read_buffer_size="$(python -c "print(int((${MEMORY_LIMIT_IN_BYTES}/(1024*1024))*0.05))")M"
-  innodb_buffer_pool_size="$(python -c "print(int((${MEMORY_LIMIT_IN_BYTES}/(1024*1024))*0.5))")M"
-  innodb_log_file_size="$(python -c "print(int((${MEMORY_LIMIT_IN_BYTES}/(1024*1024))*0.15))")M"
-  innodb_log_buffer_size="$(python -c "print(int((${MEMORY_LIMIT_IN_BYTES}/(1024*1024))*0.15))")M"
-fi
-export MYSQL_KEY_BUFFER_SIZE=${MYSQL_KEY_BUFFER_SIZE:-$key_buffer_size}
-export MYSQL_READ_BUFFER_SIZE=${MYSQL_READ_BUFFER_SIZE:-$read_buffer_size}
-export MYSQL_INNODB_BUFFER_POOL_SIZE=${MYSQL_INNODB_BUFFER_POOL_SIZE:-$innodb_buffer_pool_size}
-export MYSQL_INNODB_LOG_FILE_SIZE=${MYSQL_INNODB_LOG_FILE_SIZE:-$innodb_log_file_size}
-export MYSQL_INNODB_LOG_BUFFER_SIZE=${MYSQL_INNODB_LOG_BUFFER_SIZE:-$innodb_log_buffer_size}
+function export_setting_variables() {
+  export MYSQL_BINLOG_FORMAT=${MYSQL_BINLOG_FORMAT:-STATEMENT}
+  export MYSQL_LOWER_CASE_TABLE_NAMES=${MYSQL_LOWER_CASE_TABLE_NAMES:-0}
+  export MYSQL_MAX_CONNECTIONS=${MYSQL_MAX_CONNECTIONS:-151}
+  export MYSQL_FT_MIN_WORD_LEN=${MYSQL_FT_MIN_WORD_LEN:-4}
+  export MYSQL_FT_MAX_WORD_LEN=${MYSQL_FT_MAX_WORD_LEN:-20}
+  export MYSQL_AIO=${MYSQL_AIO:-1}
+  export MYSQL_MAX_ALLOWED_PACKET=${MYSQL_MAX_ALLOWED_PACKET:-200M}
+  export MYSQL_TABLE_OPEN_CACHE=${MYSQL_TABLE_OPEN_CACHE:-400}
+  export MYSQL_SORT_BUFFER_SIZE=${MYSQL_SORT_BUFFER_SIZE:-256K}
+
+  # Export memory limit variables and calculate limits
+  local export_vars=$(cgroup-limits) && export $export_vars || exit 1
+  if [ -n "${NO_MEMORY_LIMIT:-}" -o -z "${MEMORY_LIMIT_IN_BYTES:-}" ]; then
+    export MYSQL_KEY_BUFFER_SIZE=${MYSQL_KEY_BUFFER_SIZE:-32M}
+    export MYSQL_READ_BUFFER_SIZE=${MYSQL_READ_BUFFER_SIZE:-8M}
+    export MYSQL_INNODB_BUFFER_POOL_SIZE=${MYSQL_INNODB_BUFFER_POOL_SIZE:-32M}
+    export MYSQL_INNODB_LOG_FILE_SIZE=${MYSQL_INNODB_LOG_FILE_SIZE:-8M}
+    export MYSQL_INNODB_LOG_BUFFER_SIZE=${MYSQL_INNODB_LOG_BUFFER_SIZE:-8M}
+  else
+    export MYSQL_KEY_BUFFER_SIZE=${MYSQL_KEY_BUFFER_SIZE:-$((MEMORY_LIMIT_IN_BYTES/1024/1024/10))M}
+    export MYSQL_READ_BUFFER_SIZE=${MYSQL_READ_BUFFER_SIZE:-$((MEMORY_LIMIT_IN_BYTES/1024/1024/20))M}
+    export MYSQL_INNODB_BUFFER_POOL_SIZE=${MYSQL_INNODB_BUFFER_POOL_SIZE:-$((MEMORY_LIMIT_IN_BYTES/1024/1024/2))M}
+    # We are multiplying by 15 first and dividing by 100 later so we get as much
+    # precision as possible with whole numbers. Result is 15% of memory.
+    export MYSQL_INNODB_LOG_FILE_SIZE=${MYSQL_INNODB_LOG_FILE_SIZE:-$((MEMORY_LIMIT_IN_BYTES*15/1024/1024/100))M}
+    export MYSQL_INNODB_LOG_BUFFER_SIZE=${MYSQL_INNODB_LOG_BUFFER_SIZE:-$((MEMORY_LIMIT_IN_BYTES*15/1024/1024/100))M}
+  fi
+}
 
 # Be paranoid and stricter than we should be.
 # https://dev.mysql.com/doc/refman/en/identifiers.html
@@ -57,7 +59,7 @@ function unset_env_vars() {
 function wait_for_mysql() {
   pid=$1 ; shift
 
-  while [ true ]; do
+  while true; do
     if [ -d "/proc/$pid" ]; then
       mysqladmin --socket=/tmp/mysql.sock ping &>/dev/null && log_info "MySQL started successfully" && return 0
     else
