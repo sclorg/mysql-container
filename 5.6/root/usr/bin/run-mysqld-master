@@ -11,6 +11,8 @@ export_setting_variables
 [ -f ${CONTAINER_SCRIPTS_PATH}/validate_replication_variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate_replication_variables.sh
 [ -f ${CONTAINER_SCRIPTS_PATH}/validate_variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate_variables.sh
 
+log_volume_info $MYSQL_DATADIR
+
 # The 'server-id' for master needs to be constant
 export MYSQL_SERVER_ID=1
 log_info "The 'master' server-id is ${MYSQL_SERVER_ID}"

@@ -7,6 +7,8 @@ export_setting_variables
 
 [ -f ${CONTAINER_SCRIPTS_PATH}/validate-variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate-variables.sh
 
+log_volume_info $MYSQL_DATADIR
+
 # Process the MySQL configuration files
 log_info 'Processing MySQL configuration files ...'
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-base.cnf.template > /etc/my.cnf.d/base.cnf
