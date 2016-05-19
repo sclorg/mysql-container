@@ -29,7 +29,9 @@ log_info 'Processing MySQL configuration files ...'
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-base.cnf.template > /etc/my.cnf.d/base.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-slave.cnf.template > /etc/my.cnf.d/slave.cnf
-envsubst < ${CONTAINER_SCRIPTS_PATH}/my-repl-gtid.cnf.template > /etc/my.cnf.d/repl-gtid.cnf
+if [ "@@REPLICATION@@" = "GTID" ]; then
+  envsubst < ${CONTAINER_SCRIPTS_PATH}/my-repl-gtid.cnf.template > /etc/my.cnf.d/repl-gtid.cnf
+fi
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-tuning.cnf.template > /etc/my.cnf.d/tuning.cnf
 
 # Initialize MySQL database and wait for the MySQL master to accept
@@ -37,8 +39,24 @@ envsubst < ${CONTAINER_SCRIPTS_PATH}/my-tuning.cnf.template > /etc/my.cnf.d/tuni
 initialize_database "$@"
 wait_for_mysql_master
 
+if [ "@@REPLICATION@@" = "manual" ]; then
+  # Get binlog file and position from master
+  STATUS_INFO=$(mysql --host "$MYSQL_MASTER_SERVICE_NAME" "-u${MYSQL_MASTER_USER}" "-p${MYSQL_MASTER_PASSWORD}" replication -e 'SELECT File, Position from replication\G')
+  BINLOG_POSITION=$(echo "$STATUS_INFO" | grep 'Position:' | head -n 1 | sed -e 's/^\s*Position: //')
+  BINLOG_FILE=$(echo "$STATUS_INFO" | grep 'File:' | head -n 1 | sed -e 's/^\s*File: //')
+
+  if [ -z "${BINLOG_FILE}" -o -z "${BINLOG_POSITION}" ] ; then
+    echo "Could not read binlog position or file from master"
+    exit 1
+  fi
+
 mysql $mysql_flags <<EOSQL
-  CHANGE MASTER TO MASTER_HOST='${MYSQL_MASTER_SERVICE_NAME}',MASTER_USER='${MYSQL_MASTER_USER}', MASTER_PASSWORD='${MYSQL_MASTER_PASSWORD}', MASTER_AUTO_POSITION = 1;
+    CHANGE MASTER TO MASTER_HOST='${MYSQL_MASTER_SERVICE_NAME}',MASTER_USER='${MYSQL_MASTER_USER}', MASTER_PASSWORD='${MYSQL_MASTER_PASSWORD}', MASTER_LOG_FILE='${BINLOG_FILE}', MASTER_LOG_POS=${BINLOG_POSITION};
+    SET GLOBAL SQL_SLAVE_SKIP_COUNTER = 1; SLAVE START;
+EOSQL
+elif [ "@@REPLICATION@@" = "GTID" ]; then
+mysql $mysql_flags <<EOSQL
+    CHANGE MASTER TO MASTER_HOST='${MYSQL_MASTER_SERVICE_NAME}',MASTER_USER='${MYSQL_MASTER_USER}', MASTER_PASSWORD='${MYSQL_MASTER_PASSWORD}', MASTER_AUTO_POSITION = 1;
 EOSQL
 
 log_info 'Sourcing post-init.sh ...'
