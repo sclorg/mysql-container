@@ -10,7 +10,7 @@ set -o errexit
 set -o nounset
 shopt -s nullglob
 
-IMAGE_NAME=${IMAGE_NAME-openshift/mysql-56-centos7-candidate}
+IMAGE_NAME=${IMAGE_NAME-centos/mysql-56-centos7-candidate}
 
 CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
 
