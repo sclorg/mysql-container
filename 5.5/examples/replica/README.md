@@ -34,7 +34,7 @@ To learn more about how to create PersistentVolume, refer to [OpenShift document
 This resource provides 'headless' Service for the MySQL server(s) which acts
 as the 'master'. The headless means that the Service does not use IP
 addresses but it uses the DNS sub-system. This behavior is configured by setting
-the `portalIP` attribute to `None`.
+the `clusterIP` attribute to `None`.
 
 In this case, you can query the DNS (eg. `dig mysql-master A +search +short`) to
 obtain the list of the Service endpoints (the MySQL servers that subscribe to
