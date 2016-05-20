@@ -89,7 +89,7 @@
         "selector": {
           "name": "mysql-master"
         },
-        "portalIP": "None",
+        "clusterIP": "None",
         "type": "ClusterIP",
         "sessionAffinity": "None"
       },
@@ -118,7 +118,7 @@
         "selector": {
           "name": "mysql-slave"
         },
-        "portalIP": "None",
+        "clusterIP": "None",
         "type": "ClusterIP",
         "sessionAffinity": "None"
       },
