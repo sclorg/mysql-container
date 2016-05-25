@@ -47,6 +47,13 @@
       "description": "The password for the root user",
       "generate": "expression",
       "from": "[a-zA-Z0-9]{12}"
+    },
+    {
+      "name": "VOLUME_CAPACITY",
+      "displayName": "Volume Capacity",
+      "description": "Volume space available for data, e.g. 512Mi, 2Gi.",
+      "value": "1Gi",
+      "required": true
     }
   ],
   "objects": [
@@ -62,7 +69,24 @@
         ],
         "resources": {
           "requests": {
-            "storage": "512Mi"
+            "storage": "${VOLUME_CAPACITY}"
+          }
+        }
+      }
+    },
+    {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-slave"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "${VOLUME_CAPACITY}"
           }
         }
       }
@@ -220,6 +244,14 @@
             }
           },
           "spec": {
+            "volumes": [
+              {
+                "name": "mysql-slave-data",
+                "persistentVolumeClaim": {
+                  "claimName": "mysql-slave"
+                }
+              }
+            ],
             "containers": [
               {
                 "name": "server",
@@ -248,6 +280,12 @@
                   {
                     "name": "MYSQL_DATABASE",
                     "value": "${MYSQL_DATABASE}"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "mysql-slave-data",
+                    "mountPath": "/var/lib/mysql/data"
                   }
                 ],
                 "imagePullPolicy": "IfNotPresent"
