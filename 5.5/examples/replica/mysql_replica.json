@@ -22,29 +22,29 @@
     },
     {
       "name": "MYSQL_MASTER_PASSWORD",
-      "description": "The password for the MySQL master user",
+      "description": "The password used for the MYSQL_MASTER_USER",
       "generate": "expression",
       "from": "[a-zA-Z0-9]{12}"
     },
     {
       "name": "MYSQL_USER",
-      "description": "The username that clients will use to connect to MySQL server",
+      "description": "The username that clients will use to connect to the server",
       "value": "user"
     },
     {
       "name": "MYSQL_PASSWORD",
-      "description": "The password for the MySQL master user",
+      "description": "The password for the MYSQL_USER",
       "generate": "expression",
       "from": "[a-zA-Z0-9]{12}"
     },
     {
       "name": "MYSQL_DATABASE",
-      "description": "The name of the database that will be created",
+      "description": "The name of the database that will be created and replicated",
       "value": "userdb"
     },
     {
       "name": "MYSQL_ROOT_PASSWORD",
-      "description": "The password for the MySQL adminitrator",
+      "description": "The password for the root user",
       "generate": "expression",
       "from": "[a-zA-Z0-9]{12}"
     }
