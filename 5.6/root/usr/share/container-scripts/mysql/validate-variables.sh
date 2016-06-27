@@ -9,6 +9,7 @@ function usage() {
   echo "Or both."
   echo "Optional Settings:"
   echo "  MYSQL_LOWER_CASE_TABLE_NAMES (default: 0)"
+  echo "  MYSQL_LOG_QUERIES (default: 0)"
   echo "  MYSQL_MAX_CONNECTIONS (default: 151)"
   echo "  MYSQL_FT_MIN_WORD_LEN (default: 4)"
   echo "  MYSQL_FT_MAX_WORD_LEN (default: 20)"
