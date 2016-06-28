@@ -254,7 +254,7 @@ function run_configuration_tests() {
     --env MYSQL_PASSWORD=config_test \
     --env MYSQL_DATABASE=db \
     --env MYSQL_LOWER_CASE_TABLE_NAMES=1 \
-    --env MYSQL_LOG_QUERIES=1 \
+    --env MYSQL_LOG_QUERIES_ENABLED=1 \
     --env MYSQL_MAX_CONNECTIONS=1337 \
     --env MYSQL_FT_MIN_WORD_LEN=8 \
     --env MYSQL_FT_MAX_WORD_LEN=15 \
