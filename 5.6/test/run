@@ -254,6 +254,7 @@ function run_configuration_tests() {
     --env MYSQL_PASSWORD=config_test \
     --env MYSQL_DATABASE=db \
     --env MYSQL_LOWER_CASE_TABLE_NAMES=1 \
+    --env MYSQL_LOG_QUERIES_ENABLED=1 \
     --env MYSQL_MAX_CONNECTIONS=1337 \
     --env MYSQL_FT_MIN_WORD_LEN=8 \
     --env MYSQL_FT_MAX_WORD_LEN=15 \
@@ -277,6 +278,7 @@ function run_configuration_tests() {
   configuration="$(docker exec -t "$container_name" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
   test_config_option "$container_name" "$configuration" lower_case_table_names 1
+  test_config_option "$container_name" "$configuration" general_log 1
   test_config_option "$container_name" "$configuration" max_connections 1337
   test_config_option "$container_name" "$configuration" ft_min_word_len 8
   test_config_option "$container_name" "$configuration" ft_max_word_len 15

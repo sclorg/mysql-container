@@ -6,6 +6,10 @@
 # Sets how the table names are stored and compared. Default: 0
 lower_case_table_names = ${MYSQL_LOWER_CASE_TABLE_NAMES}
 
+# Sets whether queries should be logged
+general_log      = ${MYSQL_LOG_QUERIES_ENABLED}
+general_log_file = ${MYSQL_DATADIR}/mysql-query.log
+
 # The maximum permitted number of simultaneous client connections. Default: 151
 max_connections = ${MYSQL_MAX_CONNECTIONS}
 
