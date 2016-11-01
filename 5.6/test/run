@@ -183,7 +183,7 @@ function assert_login_access() {
 
 function assert_local_access() {
   local id="$1" ; shift
-  docker exec $(get_cid "$id") bash -c mysql <<< "SELECT 1;"
+  docker exec $(get_cid "$id") bash -c 'mysql <<< "SELECT 1;"'
 }
 
 # Make sure the invocation of docker run fails.
