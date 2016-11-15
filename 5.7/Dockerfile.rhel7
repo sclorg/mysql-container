@@ -33,7 +33,6 @@ EXPOSE 3306
 # to make sure of that.
 RUN yum install -y yum-utils && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
-    yum-config-manager --enable rhel-server-rhscl-beta-7-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     INSTALL_PKGS="rsync tar gettext hostname bind-utils rh-mysql57" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
