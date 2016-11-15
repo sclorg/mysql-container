@@ -90,9 +90,14 @@ function shutdown_local_mysql() {
 # Initialize the MySQL database (create user accounts and the initial database)
 function initialize_database() {
   log_info 'Initializing database ...'
-  log_info 'Running mysql_install_db ...'
-  # Using --rpm since we need mysql_install_db behaves as in RPM
-  mysql_install_db --rpm --datadir=$MYSQL_DATADIR
+  if [[ "$MYSQL_VERSION" < "5.7" ]] ; then
+    # Using --rpm since we need mysql_install_db behaves as in RPM
+    log_info 'Running mysql_install_db ...'
+    mysql_install_db --rpm --datadir=$MYSQL_DATADIR
+  else
+    log_info "Running mysqld --initialize-insecure ..."
+    ${MYSQL_PREFIX}/libexec/mysqld --initialize-insecure --datadir=$MYSQL_DATADIR
+  fi
   start_local_mysql "$@"
 
   if [ -v MYSQL_RUNNING_AS_SLAVE ]; then
@@ -122,6 +127,13 @@ EOSQL
 
   if [ -v MYSQL_ROOT_PASSWORD ]; then
     log_info "Setting password for MySQL root user ..."
+    # for 5.6 and lower we use the trick that GRANT creates a user if not exists
+    # because IF NOT EXISTS clause does not exist in that versions yet
+    if [[ "$MYSQL_VERSION" > "5.6" ]] ; then
+      mysql $mysql_flags <<EOSQL
+        CREATE USER IF NOT EXISTS 'root'@'%';
+EOSQL
+    fi
 mysql $mysql_flags <<EOSQL
     GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' WITH GRANT OPTION;
 EOSQL

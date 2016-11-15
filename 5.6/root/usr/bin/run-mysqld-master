@@ -24,6 +24,9 @@ envsubst < ${CONTAINER_SCRIPTS_PATH}/my-paas.cnf.template > /etc/my.cnf.d/paas.c
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-master.cnf.template > /etc/my.cnf.d/master.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-repl-gtid.cnf.template > /etc/my.cnf.d/repl-gtid.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-tuning.cnf.template > /etc/my.cnf.d/tuning.cnf
+if [[ "$MYSQL_VERSION" < "5.7" ]] ; then
+  envsubst < ${CONTAINER_SCRIPTS_PATH}/my-tuning-56-low.cnf.template > /etc/my.cnf.d/tuning-56-low.cnf
+fi
 
 if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
   initialize_database "$@"

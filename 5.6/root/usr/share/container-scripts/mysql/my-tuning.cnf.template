@@ -11,7 +11,6 @@ myisam_sort_buffer_size = 2M
 
 # It is recommended that innodb_buffer_pool_size is configured to 50 to 75 percent of system memory.
 innodb_buffer_pool_size = ${MYSQL_INNODB_BUFFER_POOL_SIZE}
-innodb_additional_mem_pool_size = 2M
 # Set .._log_file_size to 25 % of buffer pool size
 innodb_log_file_size = ${MYSQL_INNODB_LOG_FILE_SIZE}
 innodb_log_buffer_size = ${MYSQL_INNODB_LOG_BUFFER_SIZE}

@@ -22,6 +22,8 @@ function usage() {
   echo "  MYSQL_INNODB_BUFFER_POOL_SIZE (default: 32M or 50% of available memory)"
   echo "  MYSQL_INNODB_LOG_FILE_SIZE (default: 8M or 15% of available memory)"
   echo "  MYSQL_INNODB_LOG_BUFFER_SIZE (default: 8M or 15% of available memory)"
+  echo
+  echo "For more information, see https://github.com/sclorg/mysql-container"
   exit 1
 }
 
