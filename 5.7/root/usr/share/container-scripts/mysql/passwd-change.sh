@@ -10,14 +10,28 @@ fi
 # access with a password if the variable is set or disable remote access otherwise.
 if [ -v MYSQL_ROOT_PASSWORD ]; then
   # create a user if it doesn't exist and set its password
+  # for 5.6 and lower we use the trick that GRANT creates a user if not exists
+  # because IF NOT EXISTS clause does not exist in that versions yet
+  if [[ "$MYSQL_VERSION" > "5.6" ]] ; then
+    mysql $mysql_flags <<EOSQL
+      CREATE USER IF NOT EXISTS 'root'@'%';
+EOSQL
+  fi
   mysql $mysql_flags <<EOSQL
-    CREATE USER IF NOT EXISTS 'root'@'%';
     GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' WITH GRANT OPTION;
 EOSQL
 else
-  mysql $mysql_flags <<EOSQL
-    DROP USER IF EXISTS 'root'@'%';
-    FLUSH PRIVILEGES;
+  if [[ "$MYSQL_VERSION" < "5.7" ]] ; then
+    mysql $mysql_flags <<EOSQL
+      GRANT USAGE ON *.* TO 'root'@'%';
+      DROP USER 'root'@'%';
+      FLUSH PRIVILEGES;
 EOSQL
+  else
+    mysql $mysql_flags <<EOSQL
+      DROP USER IF EXISTS 'root'@'%';
+      FLUSH PRIVILEGES;
+EOSQL
+  fi
 fi
 
