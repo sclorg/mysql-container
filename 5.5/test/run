@@ -13,6 +13,7 @@ shopt -s nullglob
 IMAGE_NAME=${IMAGE_NAME-openshift/mysql-55-centos7-candidate}
 
 CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
+TESTSUITE_RESULT=1
 
 function cleanup() {
   local cidfile
@@ -34,6 +35,11 @@ function cleanup() {
     rm $cidfile
     echo "Done."
   done
+  if [ $TESTSUITE_RESULT -eq 0 ] ; then
+    echo "Tests succeeded."
+  else
+    echo "Tests failed."
+  fi
   rmdir $CIDFILE_DIR
 }
 trap cleanup EXIT SIGINT
@@ -183,7 +189,12 @@ function assert_login_access() {
 
 function assert_local_access() {
   local id="$1" ; shift
-  docker exec $(get_cid "$id") bash -c 'mysql <<< "SELECT 1;"'
+  if docker exec $(get_cid "$id") bash -c 'mysql -uroot <<< "SELECT 1;"' ; then
+    echo "    local access granted as expected"
+    return
+  fi
+  echo "    local access assertion failed"
+  return 1
 }
 
 # Make sure the invocation of docker run fails.
@@ -390,3 +401,5 @@ run_change_password_test
 
 # Replication tests
 run_replication_test
+
+TESTSUITE_RESULT=0
