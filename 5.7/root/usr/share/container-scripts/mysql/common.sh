@@ -96,7 +96,7 @@ function initialize_database() {
     mysql_install_db --rpm --datadir=$MYSQL_DATADIR
   else
     log_info "Running mysqld --initialize-insecure ..."
-    ${MYSQL_PREFIX}/libexec/mysqld --initialize-insecure --datadir=$MYSQL_DATADIR
+    ${MYSQL_PREFIX}/libexec/mysqld --initialize-insecure --datadir=$MYSQL_DATADIR --ignore-db-dir=lost+found
   fi
   start_local_mysql "$@"
 
