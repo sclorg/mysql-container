@@ -1,0 +1,299 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "mysql-replication-example",
+    "annotations": {
+      "description": "MySQL Replication Example",
+      "iconClass": "icon-database",
+      "tags": "database,mysql,replication"
+    }
+  },
+  "parameters": [
+    {
+      "name": "MYSQL_MASTER_SERVICE_NAME",
+      "description": "Service name for MySQL master service",
+      "value": "mysql-master"
+    },
+    {
+      "name": "MYSQL_MASTER_USER",
+      "description": "The username used for master-slave replication",
+      "value": "master"
+    },
+    {
+      "name": "MYSQL_MASTER_PASSWORD",
+      "description": "The password used for the MYSQL_MASTER_USER",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{12}"
+    },
+    {
+      "name": "MYSQL_USER",
+      "description": "The username that clients will use to connect to the server",
+      "value": "user"
+    },
+    {
+      "name": "MYSQL_PASSWORD",
+      "description": "The password for the MYSQL_USER",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{12}"
+    },
+    {
+      "name": "MYSQL_DATABASE",
+      "description": "The name of the database that will be created and replicated",
+      "value": "userdb"
+    },
+    {
+      "name": "MYSQL_ROOT_PASSWORD",
+      "description": "The password for the root user",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{12}"
+    },
+    {
+      "name": "VOLUME_CAPACITY",
+      "displayName": "Volume Capacity",
+      "description": "Volume space available for data, e.g. 512Mi, 2Gi.",
+      "value": "1Gi",
+      "required": true
+    }
+  ],
+  "objects": [
+    {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-master"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "${VOLUME_CAPACITY}"
+          }
+        }
+      }
+    },
+    {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-slave"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "${VOLUME_CAPACITY}"
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${MYSQL_MASTER_SERVICE_NAME}",
+        "labels": {
+          "name": "mysql-master"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "port": 3306
+          }
+        ],
+        "selector": {
+          "name": "mysql-master"
+        },
+        "clusterIP": "None"
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-slave",
+        "labels": {
+          "name": "mysql-slave"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "port": 3306
+          }
+        ],
+        "selector": {
+          "name": "mysql-slave"
+        },
+        "clusterIP": "None"
+      }
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-master"
+      },
+      "spec": {
+        "strategy": {
+          "type": "Recreate"
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "name": "mysql-master"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "mysql-master"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "mysql-master-data",
+                "persistentVolumeClaim": {
+                  "claimName": "mysql-master"
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "server",
+                "image": "centos/mysql-57-centos7",
+                "args": [
+                  "run-mysqld-master"
+                ],
+                "ports": [
+                  {
+                    "containerPort": 3306
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "MYSQL_MASTER_USER",
+                    "value": "${MYSQL_MASTER_USER}"
+                  },
+                  {
+                    "name": "MYSQL_MASTER_PASSWORD",
+                    "value": "${MYSQL_MASTER_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_USER",
+                    "value": "${MYSQL_USER}"
+                  },
+                  {
+                    "name": "MYSQL_PASSWORD",
+                    "value": "${MYSQL_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_DATABASE",
+                    "value": "${MYSQL_DATABASE}"
+                  },
+                  {
+                    "name": "MYSQL_ROOT_PASSWORD",
+                    "value": "${MYSQL_ROOT_PASSWORD}"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "mysql-master-data",
+                    "mountPath": "/var/lib/mysql/data"
+                  }
+                ],
+                "imagePullPolicy": "IfNotPresent"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-slave"
+      },
+      "spec": {
+        "strategy": {
+          "type": "Recreate"
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "name": "mysql-slave"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "name": "mysql-slave"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "mysql-slave-data",
+                "persistentVolumeClaim": {
+                  "claimName": "mysql-slave"
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "server",
+                "image": "centos/mysql-57-centos7",
+                "args": [
+                  "run-mysqld-slave"
+                ],
+                "ports": [
+                  {
+                    "containerPort": 3306
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "MYSQL_MASTER_SERVICE_NAME",
+                    "value": "${MYSQL_MASTER_SERVICE_NAME}"
+                  },
+                  {
+                    "name": "MYSQL_MASTER_USER",
+                    "value": "${MYSQL_MASTER_USER}"
+                  },
+                  {
+                    "name": "MYSQL_MASTER_PASSWORD",
+                    "value": "${MYSQL_MASTER_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_DATABASE",
+                    "value": "${MYSQL_DATABASE}"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "mysql-slave-data",
+                    "mountPath": "/var/lib/mysql/data"
+                  }
+                ],
+                "imagePullPolicy": "IfNotPresent"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
