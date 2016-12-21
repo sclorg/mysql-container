@@ -11,8 +11,8 @@ official [OpenShift Documentation](https://docs.openshift.org/latest/using_image
 Versions
 ---------------
 MySQL versions currently provided are:
-* mysql-5.5
 * mysql-5.6
+* mysql-5.7
 
 RHEL versions currently supported are:
 * RHEL7
@@ -33,7 +33,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone https://github.com/openshift/mysql.git
     $ cd mysql
-    $ make build TARGET=rhel7 VERSION=5.5
+    $ make build TARGET=rhel7 VERSION=5.7
     ```
 
 *  **CentOS7 based image**
@@ -41,13 +41,13 @@ Choose either the CentOS7 or RHEL7 based image:
     This image is available on DockerHub. To download it run:
 
     ```
-    $ docker pull openshift/mysql-55-centos7
+    $ docker pull centos/mysql-57-centos7
     ```
 
     or
 
     ```
-    $ docker pull centos/mysql-56-centos7
+    $ docker pull centos/mysql-57-centos7
     ```
 
     To build a MySQL image from scratch run:
@@ -55,10 +55,10 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone https://github.com/openshift/mysql.git
     $ cd mysql
-    $ make build VERSION=5.5
+    $ make build TARGET=centos7 VERSION=5.7
     ```
 
-For using other versions of mysql, just replace the `5.5` value by particular version
+For using other versions of mysql, just replace the `5.7` value by particular version
 in the commands above.
 
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
@@ -72,8 +72,8 @@ Usage
 For information about usage of Dockerfile for MySQL 5.6,
 see [usage documentation](5.6/README.md).
 
-For information about usage of Dockerfile for MySQL 5.5,
-see [usage documentation](5.5/README.md).
+For information about usage of Dockerfile for MySQL 5.7,
+see [usage documentation](5.7/README.md).
 
 
 Test
@@ -91,17 +91,17 @@ Users can choose between testing MySQL based on a RHEL or CentOS image.
 
     ```
     $ cd mysql
-    $ make test TARGET=rhel7 VERSION=5.5
+    $ make test TARGET=rhel7 VERSION=5.7
     ```
 
 *  **CentOS based image**
 
     ```
     $ cd mysql
-    $ make test VERSION=5.5
+    $ make test TARGET=centos7 VERSION=5.7
     ```
 
-For using other versions of mysql, just replace the `5.5` value by particular version
+For using other versions of mysql, just replace the `5.7` value by particular version
 in the commands above.
 
 **Notice: By omitting the `VERSION` parameter, the build/test action will be performed
