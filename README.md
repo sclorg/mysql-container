@@ -1,6 +1,8 @@
 MySQL Docker images
 ===================
 
+[![Build Status](https://ci.openshift.redhat.com/jenkins/buildStatus/icon?job=mysql)](https://ci.openshift.redhat.com/jenkins/job/mysql/)
+
 This repository contains Dockerfiles for MySQL images for OpenShift.
 Users can choose between RHEL and CentOS based images.
 
