@@ -76,6 +76,36 @@ For information about usage of Dockerfile for MySQL 5.7,
 see [usage documentation](5.7/README.md).
 
 
+Usage on Atomic host
+---------------------------------
+Systems derived from projectatomic.io usually include the `atomic` command that is
+used to run containers besides other things.
+
+To install a new service `mysqld1` based on this image on such a system, run:
+
+```
+$ atomic install -n mysqld1 --opt2='-e MYSQL_USER=user` -e MYSQL_PASSWORD=secretpass -e MYSQL_DATABASE=db1 -p 3306:3306' openshift/mysql-55-centos7
+```
+
+Then to run the service, use the standard `systemctl` call:
+
+```
+$ systemctl start mysqld1.service
+```
+
+In order to work with that service, you may either connect to exposed port 3306 or run this command to connect locally:
+```
+$ atomic run -n mysqld1 openshift/mysql-55-centos7 bash -c 'mysql'
+```
+
+To stop and uninstall the mysqld1 service, run:
+
+```
+$ systemctl stop mysqld1.service
+$ atomic uninstall -n mysqld1 openshift/mysql-55-centos7
+```
+
+
 Test
 ---------------------------------
 

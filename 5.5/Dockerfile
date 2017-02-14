@@ -20,6 +20,18 @@ LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database ser
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql55"
 
+# Support for atomic run/install/uninstall
+LABEL INSTALL="docker run -t -i --rm --privileged -u 0:0 -v /:/host --net=host \
+      --ipc=host --pid=host -e HOST=/host -e LOGDIR=\${LOGDIR} -e CONFDIR=\${CONFDIR} \
+      -e DATADIR=\${DATADIR} -e IMAGE=\${IMAGE} -e NAME=\${NAME} -e OPT1 -e OPT2 -e OPT3 \
+      \${OPT1} \${IMAGE} /usr/share/container-layer/mysql/atomic/install.sh" \
+      UNINSTALL="docker run -t -i --rm --privileged -u 0:0 -v /:/host --net=host \
+      --ipc=host --pid=host -e HOST=/host -e LOGDIR=\${LOGDIR} -e CONFDIR=\${CONFDIR} \
+      -e DATADIR=\${DATADIR} -e IMAGE=\${IMAGE} -e NAME=\${NAME} -e OPT1 -e OPT2 -e OPT3 \
+      \${OPT1} \${IMAGE} /usr/share/container-layer/mysql/atomic/uninstall.sh" \
+      RUN="docker run -t -i --rm --name=\${NAME} -e OPT1 -e OPT2 -e OPT3 \${OPT2} \
+      \${IMAGE}"
+
 EXPOSE 3306
 
 # This image must forever use UID 27 for mysql user so our volumes are
