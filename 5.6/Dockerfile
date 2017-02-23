@@ -10,12 +10,18 @@ FROM centos:centos7
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
-MAINTAINER SoftwareCollections.org <sclorg@redhat.com>
-
 ENV MYSQL_VERSION=5.6 \
     HOME=/var/lib/mysql
 
-LABEL io.k8s.description="MySQL is a multi-user, multi-threaded SQL database server" \
+ENV SUMMARY="MySQL 5.6 SQL database server" \
+    DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
+image provides a containerized packaging of the MySQL mysqld daemon and client application. \
+The mysqld server daemon accepts connections from clients and provides access to content from \
+MySQL databases on behalf of the clients."
+
+LABEL summary="$SUMMARY" \
+      description="$DESCRIPTION" \
+      io.k8s.description="$SUMMARY" \
       io.k8s.display-name="MySQL 5.6" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql56,rh-mysql56"
