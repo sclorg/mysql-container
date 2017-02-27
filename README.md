@@ -70,10 +70,10 @@ Usage
 ---------------------------------
 
 For information about usage of Dockerfile for MySQL 5.6,
-see [usage documentation](5.6/README.md).
+see [usage documentation](5.6).
 
 For information about usage of Dockerfile for MySQL 5.7,
-see [usage documentation](5.7/README.md).
+see [usage documentation](5.7).
 
 
 Test
