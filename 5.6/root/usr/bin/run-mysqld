@@ -14,6 +14,9 @@ log_info 'Processing MySQL configuration files ...'
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-base.cnf.template > /etc/my.cnf.d/base.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-paas.cnf.template > /etc/my.cnf.d/paas.cnf
 envsubst < ${CONTAINER_SCRIPTS_PATH}/my-tuning.cnf.template > /etc/my.cnf.d/tuning.cnf
+if [[ "$MYSQL_VERSION" < "5.7" ]] ; then
+  envsubst < ${CONTAINER_SCRIPTS_PATH}/my-tuning-56-low.cnf.template > /etc/my.cnf.d/tuning-56-low.cnf
+fi
 
 if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
   initialize_database "$@"
