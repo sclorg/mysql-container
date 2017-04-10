@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/rhel7
+FROM registry.access.redhat.com/rhel6
 
 # MySQL image for OpenShift.
 #
@@ -28,7 +28,7 @@ LABEL summary="$SUMMARY" \
 
 # Labels consumed by Red Hat build service
 LABEL com.redhat.component="rh-mysql57-docker" \
-      name="rhscl/mysql-57-rhel7" \
+      name="rhscl/mysql-57-rhel6" \
       version="5.7" \
       release="1" \
       architecture="x86_64"
@@ -39,8 +39,8 @@ EXPOSE 3306
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum install -y yum-utils && \
-    yum-config-manager --enable rhel-server-rhscl-7-rpms && \
-    yum-config-manager --enable rhel-7-server-optional-rpms && \
+    yum-config-manager --enable rhel-server-rhscl-6-rpms && \
+    yum-config-manager --enable rhel-6-server-optional-rpms && \
     INSTALL_PKGS="rsync tar gettext hostname bind-utils rh-mysql57" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
