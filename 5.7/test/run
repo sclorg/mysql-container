@@ -356,7 +356,7 @@ test_scl_usage() {
 function run_tests() {
   local name=$1 ; shift
   envs="-e MYSQL_USER=$USER -e MYSQL_PASSWORD=$PASS -e MYSQL_DATABASE=db"
-  if [ -v ROOT_PASS ]; then
+  if [ ! -z ${ROOT_PASS:-} ]; then
     envs="$envs -e MYSQL_ROOT_PASSWORD=$ROOT_PASS"
   fi
   create_container $name $envs
@@ -368,7 +368,7 @@ function run_tests() {
   container_ip=$(get_container_ip $name)
   assert_login_access "$container_ip" "$USER" "$PASS" true
   assert_login_access "$container_ip" "$USER" "${PASS}_foo" false
-  if [ -v ROOT_PASS ]; then
+  if [ ! -z ${ROOT_PASS:-} ]; then
     assert_login_access "$container_ip" root "$ROOT_PASS" true
     assert_login_access "$container_ip" root "${ROOT_PASS}_foo" false
   else

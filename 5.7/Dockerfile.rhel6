@@ -11,7 +11,8 @@ FROM registry.access.redhat.com/rhel6
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
 ENV MYSQL_VERSION=5.7 \
-    HOME=/var/lib/mysql
+    HOME=/var/lib/mysql \
+    PATH=$PATH:/sbin
 
 ENV SUMMARY="MySQL 5.7 SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
@@ -41,7 +42,7 @@ EXPOSE 3306
 RUN yum install -y yum-utils && \
     yum-config-manager --enable rhel-server-rhscl-6-rpms && \
     yum-config-manager --enable rhel-6-server-optional-rpms && \
-    INSTALL_PKGS="rsync tar gettext hostname bind-utils rh-mysql57" && \
+    INSTALL_PKGS="rsync tar gettext bind-utils rh-mysql57" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
