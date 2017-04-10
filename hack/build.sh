@@ -92,6 +92,7 @@ for dir in ${dirs}; do
   else
     docker_build_with_version Dockerfile
   fi
+  fi
 
   if [[ -v TEST_MODE ]]; then
     IMAGE_NAME=${IMAGE_NAME} test/run
