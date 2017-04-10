@@ -87,6 +87,8 @@ for dir in ${dirs}; do
   pushd ${dir} > /dev/null
   if [ "$OS" == "rhel7" -o "$OS" == "rhel7-candidate" ]; then
     docker_build_with_version Dockerfile.rhel7
+  else if [ "$OS" == "rhel6" -o "$OS" == "rhel6-candidate" ]; then
+    docker_build_with_version Dockerfile.rhel6
   else
     docker_build_with_version Dockerfile
   fi

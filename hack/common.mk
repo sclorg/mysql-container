@@ -4,6 +4,8 @@ build = hack/build.sh
 
 ifeq ($(TARGET),rhel7)
 	OS := rhel7
+else ifeq ($(TARGET),rhel6)
+	OS := rhel6
 else
 	OS := centos7
 endif
