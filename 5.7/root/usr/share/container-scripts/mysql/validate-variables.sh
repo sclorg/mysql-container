@@ -29,14 +29,14 @@ function usage() {
 
 function validate_variables() {
   # Check basic sanity of specified variables
-  if [[ ! -z ${MYSQL_USER:-} && ! -z ${MYSQL_PASSWORD:-} ]]; then
+  if [[ ! -z ${MYSQL_USER+x} && ! -z ${MYSQL_PASSWORD+x} ]]; then
     [[ "$MYSQL_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL username"
     [ ${#MYSQL_USER} -le 16 ] || usage "MySQL username too long (maximum 16 characters)"
     [[ "$MYSQL_PASSWORD" =~ $mysql_password_regex   ]] || usage "Invalid password"
     user_specified=1
   fi
 
-  if [ ! -z ${MYSQL_ROOT_PASSWORD:-} ]; then
+  if [ ! -z ${MYSQL_ROOT_PASSWORD+x} ]; then
     [[ "$MYSQL_ROOT_PASSWORD" =~ $mysql_password_regex ]] || usage "Invalid root password"
     root_specified=1
   fi
@@ -61,16 +61,16 @@ function validate_variables() {
 
   # If the root user is not specified, database name is required
   if [[ "${root_specified:-0}" == "0" ]]; then
-    [ ! -z ${MYSQL_DATABASE:-} ] || usage "You need to specify database name or root password"
+    [ ! -z ${MYSQL_DATABASE+x} ] || usage "You need to specify database name or root password"
   fi
 
-  if [ ! -z ${MYSQL_DATABASE:-} ]; then
+  if [ ! -z ${MYSQL_DATABASE+x} ]; then
     [[ "$MYSQL_DATABASE" =~ $mysql_identifier_regex ]] || usage "Invalid database name"
     [ ${#MYSQL_DATABASE} -le 64 ] || usage "Database name too long (maximum 64 characters)"
   fi
 
   # Specifically check of incomplete specification
-  if [[ ! -z ${MYSQL_USER:-} || ! -z ${MYSQL_PASSWORD:-} || ! -z ${MYSQL_DATABASE:-} ]] && \
+  if [[ ! -z ${MYSQL_USER+x} || ! -z ${MYSQL_PASSWORD+x} || ! -z ${MYSQL_DATABASE+x} ]] && \
      [[ "${user_specified:-0}" == "0" ]]; then
     usage
   fi

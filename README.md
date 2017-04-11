@@ -16,6 +16,7 @@ MySQL versions currently provided are:
 
 RHEL versions currently supported are:
 * RHEL7
+* RHEL6 (mysql-5.7 only)
 
 CentOS versions currently supported are:
 * CentOS7
@@ -23,7 +24,7 @@ CentOS versions currently supported are:
 
 Installation
 ----------------------
-Choose either the CentOS7 or RHEL7 based image:
+Choose either the CentOS7, RHEL6, or RHEL7 based image:
 
 *  **RHEL7 based image**
 
@@ -40,6 +41,17 @@ Choose either the CentOS7 or RHEL7 based image:
     $ git clone https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
     $ make build TARGET=rhel7 VERSION=5.7
+    ```
+
+*  **RHEL6 based image**
+
+    To build a RHEL6 based MySQL image, you need to run Docker build on a properly
+    subscribed RHEL machine.
+
+    ```
+    $ git clone https://github.com/sclorg/mysql-container.git
+    $ cd mysql-container
+    $ make build TARGET=rhel6 VERSION=5.7
     ```
 
 *  **CentOS7 based image**
@@ -84,7 +96,7 @@ of the MySQL image.
 
 Users can choose between testing MySQL based on a RHEL or CentOS image.
 
-*  **RHEL based image**
+*  **RHEL7 based image**
 
     To test a RHEL7 based MySQL image, you need to run the test on a properly
     subscribed RHEL machine.
@@ -92,6 +104,16 @@ Users can choose between testing MySQL based on a RHEL or CentOS image.
     ```
     $ cd mysql-container
     $ make test TARGET=rhel7 VERSION=5.7
+    ```
+
+*  **RHEL6 based image**
+
+    To test a RHEL6 based MySQL image, you need to run the test on a properly
+    subscribed RHEL machine.
+
+    ```
+    $ cd mysql-container
+    $ make test TARGET=rhel6 VERSION=5.7
     ```
 
 *  **CentOS based image**

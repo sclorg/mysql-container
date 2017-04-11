@@ -1,6 +1,6 @@
 function validate_replication_variables() {
-  if ! [[ ! -z ${MYSQL_DATABASE:-} && ! -z ${MYSQL_MASTER_USER:-} && ! -z ${MYSQL_MASTER_PASSWORD:-} && \
-        ( "${MYSQL_RUNNING_AS_SLAVE:-0}" != "1" || ! -z ${MYSQL_MASTER_SERVICE_NAME:-} ) ]]; then
+  if ! [[ ! -z ${MYSQL_DATABASE+x} && ! -z ${MYSQL_MASTER_USER+x} && ! -z ${MYSQL_MASTER_PASSWORD+x} && \
+        ( "${MYSQL_RUNNING_AS_SLAVE:-0}" != "1" || ! -z ${MYSQL_MASTER_SERVICE_NAME+x} ) ]]; then
     echo
     echo "For master/slave replication, you have to specify following environment variables:"
     echo "  MYSQL_MASTER_SERVICE_NAME (slave only)"
