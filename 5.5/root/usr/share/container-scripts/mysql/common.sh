@@ -126,6 +126,14 @@ mysql $mysql_flags <<EOSQL
 EOSQL
   fi
 
+  if [ -v UPS_USER ]; then
+    log_info "Creating user specified by MYSQL_USER (${UPS_USER}) ..."
+mysql $mysql_flags <<EOSQL
+    CREATE USER '${UPS_USER}'@'%' IDENTIFIED BY '${UPS_PASSWORD}';
+EOSQL
+  fi
+
+
   if [ -v MYSQL_DATABASE ]; then
     log_info "Creating database ${MYSQL_DATABASE} ..."
     mysqladmin $admin_flags create "${MYSQL_DATABASE}"
@@ -133,6 +141,18 @@ EOSQL
       log_info "Granting privileges to user ${MYSQL_USER} for ${MYSQL_DATABASE} ..."
 mysql $mysql_flags <<EOSQL
       GRANT ALL ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%' ;
+      FLUSH PRIVILEGES ;
+EOSQL
+    fi
+  fi
+
+  if [ -v UPS_DATABASE ]; then
+    log_info "Creating database ${UPS_DATABASE} ..."
+    mysqladmin $admin_flags create "${UPS_DATABASE}"
+    if [ -v UPS_USER ]; then
+      log_info "Granting privileges to user ${UPS_USER} for ${UPS_DATABASE} ..."
+mysql $mysql_flags <<EOSQL
+      GRANT ALL ON \`${UPS_DATABASE}\`.* TO '${UPS_USER}'@'%' ;
       FLUSH PRIVILEGES ;
 EOSQL
     fi

@@ -60,6 +60,7 @@ ADD root /
 # script.
 RUN rm -rf /etc/my.cnf.d/* 
 RUN /usr/libexec/container-setup
+RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 VOLUME ["/var/lib/mysql/data"]
 
