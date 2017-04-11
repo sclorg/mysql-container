@@ -83,8 +83,8 @@ if __name__ == "__main__":
         "NUMBER_OF_CORES": get_number_of_cores()
     }
 
-    env_vars = {k: v for k, v in env_vars.items() if v is not None}
-
+    env_vars = dict([(k, v) for k, v in env_vars.items() if v is not None])
+    
     if env_vars.get("MEMORY_LIMIT_IN_BYTES", 0) >= 92233720368547:
         env_vars["NO_MEMORY_LIMIT"] = "true"
 

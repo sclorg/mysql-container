@@ -4,8 +4,8 @@ MySQL Docker image
 This repository contains Dockerfiles for MySQL images for OpenShift.
 Users can choose between RHEL and CentOS based images.
 
-Dockerfile for CentOS is called Dockerfile, Dockerfile for RHEL is called
-Dockerfile.rhel7.
+Dockerfile for CentOS is called Dockerfile, Dockerfiles for RHEL are called
+Dockerfile.rhel6 & Dockerfile.rhel7.
 
 
 Environment variables and volumes
