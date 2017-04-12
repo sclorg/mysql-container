@@ -34,4 +34,3 @@ EOSQL
 EOSQL
   fi
 fi
-
