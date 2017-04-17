@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/rhel6
+FROM rhel6
 
 # MySQL image for OpenShift.
 #
