@@ -37,7 +37,7 @@ Choose either the CentOS7 or RHEL7 based image:
     subscribed RHEL machine.
 
     ```
-    $ git clone https://github.com/sclorg/mysql-container.git
+    $ git clone --recursive https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
     $ make build TARGET=rhel7 VERSION=5.7
     ```
@@ -53,7 +53,7 @@ Choose either the CentOS7 or RHEL7 based image:
     To build a CentOS based MySQL image from scratch, run:
 
     ```
-    $ git clone https://github.com/sclorg/mysql-container.git
+    $ git clone --recursive https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
     $ make build TARGET=centos7 VERSION=5.7
     ```
