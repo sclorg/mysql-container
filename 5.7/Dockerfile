@@ -24,7 +24,11 @@ LABEL summary="$SUMMARY" \
       io.k8s.description="$SUMMARY" \
       io.k8s.display-name="MySQL 5.7" \
       io.openshift.expose-services="3306:mysql" \
-      io.openshift.tags="database,mysql,mysql57,rh-mysql57"
+      io.openshift.tags="database,mysql,mysql57,rh-mysql57" \
+      com.redhat.component="rh-mysql57-docker" \
+      name="centos/mysql-57-centos7" \
+      version="5.7" \
+      release="1"
 
 EXPOSE 3306
 

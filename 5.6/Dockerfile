@@ -24,7 +24,11 @@ LABEL summary="$SUMMARY" \
       io.k8s.description="$SUMMARY" \
       io.k8s.display-name="MySQL 5.6" \
       io.openshift.expose-services="3306:mysql" \
-      io.openshift.tags="database,mysql,mysql56,rh-mysql56"
+      io.openshift.tags="database,mysql,mysql56,rh-mysql56" \
+      com.redhat.component="rh-mysql56-docker" \
+      name="centos/mysql-56-centos7" \
+      version="5.6" \
+      release="1"
 
 EXPOSE 3306
 
