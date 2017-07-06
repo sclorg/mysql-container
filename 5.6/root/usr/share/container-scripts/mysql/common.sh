@@ -122,6 +122,17 @@ mysql $mysql_flags <<EOSQL
       GRANT ALL ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%' ;
       FLUSH PRIVILEGES ;
 EOSQL
+
+echo
+echo 'Handling files in /docker-entrypoint-initdb.d if any... '
+for f in /docker-entrypoint-initdb.d/*; do
+	case "$f" in
+		*.sql)    echo "running $f"; mysql $mysql_flags ${MYSQL_DATABASE} < "$f"; echo ;;
+		*)        echo "ignoring $f" ;;
+	esac
+	echo
+done
+
     fi
   fi
 
