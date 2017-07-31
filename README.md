@@ -39,7 +39,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
-    $ make build TARGET=rhel7 VERSION=5.7
+    $ make build TARGET=rhel7 VERSIONS=5.7
     ```
 
 *  **CentOS7 based image**
@@ -55,13 +55,13 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
-    $ make build TARGET=centos7 VERSION=5.7
+    $ make build TARGET=centos7 VERSIONS=5.7
     ```
 
 For using other versions of MySQL, just replace the `5.7` value by particular version
 in the commands above.
 
-**Notice: By omitting the `VERSION` parameter, the build/test action will be performed
+**Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
 on all provided versions of MySQL, which must be specified in  `VERSIONS` variable.
 This variable must be set to a list with possible versions (subdirectories).**
 
@@ -91,19 +91,19 @@ Users can choose between testing MySQL based on a RHEL or CentOS image.
 
     ```
     $ cd mysql-container
-    $ make test TARGET=rhel7 VERSION=5.7
+    $ make test TARGET=rhel7 VERSIONS=5.7
     ```
 
 *  **CentOS based image**
 
     ```
     $ cd mysql-container
-    $ make test TARGET=centos7 VERSION=5.7
+    $ make test TARGET=centos7 VERSIONS=5.7
     ```
 
 For using other versions of MySQL, just replace the `5.7` value by particular version
 in the commands above.
 
-**Notice: By omitting the `VERSION` parameter, the build/test action will be performed
+**Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
 on all provided versions of MySQL, which must be specified in  `VERSIONS` variable.
 This variable must be set to a list with possible versions (subdirectories).**
