@@ -8,8 +8,8 @@ set -eu
 
 export_setting_variables
 
-[ -f ${CONTAINER_SCRIPTS_PATH}/validate_replication_variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate_replication_variables.sh
-[ -f ${CONTAINER_SCRIPTS_PATH}/validate_variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate_variables.sh
+[ -f ${CONTAINER_SCRIPTS_PATH}/validate-replication-variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate-replication-variables.sh
+[ -f ${CONTAINER_SCRIPTS_PATH}/validate-variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate-variables.sh
 
 log_volume_info $MYSQL_DATADIR
 
