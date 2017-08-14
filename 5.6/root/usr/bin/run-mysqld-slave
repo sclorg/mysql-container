@@ -12,7 +12,7 @@ log_volume_info $MYSQL_DATADIR
 
 export MYSQL_RUNNING_AS_SLAVE=1
 
-[ -f ${CONTAINER_SCRIPTS_PATH}/validate_replication_variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate_replication_variables.sh
+[ -f ${CONTAINER_SCRIPTS_PATH}/validate-replication-variables.sh ] && source ${CONTAINER_SCRIPTS_PATH}/validate-replication-variables.sh
 
 # Generate the unique 'server-id' for this master
 export MYSQL_SERVER_ID=$(server_id)
