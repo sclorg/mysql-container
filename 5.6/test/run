@@ -224,9 +224,10 @@ function run_container_creation_tests() {
   try_image_invalid_combinations  -e MYSQL_ROOT_PASSWORD=root_pass
 
   local VERY_LONG_DB_NAME="very_long_database_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  local VERY_LONG_USER_NAME="very_long_user_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass
   assert_container_creation_fails -e MYSQL_USER=\$invalid -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
-  assert_container_creation_fails -e MYSQL_USER=very_long_username -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
+  assert_container_creation_fails -e MYSQL_USER=$VERY_LONG_USER_NAME -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD="\"" -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=\$invalid -e MYSQL_ROOT_PASSWORD=root_pass
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=$VERY_LONG_DB_NAME -e MYSQL_ROOT_PASSWORD=root_pass
