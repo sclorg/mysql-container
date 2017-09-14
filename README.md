@@ -7,12 +7,17 @@ Users can choose between RHEL and CentOS based images.
 For more information about using these images with OpenShift, please see the
 official [OpenShift Documentation](https://docs.openshift.org/latest/using_images/db_images/mysql.html).
 
+For more information about contributing, see
+[the Contribution Guidelines](https://github.com/sclorg/welcome/blob/master/contribution.md).
+For more information about concepts used in these docker images, see the
+[Landing page](https://github.com/sclorg/welcome).
+
 
 Versions
 ---------------
 MySQL versions currently provided are:
-* [mysql-5.6](5.6)
-* [mysql-5.7](5.7)
+* [MySQL 5.6](5.6)
+* [MySQL 5.7](5.7)
 
 RHEL versions currently supported are:
 * RHEL7
@@ -39,6 +44,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
+    $ git submodule update --init
     $ make build TARGET=rhel7 VERSIONS=5.7
     ```
 
@@ -55,6 +61,7 @@ Choose either the CentOS7 or RHEL7 based image:
     ```
     $ git clone --recursive https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
+    $ git submodule update --init
     $ make build TARGET=centos7 VERSIONS=5.7
     ```
 
@@ -91,6 +98,7 @@ Users can choose between testing MySQL based on a RHEL or CentOS image.
 
     ```
     $ cd mysql-container
+    $ git submodule update --init
     $ make test TARGET=rhel7 VERSIONS=5.7
     ```
 
@@ -98,6 +106,7 @@ Users can choose between testing MySQL based on a RHEL or CentOS image.
 
     ```
     $ cd mysql-container
+    $ git submodule update --init
     $ make test TARGET=centos7 VERSIONS=5.7
     ```
 
