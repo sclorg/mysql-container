@@ -10,7 +10,7 @@ set -o errexit
 set -o nounset
 shopt -s nullglob
 
-IMAGE_NAME=${IMAGE_NAME-centos/mysql-56-centos7-candidate}
+IMAGE_NAME=${IMAGE_NAME-centos/mysql-${VERSION//.}-centos7-candidate}
 
 CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
 TESTSUITE_RESULT=1
@@ -110,7 +110,7 @@ function create_container() {
 
 function run_change_password_test() {
   local tmpdir=$(mktemp -d)
-  mkdir "${tmpdir}/data" && chmod -R a+rwx "${tmpdir}"
+  chmod -R a+rwx "${tmpdir}"
 
   # Create MySQL container with persistent volume and set the initial password
   create_container "testpass1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
@@ -363,7 +363,7 @@ function run_tests() {
   create_container $name $envs
   test_connection "$name" "$USER" "$PASS"
   echo "  Testing scl usage"
-  test_scl_usage $name 'mysql --version' '5.6'
+  test_scl_usage $name 'mysql --version' "$VERSION"
   echo "  Testing login accesses"
   local container_ip
   container_ip=$(get_container_ip $name)
