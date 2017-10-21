@@ -1,3 +1,4 @@
+set +e
 # Set the password for MySQL user and root everytime this container is started.
 # This allows to change the password by editing the deployment configuration.
 if [[ -v MYSQL_USER && -v MYSQL_PASSWORD ]]; then
@@ -22,4 +23,4 @@ else
     FLUSH PRIVILEGES;
 EOSQL
 fi
-
+set -e
