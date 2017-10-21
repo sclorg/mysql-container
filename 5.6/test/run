@@ -10,7 +10,7 @@ set -o errexit
 set -o nounset
 shopt -s nullglob
 
-IMAGE_NAME=${IMAGE_NAME-centos/mysql-56-centos7-candidate}
+IMAGE_NAME=${IMAGE_NAME-centos/mysql-${VERSION//.}-centos7-candidate}
 
 CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
 TESTSUITE_RESULT=1
@@ -110,7 +110,7 @@ function create_container() {
 
 function run_change_password_test() {
   local tmpdir=$(mktemp -d)
-  mkdir "${tmpdir}/data" && chmod -R a+rwx "${tmpdir}"
+  chmod -R a+rwx "${tmpdir}"
 
   # Create MySQL container with persistent volume and set the initial password
   create_container "testpass1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
@@ -224,9 +224,10 @@ function run_container_creation_tests() {
   try_image_invalid_combinations  -e MYSQL_ROOT_PASSWORD=root_pass
 
   local VERY_LONG_DB_NAME="very_long_database_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  local VERY_LONG_USER_NAME="very_long_user_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass
   assert_container_creation_fails -e MYSQL_USER=\$invalid -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
-  assert_container_creation_fails -e MYSQL_USER=very_long_username -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
+  assert_container_creation_fails -e MYSQL_USER=$VERY_LONG_USER_NAME -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD="\"" -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=\$invalid -e MYSQL_ROOT_PASSWORD=root_pass
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=$VERY_LONG_DB_NAME -e MYSQL_ROOT_PASSWORD=root_pass
@@ -362,7 +363,7 @@ function run_tests() {
   create_container $name $envs
   test_connection "$name" "$USER" "$PASS"
   echo "  Testing scl usage"
-  test_scl_usage $name 'mysql --version' '5.6'
+  test_scl_usage $name 'mysql --version' "$VERSION"
   echo "  Testing login accesses"
   local container_ip
   container_ip=$(get_container_ip $name)
