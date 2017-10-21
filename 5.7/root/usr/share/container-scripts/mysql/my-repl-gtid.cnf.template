@@ -1,6 +1,0 @@
-[mysqld]
-
-gtid_mode     = ON
-log-slave-updates = ON
-enforce-gtid-consistency = ON
-
