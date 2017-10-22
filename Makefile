@@ -2,6 +2,7 @@
 BASE_IMAGE_NAME = mysql
 VERSIONS = 5.6 5.7
 OPENSHIFT_NAMESPACES = 5.5
+DOCKER_BUILD_CONTEXT = ..
 
 # HACK:  Ensure that 'git pull' for old clones doesn't cause confusion.
 # New clones should use '--recursive'.
