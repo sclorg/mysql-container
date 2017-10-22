@@ -8,6 +8,7 @@ function validate_replication_variables() {
     echo "  MYSQL_MASTER_USER"
     echo "  MYSQL_MASTER_PASSWORD"
     echo
+    return 1
   fi
   [[ "$MYSQL_DATABASE" =~ $mysql_identifier_regex ]] || usage "Invalid database name"
   [[ "$MYSQL_MASTER_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL master username"
@@ -15,4 +16,6 @@ function validate_replication_variables() {
   [[ "$MYSQL_MASTER_PASSWORD" =~ $mysql_password_regex   ]] || usage "Invalid MySQL master password"
 }
 
-validate_replication_variables
+if [ -v MYSQL_RUNNING_AS_MASTER ] || [ -v MYSQL_RUNNING_AS_SLAVE ] ; then
+  validate_replication_variables
+fi

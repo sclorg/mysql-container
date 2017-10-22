@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM centos/s2i-core-centos7
 
 # MySQL image for OpenShift.
 #
@@ -11,6 +11,7 @@ FROM centos:centos7
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
 ENV MYSQL_VERSION=5.6 \
+    APP_DATA=/opt/app-root/src \
     HOME=/var/lib/mysql
 
 ENV SUMMARY="MySQL 5.6 SQL database server" \
@@ -35,9 +36,10 @@ EXPOSE 3306
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN yum install -y centos-release-scl && \
-    INSTALL_PKGS="tar rsync gettext hostname bind-utils rh-mysql56" && \
-    yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
+RUN yum install -y yum-utils && \
+    yum install -y centos-release-scl && \
+    INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base shadow-utils rh-mysql56" && \
+    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
     mkdir -p /var/lib/mysql/data && chown -R mysql.0 /var/lib/mysql && \
@@ -56,12 +58,13 @@ ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
 
 COPY 5.6/root-common /
+COPY 5.6/s2i-common/bin/ $STI_SCRIPTS_PATH
 COPY 5.6/root /
 
 # this is needed due to issues with squash
 # when this directory gets rm'd by the container-setup
 # script.
-RUN rm -rf /etc/my.cnf.d/* 
+RUN rm -rf /etc/my.cnf.d/*
 RUN /usr/libexec/container-setup
 
 VOLUME ["/var/lib/mysql/data"]

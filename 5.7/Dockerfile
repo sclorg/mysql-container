@@ -38,7 +38,6 @@ EXPOSE 3306
 # to make sure of that.
 RUN yum install -y yum-utils && \
     yum install -y centos-release-scl && \
-    yum-config-manager --enable centos-sclo-rh-testing && \
     INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base shadow-utils rh-mysql57" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
@@ -59,6 +58,7 @@ ENV BASH_ENV=${CONTAINER_SCRIPTS_PATH}/scl_enable \
     PROMPT_COMMAND=". ${CONTAINER_SCRIPTS_PATH}/scl_enable"
 
 COPY 5.7/root-common /
+COPY 5.7/s2i-common/bin/ $STI_SCRIPTS_PATH
 COPY 5.7/root /
 
 # this is needed due to issues with squash

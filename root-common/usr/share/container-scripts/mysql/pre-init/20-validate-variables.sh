@@ -80,4 +80,6 @@ function validate_variables() {
   fi
 }
 
-validate_variables
+if ! [ -v MYSQL_RUNNING_AS_SLAVE ] ; then
+  validate_variables
+fi

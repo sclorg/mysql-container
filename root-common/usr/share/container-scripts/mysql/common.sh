@@ -41,6 +41,9 @@ function export_setting_variables() {
   fi
 }
 
+# this stores whether the database was initialized from empty datadir
+export MYSQL_DATADIR_FIRST_INIT=false
+
 # Be paranoid and stricter than we should be.
 # https://dev.mysql.com/doc/refman/en/identifiers.html
 mysql_identifier_regex='^[a-zA-Z0-9_]+$'
@@ -139,6 +142,9 @@ mysql $mysql_flags <<EOSQL
 EOSQL
   fi
   log_info 'Initialization finished'
+
+  # remember that the database was just initialized, it may be needed on other places
+  export MYSQL_DATADIR_FIRST_INIT=true
 }
 
 # The 'server_id' number for slave needs to be within 1-4294967295 range.
@@ -158,4 +164,52 @@ function wait_for_mysql_master() {
       --password="${MYSQL_MASTER_PASSWORD}" ping &>/dev/null && log_info "MySQL master is ready" && return 0
     sleep 1
   done
+}
+
+# get_matched_files finds file for image extending
+function get_matched_files() {
+  local custom_dir default_dir
+  custom_dir="$1"
+  default_dir="$2"
+  files_matched="$3"
+  find "$default_dir" -maxdepth 1 -type f -name "$files_matched" -printf "%f\n"
+  [ -d "$custom_dir" ] && find "$custom_dir" -maxdepth 1 -type f -name "$files_matched" -printf "%f\n"
+}
+
+# process_extending_files process extending files in $1 and $2 directories
+# - source all *.sh files
+#   (if there are files with same name source only file from $1)
+function process_extending_files() {
+  local custom_dir default_dir
+  custom_dir=$1
+  default_dir=$2
+
+  while read filename ; do
+    echo "=> sourcing $filename ..."
+    # Custom file is prefered
+    if [ -f $custom_dir/$filename ]; then
+      source $custom_dir/$filename
+    else
+      source $default_dir/$filename
+    fi
+  done <<<"$(get_matched_files "$custom_dir" "$default_dir" '*.sh' | sort -u)"
+}
+
+# process extending config files in $1 and $2 directories
+# - expand variables in *.cnf and copy the files into /etc/my.cnf.d directory
+#   (if there are files with same name source only file from $1)
+function process_extending_config_files() {
+  local custom_dir default_dir
+  custom_dir=$1
+  default_dir=$2
+
+  while read filename ; do
+    echo "=> sourcing $filename ..."
+    # Custom file is prefered
+    if [ -f $custom_dir/$filename ]; then
+       envsubst < $custom_dir/$filename > /etc/my.cnf.d/$filename
+    else
+       envsubst < $default_dir/$filename > /etc/my.cnf.d/$filename
+    fi
+  done <<<"$(get_matched_files "$custom_dir" "$default_dir" '*.cnf' | sort -u)"
 }

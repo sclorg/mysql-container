@@ -10,10 +10,27 @@ set -o errexit
 set -o nounset
 shopt -s nullglob
 
-IMAGE_NAME=${IMAGE_NAME-centos/mysql-${VERSION//.}-centos7-candidate}
+TEST_LIST="\
+run_container_creation_tests
+run_configuration_tests
+run_general_tests
+run_change_password_test
+run_replication_test
+run_doc_test
+run_s2i_test
+run_ssl_test
+"
+
+if [ -e "${IMAGE_NAME:-}" ] ; then
+  echo "Error: IMAGE_NAME must be specified"
+  exit 1
+fi
 
 CIDFILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
 TESTSUITE_RESULT=1
+test_dir=$(readlink -zf $(dirname "${BASH_SOURCE[0]}"))
+
+s2i_args="--force-pull=false "
 
 function cleanup() {
   local cidfile
@@ -58,7 +75,7 @@ function mysql_cmd() {
   local container_ip="$1"; shift
   local login="$1"; shift
   local password="$1"; shift
-  docker run --rm "$IMAGE_NAME" mysql --host "$container_ip" -u"$login" -p"$password" "$@" db
+  docker run --rm ${CONTAINER_EXTRA_ARGS:-} "$IMAGE_NAME" mysql --host "$container_ip" -u"$login" -p"$password" "$@" db
 }
 
 function test_connection() {
@@ -158,6 +175,27 @@ function run_replication_test() {
     fi
     if [[ "${i}" == "${max_attempts}" ]]; then
       echo "The ${slave_ip} failed to register in MASTER"
+      echo "Dumping logs for $(get_cid slave.cid)"
+      docker logs $(get_cid slave.cid)
+      return 1
+    fi
+    sleep 1
+  done
+
+  # do some real work to test replication in practice
+  mysql_cmd "$master_ip" root root -e "CREATE TABLE t1 (a INT); INSERT INTO t1 VALUES (24);"
+
+  # read value from slave and check whether it is expectd
+  for i in $(seq $max_attempts); do
+    set +e
+    result="$(mysql_cmd "${slave_ip}" root root -e "select * from t1 \G" | grep -e ^a | grep 24)"
+    set -e
+    if [[ ! -z "${result}" ]]; then
+      echo "${slave_ip} successfully got value from MASTER ${master_ip}"
+      break
+    fi
+    if [[ "${i}" == "${max_attempts}" ]]; then
+      echo "The ${slave_ip} failed to see value added on MASTER"
       echo "Dumping logs for $(get_cid slave.cid)"
       docker logs $(get_cid slave.cid)
       return 1
@@ -403,28 +441,115 @@ run_doc_test() {
   echo
 }
 
-# Tests.
+_s2i_test_image() {
+  local container_name="$1"
+  local mount_opts="$2"
+  echo "    Testing s2i app image with invalid configuration"
+  assert_container_creation_fails -e MYSQL_USER=root -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=pass
+  echo "    Testing s2i app image with correct configuration"
+  create_container \
+    "$container_name" \
+    --env MYSQL_USER=config_test_user \
+    --env MYSQL_PASSWORD=config_test \
+    --env MYSQL_DATABASE=db \
+    --env MYSQL_OPERATIONS_USER=operations_user \
+    --env MYSQL_OPERATIONS_PASSWORD=operations_pass \
+    ${mount_opts}
 
-run_container_creation_tests
+  test_connection "$container_name" operations_user operations_pass
 
-run_configuration_tests
+  configuration="$(docker exec -t "$(get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
-# Set lower buffer pool size to avoid running out of memory.
-export CONTAINER_ARGS="run-mysqld --innodb_buffer_pool_size=5242880"
+  docker stop "$(get_cid $container_name)" >/dev/null
+}
 
-# Normal tests
-USER=user PASS=pass run_tests no_root
-USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
-# Test with arbitrary uid for the container
-DOCKER_ARGS="-u 12345" USER=user PASS=pass run_tests no_root_altuid
-DOCKER_ARGS="-u 12345" USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root_altuid
+run_s2i_test() {
+  echo "  Testing s2i usage"
+  s2i usage ${s2i_args} ${IMAGE_NAME} &>/dev/null
 
-# Test the password change
-run_change_password_test
+  echo "  Testing s2i build"
+  s2i build file://${test_dir}/test-app ${IMAGE_NAME} ${IMAGE_NAME}-testapp
+  local image_name_backup=${IMAGE_NAME}
+  export IMAGE_NAME=${IMAGE_NAME}-testapp
 
-# Replication tests
-run_replication_test
+  local container_name=s2i_config_build
+  _s2i_test_image "s2i_config_build" ""
 
-run_doc_test
+  # return back original value for IMAGE_NAME
+  export IMAGE_NAME=${image_name_backup}
+
+  echo "  Testing s2i mount"
+  test_app_dir=$(mktemp -d)
+  cp -Lr ${test_dir}/test-app ${test_app_dir}/
+  chown -R 27:27 ${test_app_dir}
+  _s2i_test_image "_s2i_test_mount" "-v ${test_app_dir}/test-app:/opt/app-root/src/:z"
+  rm -rf ${test_app_dir}
+  echo "  Success!"
+}
+
+gen_self_signed_cert() {
+  local output_dir=$1 ; shift
+  local base_name=$1 ; shift
+  mkdir -p ${output_dir}
+  openssl req -newkey rsa:2048 -nodes -keyout ${output_dir}/${base_name}-key.pem -subj '/C=GB/ST=Berkshire/L=Newbury/O=My Server Company' > ${base_name}-req.pem
+  openssl req -new -x509 -nodes -key ${output_dir}/${base_name}-key.pem -batch > ${output_dir}/${base_name}-cert-selfsigned.pem
+}
+
+run_ssl_test() {
+  echo "  Testing ssl usage"
+  test_app_dir=$(mktemp -d)
+  mkdir -p ${test_app_dir}/{mysql-certs,mysql-cfg}
+  gen_self_signed_cert ${test_app_dir}/mysql-certs server
+  echo "[mysqld]
+ssl-key=\${APP_DATA}/mysql-certs/server-key.pem
+ssl-cert=\${APP_DATA}/mysql-certs/server-cert-selfsigned.pem
+" >${test_app_dir}/mysql-cfg/ssl.cnf
+  chown -R 27:27 ${test_app_dir}
+  local ca_cert_path="/opt/app-root/src/mysql-certs/server-cert-selfsigned.pem"
+
+  create_container \
+    "_s2i_test_ssl" \
+    --env MYSQL_USER=ssl_test_user \
+    --env MYSQL_PASSWORD=ssl_test \
+    --env MYSQL_DATABASE=db \
+    -v ${test_app_dir}:/opt/app-root/src/:z
+
+  test_connection "_s2i_test_ssl" ssl_test_user ssl_test
+  ip=$(get_container_ip _s2i_test_ssl)
+
+  # At least MySQL 5.6 requires ssl-ca option on client side, otherwise the ssl is not used
+  CONTAINER_EXTRA_ARGS="-v ${test_app_dir}:/opt/app-root/src/:z"
+  if mysql_cmd "$ip" "ssl_test_user" "ssl_test" --ssl-mode=REQUIRED --ssl-ca=${ca_cert_path} -e 'show status like "Ssl_cipher" \G' | grep 'Value: [A-Z][A-Z0-9-]*' ; then
+    echo "  Success!"
+    rm -rf ${test_app_dir}
+  else
+    echo "  FAIL!"
+    mysql_cmd "$ip" "ssl_test_user" "ssl_test" --ssl-ca=${ca_cert_path} -e 'show status like "%ssl%" \G'
+    return 1
+  fi
+}
+
+function run_general_tests() {
+  # Set lower buffer pool size to avoid running out of memory.
+  export CONTAINER_ARGS="run-mysqld --innodb_buffer_pool_size=5242880"
+
+  # Normal tests
+  USER=user PASS=pass run_tests no_root
+  USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
+  # Test with arbitrary uid for the container
+  DOCKER_ARGS="-u 12345" USER=user PASS=pass run_tests no_root_altuid
+  DOCKER_ARGS="-u 12345" USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root_altuid
+}
+
+function run_all_tests() {
+  for test_case in $TEST_LIST; do
+    : "Running test $test_case"
+    $test_case
+  done;
+}
+
+# Run the chosen tests
+TEST_LIST=${@:-$TEST_LIST} run_all_tests
 
 TESTSUITE_RESULT=0
+
