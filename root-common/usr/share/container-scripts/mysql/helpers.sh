@@ -7,6 +7,14 @@ function log_and_run {
   "$@"
 }
 
+function log_debug {
+  CONTAINER_DEBUG=${CONTAINER_DEBUG:-}
+  if [[ "${CONTAINER_DEBUG,,}" != "true" ]]; then
+    return
+  fi
+  log_info $@
+}
+
 function log_volume_info {
   CONTAINER_DEBUG=${CONTAINER_DEBUG:-}
   if [[ "${CONTAINER_DEBUG,,}" != "true" ]]; then

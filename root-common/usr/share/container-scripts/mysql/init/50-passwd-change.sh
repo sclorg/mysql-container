@@ -4,9 +4,11 @@ password_change() {
   # Set the password for MySQL user and root everytime this container is started.
   # This allows to change the password by editing the deployment configuration.
   if [[ -v MYSQL_USER && -v MYSQL_PASSWORD ]]; then
+    log_debug "About to change password for user '${MYSQL_USER}'."
 mysql $mysql_flags <<EOSQL
       SET PASSWORD FOR '${MYSQL_USER}'@'%' = PASSWORD('${MYSQL_PASSWORD}');
 EOSQL
+    log_debug 'Password for user '${MYSQL_USER}' changed.'
   fi
 
   # The MYSQL_ROOT_PASSWORD is optional, therefore we need to either enable remote
@@ -15,13 +17,14 @@ EOSQL
     # GRANT will create a user if it doesn't exist on 5.6 and lower, but we
     # need to explicitly call CREATE USER in 5.7 and higher
     # then set its password
+    log_debug "About to change password for user 'root'."
     if [ "$MYSQL_VERSION" \> "5.6" ] ; then
 mysql $mysql_flags <<EOSQL
       CREATE USER IF NOT EXISTS 'root'@'%';
 EOSQL
     fi
 mysql $mysql_flags <<EOSQL
-      GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' WITH GRANT OPTION;
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' WITH GRANT OPTION;
 EOSQL
   else
     if [ "$MYSQL_VERSION" \> "5.6" ] ; then
@@ -38,11 +41,15 @@ mysql $mysql_flags <<EOSQL
       FLUSH PRIVILEGES;
 EOSQL
     fi
+    log_debug "Password for 'root' user changed."
   fi
 }
 
 if ! [ -v MYSQL_RUNNING_AS_SLAVE ] ; then
-  password_change
+  if ! password_change ; then
+    log_info "Changing password failed."
+    return 1
+  fi
 fi
 
 unset -f password_change
