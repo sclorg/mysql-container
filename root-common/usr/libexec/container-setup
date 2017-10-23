@@ -54,5 +54,6 @@ restorecon -R /var/lib/mysql
 # arbitrary UID
 # When only specifying user, group is 0, that's why /var/lib/mysql must have
 # owner mysql.0; that allows to avoid a+rwx for this dir
-chmod g+w -R /var/lib/mysql ${MYSQL_CONFIG_FILE}.d
+/usr/libexec/fix-permissions /var/lib/mysql ${MYSQL_CONFIG_FILE}.d ${APP_DATA}/..
+usermod -a -G root mysql
 

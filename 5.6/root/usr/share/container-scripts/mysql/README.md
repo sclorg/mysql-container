@@ -44,7 +44,6 @@ or if it was already present, `mysqld` is executed and will run as PID 1. You ca
  stop the detached container by running `docker stop mysql_database`.
 
 
-
 Environment variables and volumes
 ---------------------------------
 
@@ -140,6 +139,81 @@ your own configuration file, you can override the `MYSQL_DEFAULTS_FILE` env
 variable with the full path of the file you wish to use. For example, the default
 location is `/etc/my.cnf` but you can change it to `/etc/mysql/my.cnf` by setting
  `MYSQL_DEFAULTS_FILE=/etc/mysql/my.cnf`
+
+
+Extending image
+---------------
+This image can be extended using [source-to-image](https://github.com/openshift/source-to-image).
+
+For example, to build a customized MariaDB database image `my-mysql-rhel7`
+with a configuration in `~/image-configuration/` run:
+
+```
+$ s2i build ~/image-configuration/ rhscl/mysql-56-rhel7 my-mysql-rhel7
+```
+
+The directory passed to `s2i build` can contain these directories:
+
+`mysql-cfg/`
+    When starting the container, files from this directory will be used as
+    a configuration for the `mysqld` daemon.
+    `envsubst` command is run on this file to still allow customization of
+    the image using environmental variables
+
+`mysql-pre-init/`
+    Shell scripts (`*.sh`) available in this directory are sourced before
+    `mysqld` daemon is started.
+
+`mysql-init/`
+    Shell scripts (`*.sh`) available in this directory are sourced when
+    `mysqld` daemon is started locally. In this phase, use `${mysql_flags}`
+    to connect to the locally running daemon, for example `mysql $mysql_flags < dump.sql`
+
+Variables that can be used in the scripts provided to s2i:
+
+`$mysql_flags`
+    arguments for the `mysql` tool that will connect to the locally running `mysqld` during initialization
+
+`$MYSQL_RUNNING_AS_MASTER`
+    variable defined when the container is run with `run-mysqld-master` command
+
+`$MYSQL_RUNNING_AS_SLAVE`
+    variable defined when the container is run with `run-mysqld-slave` command
+
+`$MYSQL_DATADIR_FIRST_INIT`
+    variable defined when the container was initialized from the empty data dir
+
+During `s2i build` all provided files are copied into `/opt/app-root/src`
+directory into the resulting image. If some configuration files are present
+in the destination directory, files with the same name are overwritten.
+Also only one file with the same name can be used for customization and user
+provided files are preferred over default files in
+`/usr/share/container-scripts/mysql/`- so it is possible to overwrite them.
+
+Same configuration directory structure can be used to customize the image
+every time the image is started using `docker run`. The directory has to be
+mounted into `/opt/app-root/src/` in the image
+(`-v ./image-configuration/:/opt/app-root/src/`).
+This overwrites customization built into the image.
+
+
+Securing the connection with SSL
+--------------------------------
+In order to secure the connection with SSL, use the extending feature described
+above. In particular, put the SSL certificates into a separate directory:
+
+    sslapp/mysql-certs/server-cert-selfsigned.pem
+    sslapp/mysql-certs/server-key.pem
+
+And then put a separate configuration file into mysql-cfg:
+
+    $> cat sslapp/mysql-cfg/ssl.cnf
+    [mysqld]
+    ssl-key=${APP_DATA}/mysql-certs/server-key.pem
+    ssl-cert=${APP_DATA}/mysql-certs/server-cert-selfsigned.pem
+
+Such a directory `sslapp` can then be mounted into the container with -v,
+or a new container image can be built using s2i.
 
 
 Changing the replication binlog_format
