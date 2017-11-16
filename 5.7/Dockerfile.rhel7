@@ -68,7 +68,8 @@ COPY 5.7/root /
 # when this directory gets rm'd by the container-setup
 # script.
 RUN rm -rf /etc/my.cnf.d/*
-RUN /usr/libexec/container-setup
+# Reset permissions of filesystem to default values
+RUN /usr/libexec/container-setup && rpm-file-permissions
 
 VOLUME ["/var/lib/mysql/data"]
 
