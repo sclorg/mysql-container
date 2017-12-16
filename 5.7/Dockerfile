@@ -29,7 +29,8 @@ LABEL summary="$SUMMARY" \
       com.redhat.component="rh-mysql57-docker" \
       name="centos/mysql-57-centos7" \
       version="5.7" \
-      release="1"
+      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 centos/mysql-57-centos7" \
+      maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
 

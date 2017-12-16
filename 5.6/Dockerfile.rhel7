@@ -29,7 +29,8 @@ LABEL summary="$SUMMARY" \
       com.redhat.component="rh-mysql56-docker" \
       name="rhscl/mysql-56-rhel7" \
       version="5.6" \
-      release="1"
+      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhscl/mysql-56-rhel7" \
+      maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
 
