@@ -2,7 +2,7 @@ MySQL SQL Database Server Docker Image
 ======================================
 
 This repository contains Dockerfiles for MySQL images for OpenShift and general usage.
-Users can choose between RHEL and CentOS based images.
+Users can choose between RHEL, Fedora and CentOS based images.
 
 For more information about using these images with OpenShift, please see the
 official [OpenShift Documentation](https://docs.openshift.org/latest/using_images/db_images/mysql.html).
@@ -32,7 +32,8 @@ Choose either the CentOS7 or RHEL7 based image:
 
 *  **RHEL7 based image**
 
-    This image is available in Red Hat Container Registry. To download it run:
+    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/mysql-57-rhel7).
+    To download it run:
 
     ```
     $ docker pull registry.access.redhat.com/rhscl/mysql-57-rhel7

@@ -50,39 +50,75 @@ Environment variables and volumes
 The image recognizes the following environment variables that you can set during
 initialization by passing `-e VAR=VALUE` to the Docker run command.
 
-|    Variable name       |    Description                            |
-| :--------------------- | ----------------------------------------- |
-|  `MYSQL_USER`          | User name for MySQL account to be created |
-|  `MYSQL_PASSWORD`      | Password for the user account             |
-|  `MYSQL_DATABASE`      | Database name                             |
-|  `MYSQL_ROOT_PASSWORD` | Password for the root user (optional)     |
+**`MYSQL_USER`**  
+       User name for MySQL account to be created
+
+**`MYSQL_PASSWORD`**  
+       Password for the user account
+
+**`MYSQL_DATABASE`**  
+       Database name
+
+**`MYSQL_ROOT_PASSWORD`**  
+       Password for the root user (optional)
+
 
 The following environment variables influence the MySQL configuration file. They are all optional.
 
-|    Variable name                |    Description                                                    |    Default
-| :------------------------------ | ----------------------------------------------------------------- | -------------------------------
-|  `MYSQL_LOWER_CASE_TABLE_NAMES` | Sets how the table names are stored and compared                  |  0
-|  `MYSQL_MAX_CONNECTIONS`        | The maximum permitted number of simultaneous client connections   |  151
-|  `MYSQL_MAX_ALLOWED_PACKET`     | The maximum size of one packet or any generated/intermediate string | 200M
-|  `MYSQL_FT_MIN_WORD_LEN`        | The minimum length of the word to be included in a FULLTEXT index |  4
-|  `MYSQL_FT_MAX_WORD_LEN`        | The maximum length of the word to be included in a FULLTEXT index |  20
-|  `MYSQL_AIO`                    | Controls the `innodb_use_native_aio` setting value in case the native AIO is broken. See http://help.directadmin.com/item.php?id=529 |  1
-|  `MYSQL_TABLE_OPEN_CACHE`       | The number of open tables for all threads                         |  400
-|  `MYSQL_KEY_BUFFER_SIZE`        | The size of the buffer used for index blocks                      |  32M (or 10% of available memory)
-|  `MYSQL_SORT_BUFFER_SIZE`       | The size of the buffer used for sorting                           |  256K
-|  `MYSQL_READ_BUFFER_SIZE`       | The size of the buffer used for a sequential scan                 |  8M (or 5% of available memory)
-|  `MYSQL_INNODB_BUFFER_POOL_SIZE`| The size of the buffer pool where InnoDB caches table and index data |  32M (or 50% of available memory)
-|  `MYSQL_INNODB_LOG_FILE_SIZE`   | The size of each log file in a log group                          |  8M (or 15% of available available)
-|  `MYSQL_INNODB_LOG_BUFFER_SIZE` | The size of the buffer that InnoDB uses to write to the log files on disk | 8M (or 15% of available memory)
-|  `MYSQL_DEFAULTS_FILE`          | Point to an alternative configuration file                        |  /etc/my.cnf
-|  `MYSQL_BINLOG_FORMAT`          | Set sets the binlog format, supported values are `row` and `statement` | statement
-|  `MYSQL_LOG_QUERIES_ENABLED`    | To enable query logging set this to `1`                           | 0
+**`MYSQL_LOWER_CASE_TABLE_NAMES (default: 0)`**  
+       Sets how the table names are stored and compared
+
+**`MYSQL_MAX_CONNECTIONS (default: 151)`**  
+       The maximum permitted number of simultaneous client connections
+
+**`MYSQL_MAX_ALLOWED_PACKET (default: 200M)`**  
+       The maximum size of one packet or any generated/intermediate string
+
+**`MYSQL_FT_MIN_WORD_LEN (default: 4)`**  
+       The minimum length of the word to be included in a FULLTEXT index
+
+**`MYSQL_FT_MAX_WORD_LEN (default: 20)`**  
+       The maximum length of the word to be included in a FULLTEXT index
+
+**`MYSQL_AIO (default: 1)`**  
+       Controls the `innodb_use_native_aio` setting value in case the native AIO is broken. See http://help.directadmin.com/item.php?id=529
+
+**`MYSQL_TABLE_OPEN_CACHE (default: 400)`**  
+       The number of open tables for all threads
+
+**`MYSQL_KEY_BUFFER_SIZE (default: 32M or 10% of available memory)`**  
+       The size of the buffer used for index blocks
+
+**`MYSQL_SORT_BUFFER_SIZE (default: 256K)`**  
+       The size of the buffer used for sorting
+
+**`MYSQL_READ_BUFFER_SIZE (default: 8M or 5% of available memory)`**  
+       The size of the buffer used for a sequential scan
+
+**`MYSQL_INNODB_BUFFER_POOL_SIZE (default: 32M or 50% of available memory)`**  
+       The size of the buffer pool where InnoDB caches table and index data
+
+**`MYSQL_INNODB_LOG_FILE_SIZE (default: 8M or 15% of available available)`**  
+       The size of each log file in a log group
+
+**`MYSQL_INNODB_LOG_BUFFER_SIZE (default: 8M or 15% of available memory)`**  
+       The size of the buffer that InnoDB uses to write to the log files on disk
+
+**`MYSQL_DEFAULTS_FILE (default: /etc/my.cnf)`**  
+       Point to an alternative configuration file
+
+**`MYSQL_BINLOG_FORMAT (default: statement)`**  
+       Set sets the binlog format, supported values are `row` and `statement`
+
+**`MYSQL_LOG_QUERIES_ENABLED (default: 0)`**  
+       To enable query logging set this to `1`
+
 
 You can also set the following mount points by passing the `-v /host:/container` flag to Docker.
 
-|  Volume mount point      | Description          |
-| :----------------------- | -------------------- |
-|  `/var/lib/mysql/data`   | MySQL data directory |
+**`/var/lib/mysql/data`**  
+       MySQL data directory
+
 
 **Notice: When mouting a directory from the host into the container, ensure that the mounted
 directory has the appropriate permissions and that the owner and group of the directory
@@ -96,13 +132,21 @@ When the MySQL image is run with the `--memory` parameter set and you didn't
 specify value for some parameters, their values will be automatically
 calculated based on the available memory.
 
-| Variable name                   | Configuration parameter   | Relative value
-| :-------------------------------| ------------------------- | --------------
-| `MYSQL_KEY_BUFFER_SIZE`         | `key_buffer_size`         | 10%
-| `MYSQL_READ_BUFFER_SIZE`        | `read_buffer_size`        | 5%
-| `MYSQL_INNODB_BUFFER_POOL_SIZE` | `innodb_buffer_pool_size` | 50%
-| `MYSQL_INNODB_LOG_FILE_SIZE`    | `innodb_log_file_size`    | 15%
-| `MYSQL_INNODB_LOG_BUFFER_SIZE`  | `innodb_log_buffer_size`  | 15%
+**`MYSQL_KEY_BUFFER_SIZE (default: 10%)`**  
+       `key_buffer_size`
+
+**`MYSQL_READ_BUFFER_SIZE (default: 5%)`**  
+       `read_buffer_size`
+
+**`MYSQL_INNODB_BUFFER_POOL_SIZE (default: 50%)`**  
+       `innodb_buffer_pool_size`
+
+**`MYSQL_INNODB_LOG_FILE_SIZE (default: 15%)`**  
+       `innodb_log_file_size`
+
+**`MYSQL_INNODB_LOG_BUFFER_SIZE (default: 15%)`**  
+       `innodb_log_buffer_size`
+
 
 
 MySQL root user
