@@ -22,4 +22,3 @@ else
     FLUSH PRIVILEGES;
 EOSQL
 fi
-
