@@ -39,6 +39,7 @@ function export_setting_variables() {
     export MYSQL_INNODB_LOG_FILE_SIZE=${MYSQL_INNODB_LOG_FILE_SIZE:-$((MEMORY_LIMIT_IN_BYTES*15/1024/1024/100))M}
     export MYSQL_INNODB_LOG_BUFFER_SIZE=${MYSQL_INNODB_LOG_BUFFER_SIZE:-$((MEMORY_LIMIT_IN_BYTES*15/1024/1024/100))M}
   fi
+  export MYSQL_UPGRADE=${MYSQL_UPGRADE:-warn}
 }
 
 # this stores whether the database was initialized from empty datadir
@@ -102,6 +103,11 @@ function initialize_database() {
     ${MYSQL_PREFIX}/libexec/mysqld --initialize-insecure --datadir=$MYSQL_DATADIR --ignore-db-dir=lost+found
   fi
   start_local_mysql "$@"
+
+  # Running mysql_upgrade creates the mysql_upgrade_info file in the data dir,
+  # which is necessary to detect which version of the mysqld daemon created the data.
+  # Checking empty file should not take longer than a second and one extra check should not harm.
+  mysql_upgrade --socket=/tmp/mysql.sock
 
   if [ -v MYSQL_RUNNING_AS_SLAVE ]; then
     log_info 'Initialization finished'
@@ -212,4 +218,56 @@ function process_extending_config_files() {
        envsubst < $default_dir/$filename > /etc/my.cnf.d/$filename
     fi
   done <<<"$(get_matched_files "$custom_dir" "$default_dir" '*.cnf' | sort -u)"
+}
+
+# Converts string version to the integer format (5.5.33 is converted to 505,
+# 10.1.23-MariaDB is converted into 1001, etc.
+function version2number() {
+  local version_major=$(echo "$1" | grep -o -e '^[0-9]*\.[0-9]*')
+  printf %d%02d ${version_major%%.*} ${version_major##*.}
+}
+
+# Converts the version in format of an integer into major.minor
+function number2version() {
+  local numver=${1}
+  echo $((numver / 100)).$((numver % 100))
+}
+
+# Prints version of the mysqld that is currently available (string)
+function mysqld_version() {
+  ${MYSQL_PREFIX}/libexec/mysqld -V | awk '{print $3}'
+}
+
+# Returns version from the daemon in integer format
+function mysqld_compat_version() {
+  version2number $(mysqld_version)
+}
+
+# Returns version from the datadir
+function get_datadir_version() {
+  local datadir="$1"
+  local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
+  [ -r "$upgrade_info_file" ] || return
+  local version_text=$(cat "$upgrade_info_file" | head -n 1)
+  version2number "${version_text}"
+}
+
+# Returns name of the file in the datadir that holds version information about the data
+function get_mysql_upgrade_info_file() {
+  local datadir="$1"
+  echo "$datadir/mysql_upgrade_info"
+}
+
+# Writes version string of the daemon into mysql_upgrade_info file (should be only used when the file is missing and only when
+function write_mysql_upgrade_info_file() {
+  local datadir="$1"
+  local version=$(mysqld_version)
+  local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
+  if [ -f "$datadir/mysql_upgrade_info" ] ; then
+    echo "File ${upgrade_info_file} exists, nothing is done."
+  else
+    log_info "Storing version '${version}' information into the data dir '${upgrade_info_file}'"
+    echo "${version}" > "${upgrade_info_file}"
+    mysqld_version >"$datadir/mysql_upgrade_info"
+  fi
 }
