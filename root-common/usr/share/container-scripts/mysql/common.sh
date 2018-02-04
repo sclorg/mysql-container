@@ -96,18 +96,16 @@ function initialize_database() {
   log_info 'Initializing database ...'
   if [[ "$MYSQL_VERSION" < "5.7" ]] ; then
     # Using --rpm since we need mysql_install_db behaves as in RPM
-    log_info 'Running mysql_install_db ...'
-    mysql_install_db --rpm --datadir=$MYSQL_DATADIR
+    log_and_run mysql_install_db --rpm --datadir=$MYSQL_DATADIR
   else
-    log_info "Running mysqld --initialize-insecure ..."
-    ${MYSQL_PREFIX}/libexec/mysqld --initialize-insecure --datadir=$MYSQL_DATADIR --ignore-db-dir=lost+found
+    log_and_run ${MYSQL_PREFIX}/libexec/mysqld --initialize-insecure --datadir=$MYSQL_DATADIR --ignore-db-dir=lost+found
   fi
   start_local_mysql "$@"
 
   # Running mysql_upgrade creates the mysql_upgrade_info file in the data dir,
   # which is necessary to detect which version of the mysqld daemon created the data.
   # Checking empty file should not take longer than a second and one extra check should not harm.
-  mysql_upgrade --socket=/tmp/mysql.sock
+  mysql_upgrade ${mysql_flags}
 
   if [ -v MYSQL_RUNNING_AS_SLAVE ]; then
     log_info 'Initialization finished'

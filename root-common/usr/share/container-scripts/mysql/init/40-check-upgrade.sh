@@ -62,7 +62,7 @@ check_datadir_version() {
           if [ "${MYSQL_UPGRADE}" == 'auto' ] ; then
             log_info "The data directory will be upgraded automatically from ${datadir_version_dot}"\
                      "to version ${mysqld_version_dot}. $(upstream_upgrade_info)"
-            log_and_run mysql_upgrade --socket=/tmp/mysql.sock
+            log_and_run mysql_upgrade ${mysql_flags}
           else
             log_warn "Automatic upgrade is not turned on, proceed with the upgrade."\
                      "In order to upgrade the data directory, run this container with the MYSQL_UPGRADE"\
@@ -83,15 +83,15 @@ check_datadir_version() {
         ;;
 
       force)
-        log_and_run mysql_upgrade --socket=/tmp/mysql.sock --force
+        log_and_run mysql_upgrade ${mysql_flags} --force
         ;;
 
       optimize)
-        log_and_run mysqlcheck --socket=/tmp/mysql.sock --optimize --all-databases --force
+        log_and_run mysqlcheck ${mysql_flags} --optimize --all-databases --force
         ;;
 
       analyze)
-        log_and_run mysqlcheck --socket=/tmp/mysql.sock --analyze --all-databases --force
+        log_and_run mysqlcheck ${mysql_flags} --analyze --all-databases --force
         ;;
 
       disable)
