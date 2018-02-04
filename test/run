@@ -472,7 +472,13 @@ ssl-cert=\${APP_DATA}/mysql-certs/server-cert-selfsigned.pem
 
   # At least MySQL 5.6 requires ssl-ca option on client side, otherwise the ssl is not used
   CONTAINER_EXTRA_ARGS="-v ${test_app_dir}:/opt/app-root/src/:z"
-  if mysql_cmd "$ip" "ssl_test_user" "ssl_test" --ssl-mode=REQUIRED --ssl-ca=${ca_cert_path} -e 'show status like "Ssl_cipher" \G' | grep 'Value: [A-Z][A-Z0-9-]*' ; then
+
+  # MySQL requires --ssl-mode to be set in order to require SSL
+  case ${VERSION} in
+    5*) ssl_mode_opt='--ssl-mode=REQUIRED'
+  esac
+
+  if mysql_cmd "$ip" "ssl_test_user" "ssl_test" ${ssl_mode_opt:-} --ssl-ca=${ca_cert_path} -e 'show status like "Ssl_cipher" \G' | grep 'Value: [A-Z][A-Z0-9-]*' ; then
     echo "  Success!"
     rm -rf ${test_app_dir}
   else
@@ -514,7 +520,7 @@ function run_upgrade_test() {
   mkdir "${tmpdir}/data" && chmod -R a+rwx "${tmpdir}"
 
   # Create MySQL container with persistent volume and set the version from too old version
-  local datadir=${tmpdir}
+  local datadir=${tmpdir}/data
   create_container "testupg1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z
   test_connection testupg1 user foo
@@ -534,7 +540,7 @@ function run_upgrade_test() {
     return 1
   fi
   # Check whether upgrade did not happen
-  if docker logs $(ct_get_cid testupg2) 2>&1 | grep -e 'Running mysql_upgrade --socket=/tmp/mysql.sock' &>/dev/null ; then
+  if docker logs $(ct_get_cid testupg2) 2>&1 | grep -e 'Running mysql_upgrade' &>/dev/null ; then
     echo "Upgrade should not be run when information about version is missing"
     return 1
   fi
@@ -555,7 +561,7 @@ function run_upgrade_test() {
   test_connection testupg3 user foo
   docker stop $(ct_get_cid testupg3) >/dev/null
   # Check whether some upgrade happened
-  if ! docker logs $(ct_get_cid testupg3) 2>&1 | grep -e 'Running mysql_upgrade --socket=/tmp/mysql.sock' &>/dev/null ; then
+  if ! docker logs $(ct_get_cid testupg3) 2>&1 | grep -qe 'Running mysql_upgrade' ; then
     echo "Upgrade did not happen but it should when upgrading from previous version"
     docker logs $(ct_get_cid testupg3)
     return 1
@@ -570,7 +576,7 @@ function run_upgrade_test() {
   test_connection testupg4 user foo
   docker stop $(ct_get_cid testupg4) >/dev/null
   # Check whether some upgrade happened
-  if docker logs $(ct_get_cid testupg4) 2>&1 | grep -e 'Running mysql_upgrade --socket=/tmp/mysql.sock' &>/dev/null ; then
+  if docker logs $(ct_get_cid testupg4) 2>&1 | grep -e 'Running mysql_upgrade' &>/dev/null ; then
     echo "Upgrade happened but it should not when upgrading from current version"
     return 1
   fi
