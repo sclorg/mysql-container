@@ -40,9 +40,9 @@ function cleanup() {
   ct_cleanup
 
   if [ $TESTSUITE_RESULT -eq 0 ] ; then
-    echo "Tests succeeded."
+    echo "Tests for ${IMAGE_NAME} succeeded."
   else
-    echo "Tests failed."
+    echo "Tests for ${IMAGE_NAME} failed."
   fi
 }
 trap cleanup EXIT SIGINT
@@ -618,7 +618,7 @@ function run_upgrade_test() {
 
 function run_all_tests() {
   for test_case in $TEST_LIST; do
-    : "Running test $test_case"
+    echo "Running test $test_case for ${IMAGE_NAME}"
     $test_case
   done;
 }
