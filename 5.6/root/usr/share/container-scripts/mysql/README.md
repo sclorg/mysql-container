@@ -1,4 +1,4 @@
-MySQL 5.6 SQL Database Server Docker image
+MySQL 5.6 SQL Database Server container image
 ==========================================
 
 This container image includes MySQL 5.6 SQL database server for OpenShift and general usage.
