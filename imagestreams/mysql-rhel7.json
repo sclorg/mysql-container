@@ -21,6 +21,9 @@
         "from": {
           "kind": "ImageStreamTag",
           "name": "5.7"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       },
       {
@@ -36,6 +39,9 @@
         "from": {
           "kind": "DockerImage",
           "name": "registry.access.redhat.com/openshift3/mysql-55-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       },
       {
@@ -45,12 +51,15 @@
           "openshift.io/provider-display-name": "Red Hat, Inc.",
           "description": "Provides a MySQL 5.6 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/mysql-container/tree/master/5.6/README.md.",
           "iconClass": "icon-mysql-database",
-          "tags": "mysql",
+          "tags": "hidden,mysql",
           "version": "5.6"
         },
         "from": {
           "kind": "DockerImage",
           "name": "registry.access.redhat.com/rhscl/mysql-56-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       },
       {
@@ -66,6 +75,9 @@
         "from": {
           "kind": "DockerImage",
           "name": "registry.access.redhat.com/rhscl/mysql-57-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
         }
       }
     ]
