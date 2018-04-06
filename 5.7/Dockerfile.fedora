@@ -66,9 +66,10 @@ COPY 5.7/root /
 # this is needed due to issues with squash
 # when this directory gets rm'd by the container-setup
 # script.
-RUN rm -rf /etc/my.cnf.d/*
-# Reset permissions of filesystem to default values
-RUN /usr/libexec/container-setup && rpm-file-permissions
+# Also reset permissions of filesystem to default values
+RUN rm -rf /etc/my.cnf.d/* && \
+    /usr/libexec/container-setup && \
+    rpm-file-permissions
 
 VOLUME ["/var/lib/mysql/data"]
 
