@@ -70,9 +70,7 @@ RUN rm -rf /etc/my.cnf.d/* && \
     /usr/libexec/container-setup && \
     rpm-file-permissions
 
-# Not using VOLUME statement since it's not working in OpenShift Online:
-# https://github.com/sclorg/httpd-container/issues/30
-# VOLUME ["/var/lib/mysql/data"]
+VOLUME ["/var/lib/mysql/data"]
 
 USER 27
 
