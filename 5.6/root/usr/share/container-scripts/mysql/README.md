@@ -292,19 +292,21 @@ we can control it by setting `MYSQL_UPGRADE` variable, which can have one or mor
    the version file is created if not exist, but no `mysql_upgrade` will be called.
    However, this automatic creation will be removed after few months, since the version should be
    created on most deployments at that point.
- * `auto` -- `mysql_upgrade` is run at the beginning of the container start, if the data version
-   can be determined and the data come with the very previous version. A warning is printed if the data
-   come from even older or newer version. This value effectively enables automatic upgrades,
+ * `auto` -- `mysql_upgrade` is run at the beginning of the container start, when the local
+   daemon is running, but only if the data version can be determined and the data come
+   with the very previous version. A warning is printed if the data come from even older
+   or newer version. This value effectively enables automatic upgrades,
    but it is always risky and users should still back-up all the data before starting the newer container.
    Set this option only if you have very good back-ups at any moment and you are fine to fail-over
    from the back-up.
- * `force` -- `mysql_upgrade` is run right after the daemon has started, no matter what version the data
-   come from. This is also the way to create the missing version file `mysql_upgrade_info` if not present
+ * `force` -- `mysql_upgrade --force` is run at the beginning of the container start, when the local
+   daemon is running, no matter what version of the daemon the data come from.
+   This is also the way to create the missing version file `mysql_upgrade_info` if not present
    in the root of the data directory; this file holds information about the version of the data.
- * `optimize` -- runs `mysqlcheck --optimize` before starting the mysqld daemon, no matter what version
-   of the data is detected. It optimizes all the tables.
- * `analyze` -- runs `mysqlcheck --analyze` before starting the mysqld daemon, no matter what version
-   of the data is detected. It analyzes all the tables.
+ * `optimize` -- runs `mysqlcheck --optimize` at the beginning of the container start, when the local
+   daemon is running, no matter what version of the data is detected. It optimizes all the tables.
+ * `analyze` -- runs `mysqlcheck --analyze` at the beginning of the container start, when the local
+   daemon is running, no matter what version of the data is detected. It analyzes all the tables.
  * `disable` -- nothing is done regarding data directory version.
 
 Multiple values are separated by comma and run in-order, e.g. `MYSQL_UPGRADE="optimize,analyze"`.

@@ -35,7 +35,7 @@ check_datadir_version() {
           write_mysql_upgrade_info_file "${MYSQL_DATADIR}"
           continue
           # This is currently a dead-code, but should be enabled after the mysql_upgrade_info
-          # file gets to the deployments (after few monts most of the deployments should already have the file)
+          # file gets to the deployments (after few months most of the deployments should already have the file)
           log_warn "Version of the data could not be determined."\
                    "Running such a container is risky."\
                    "The current daemon version is ${mysqld_version_dot}."\
@@ -66,7 +66,7 @@ check_datadir_version() {
           else
             log_warn "Automatic upgrade is not turned on, proceed with the upgrade."\
                      "In order to upgrade the data directory, run this container with the MYSQL_UPGRADE"\
-                     "environment variable set to 'auto' or run running mysql_upgrade manually. $(upstream_upgrade_info)"
+                     "environment variable set to 'auto' or run mysql_upgrade manually. $(upstream_upgrade_info)"
           fi
         else
           log_warn "MySQL server is version ${mysqld_version_dot} and datadir is version"\

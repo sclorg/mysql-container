@@ -241,7 +241,7 @@ function mysqld_compat_version() {
   version2number $(mysqld_version)
 }
 
-# Returns version from the datadir
+# Returns version from the datadir in the integer format
 function get_datadir_version() {
   local datadir="$1"
   local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
@@ -256,7 +256,10 @@ function get_mysql_upgrade_info_file() {
   echo "$datadir/mysql_upgrade_info"
 }
 
-# Writes version string of the daemon into mysql_upgrade_info file (should be only used when the file is missing and only when
+# Writes version string of the daemon into mysql_upgrade_info file
+# (should be only used when the file is missing and only during limited time;
+# once most deployments include this version file, we should leave it on
+# scripts to generate the file right after initialization or when upgrading)
 function write_mysql_upgrade_info_file() {
   local datadir="$1"
   local version=$(mysqld_version)
