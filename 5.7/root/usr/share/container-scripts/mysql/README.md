@@ -284,32 +284,34 @@ faster for large data directory, but only possible if upgrading from the very pr
 so skipping versions is not supported.
 
 This container detects whether the data needs to be upgraded using `mysql_upgrade` and
-we can control it by setting `MYSQL_UPGRADE` variable, which can have one or more of the following values:
+we can control it by setting `MYSQL_DATADIR_ACTION` variable, which can have one or more of the following values:
 
- * `warn` -- If the data version can be determined and the data come from a different version
+ * `upgrade-warn` -- If the data version can be determined and the data come from a different version
    of the daemon, a warning is printed but the container starts. This is the default value.
    Since historically the version file `mysql_upgrade_info` was not created, when using this option,
    the version file is created if not exist, but no `mysql_upgrade` will be called.
    However, this automatic creation will be removed after few months, since the version should be
    created on most deployments at that point.
- * `auto` -- `mysql_upgrade` is run at the beginning of the container start, when the local
+ * `upgrade-auto` -- `mysql_upgrade` is run at the beginning of the container start, when the local
    daemon is running, but only if the data version can be determined and the data come
    with the very previous version. A warning is printed if the data come from even older
    or newer version. This value effectively enables automatic upgrades,
    but it is always risky and users should still back-up all the data before starting the newer container.
    Set this option only if you have very good back-ups at any moment and you are fine to fail-over
    from the back-up.
- * `force` -- `mysql_upgrade --force` is run at the beginning of the container start, when the local
+ * `upgrade-force` -- `mysql_upgrade --force` is run at the beginning of the container start, when the local
    daemon is running, no matter what version of the daemon the data come from.
    This is also the way to create the missing version file `mysql_upgrade_info` if not present
    in the root of the data directory; this file holds information about the version of the data.
- * `optimize` -- runs `mysqlcheck --optimize` at the beginning of the container start, when the local
-   daemon is running, no matter what version of the data is detected. It optimizes all the tables.
- * `analyze` -- runs `mysqlcheck --analyze` at the beginning of the container start, when the local
-   daemon is running, no matter what version of the data is detected. It analyzes all the tables.
+
+There are also some other actions that you may want to run at the beginning of the container start,
+when the local daemon is running, no matter what version of the data is detected:
+
+ * `optimize` -- runs `mysqlcheck --optimize`. It optimizes all the tables.
+ * `analyze` -- runs `mysqlcheck --analyze`. It analyzes all the tables.
  * `disable` -- nothing is done regarding data directory version.
 
-Multiple values are separated by comma and run in-order, e.g. `MYSQL_UPGRADE="optimize,analyze"`.
+Multiple values are separated by comma and run in-order, e.g. `MYSQL_DATADIR_ACTION="optimize,analyze"`.
 
 
 Changing the replication binlog_format

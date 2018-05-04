@@ -548,16 +548,16 @@ function run_upgrade_test() {
   # Create version file that is too old
   echo "  Testing upgrade from too old data"
   echo "5.0.12" >${datadir}/mysql_upgrade_info
-  # Create another container with same data and upgrade set to 'auto'
+  # Create another container with same data and upgrade set to 'upgrade-auto'
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_UPGRADE=auto 2>/dev/null
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto 2>/dev/null
 
   # Create version file that we can upgrade from
   echo "  Testing upgrade from previous version"
   echo "$(get_previous_major_version ${VERSION}).12" >${datadir}/mysql_upgrade_info
-  # Create another container with same data and upgrade set to 'auto'
+  # Create another container with same data and upgrade set to 'upgrade-aauto'
   create_container "testupg3" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_UPGRADE=auto
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto
   test_connection testupg3 user foo
   docker stop $(ct_get_cid testupg3) >/dev/null
   # Check whether some upgrade happened
@@ -570,9 +570,9 @@ function run_upgrade_test() {
   # Create version file that we don't need to upgrade from
   echo "  Testing upgrade from the same version"
   echo "${VERSION}.12" >${datadir}/mysql_upgrade_info
-  # Create another container with same data and upgrade set to 'auto'
+  # Create another container with same data and upgrade set to 'upgrade-aauto'
   create_container "testupg4" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_UPGRADE=auto
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto
   test_connection testupg4 user foo
   docker stop $(ct_get_cid testupg4) >/dev/null
   # Check whether some upgrade happened
@@ -584,7 +584,7 @@ function run_upgrade_test() {
   # Create second container with same data and upgrade set to 'analyze'
   echo "  Testing running --analyze"
   create_container "testupg5" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_UPGRADE=analyze
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=analyze
   test_connection testupg5 user foo
   docker stop $(ct_get_cid testupg5) >/dev/null
   # Check whether analyze happened
@@ -596,7 +596,7 @@ function run_upgrade_test() {
   # Create another container with same data and upgrade set to 'optimize'
   echo "  Testing running --optimize"
   create_container "testupg6" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_UPGRADE=optimize
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=optimize
   test_connection testupg6 user foo
   docker stop $(ct_get_cid testupg6) >/dev/null
   # Check whether optimize happened
@@ -608,9 +608,8 @@ function run_upgrade_test() {
   # Create version file that we cannot upgrade from
   echo "  Testing upgrade from the future version"
   echo "20.1.12" >${datadir}/mysql_upgrade_info
-  # Create another container with same data and upgrade set to 'optimize'
   assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_UPGRADE=auto 2>/dev/null
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto 2>/dev/null
 
   echo "  Upgrade tests succeeded!"
   echo

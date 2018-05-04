@@ -17,10 +17,10 @@ check_datadir_version() {
   local datadir_version_dot=$(number2version "${datadir_version}")
   local mysqld_version_dot=$(number2version "${mysqld_version}")
 
-  for upgrade_action in ${MYSQL_UPGRADE//,/ } ; do
-    log_info "Running upgrade action: ${upgrade_action}"
-    case ${upgrade_action} in
-      auto|warn)
+  for datadir_action in ${MYSQL_DATADIR_ACTION//,/ } ; do
+    log_info "Running datadir action: ${datadir_action}"
+    case ${datadir_action} in
+      upgrade-auto|upgrade-warn)
         if [ -z "${datadir_version}" ] || [ "${datadir_version}" -eq 0 ] ; then
           # Writing the info file, since historically it was not written
           log_warn "Version of the data could not be determined."\
@@ -29,7 +29,7 @@ check_datadir_version() {
                    "In order to allow seamless updates to the next higher version in the future,"\
                    "the file mysql_upgrade_info will be created."\
                    "If the data directory was created with a different version than ${mysqld_version_dot},"\
-                   "it is required to run this container with the MYSQL_UPGRADE environment variable"\
+                   "it is required to run this container with the MYSQL_DATADIR_ACTION environment variable"\
                    "set to 'force', or run 'mysql_upgrade' utility manually; the mysql_upgrade tool"\
                    "checks the tables and creates such a file as well. $(upstream_upgrade_info)"
           write_mysql_upgrade_info_file "${MYSQL_DATADIR}"
@@ -45,7 +45,7 @@ check_datadir_version() {
                    "that includes version information (${mysqld_version_dot} in this case) in the root"\
                    "of the data directory."\
                    "In order to create the 'mysql_upgrade_info' file, either run this container with"\
-                   "the MYSQL_UPGRADE environment variable set to 'force', or run 'mysql_upgrade' utility"\
+                   "the MYSQL_DATADIR_ACTION environment variable set to 'force', or run 'mysql_upgrade' utility"\
                    "manually; the mysql_upgrade tool checks the tables and creates such a file as well."\
                    "That will enable correct upgrade check in the future. $(upstream_upgrade_info)"
         fi
@@ -59,14 +59,14 @@ check_datadir_version() {
         if [ $(( ${datadir_version} + 1 )) -eq "${mysqld_version}" -o "${datadir_version}" -eq 505 -a "${mysqld_version}" -eq 1000 ] ; then
           log_warn "MySQL server is version ${mysqld_version_dot} and datadir is version"\
                    "${datadir_version_dot}, which is a compatible combination."
-          if [ "${MYSQL_UPGRADE}" == 'auto' ] ; then
+          if [ "${MYSQL_DATADIR_ACTION}" == 'upgrade-auto' ] ; then
             log_info "The data directory will be upgraded automatically from ${datadir_version_dot}"\
                      "to version ${mysqld_version_dot}. $(upstream_upgrade_info)"
             log_and_run mysql_upgrade ${mysql_flags}
           else
             log_warn "Automatic upgrade is not turned on, proceed with the upgrade."\
-                     "In order to upgrade the data directory, run this container with the MYSQL_UPGRADE"\
-                     "environment variable set to 'auto' or run mysql_upgrade manually. $(upstream_upgrade_info)"
+                     "In order to upgrade the data directory, run this container with the MYSQL_DATADIR_ACTION"\
+                     "environment variable set to 'upgrade-auto' or run mysql_upgrade manually. $(upstream_upgrade_info)"
           fi
         else
           log_warn "MySQL server is version ${mysqld_version_dot} and datadir is version"\
@@ -77,12 +77,12 @@ check_datadir_version() {
                      "dumping data and load them again into a fresh instance. $(upstream_upgrade_info)"
           fi
           log_warn "Consider restoring the database from a back-up. To ignore this"\
-                   "warning, set 'MYSQL_UPGRADE' variable to 'force', but this may result in data corruption. $(upstream_upgrade_info)"
+                   "warning, set 'MYSQL_DATADIR_ACTION' variable to 'upgrade-force', but this may result in data corruption. $(upstream_upgrade_info)"
           return 1
         fi
         ;;
 
-      force)
+      upgrade-force)
         log_and_run mysql_upgrade ${mysql_flags} --force
         ;;
 
@@ -95,10 +95,10 @@ check_datadir_version() {
         ;;
 
       disable)
-        log_info "Nothing is done about the data directory version."
+        log_info "Nothing is done about the data directory."
         ;;
       *)
-        log_warn "Unknown value of MYSQL_UPGRADE variable: '${MYSQL_UPGRADE}', ignoring."
+        log_warn "Unknown value of MYSQL_DATADIR_ACTION variable: '${MYSQL_DATADIR_ACTION}', ignoring."
         ;;
     esac
   done
