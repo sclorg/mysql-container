@@ -16,7 +16,6 @@ For more information about concepts used in these container images, see the
 Versions
 ---------------
 MySQL versions currently provided are:
-* [MySQL 5.6](5.6)
 * [MySQL 5.7](5.7)
 
 RHEL versions currently supported are:
@@ -76,9 +75,6 @@ This variable must be set to a list with possible versions (subdirectories).**
 
 Usage
 ---------------------------------
-
-For information about usage of Dockerfile for MySQL 5.6,
-see [usage documentation](5.6).
 
 For information about usage of Dockerfile for MySQL 5.7,
 see [usage documentation](5.7).
