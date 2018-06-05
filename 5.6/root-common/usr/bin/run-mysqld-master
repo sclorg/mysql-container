@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# This is an entrypoint that runs the MySQL server in the 'master' mode.
+#
+
+export_vars=$(cgroup-limits); export $export_vars
+source ${CONTAINER_SCRIPTS_PATH}/common.sh
+set -eu
+if [[ -v DEBUG_IGNORE_SCRIPT_FAILURES ]]; then
+  set +e
+fi
+
+export_setting_variables
+
+log_volume_info $MYSQL_DATADIR
+
+export MYSQL_RUNNING_AS_MASTER=1
+
+# The 'server-id' for master needs to be constant
+export MYSQL_SERVER_ID=1
+log_info "The 'master' server-id is ${MYSQL_SERVER_ID}"
+
+# pre-init files
+process_extending_files ${APP_DATA}/mysql-pre-init/ ${CONTAINER_SCRIPTS_PATH}/pre-init/
+
+if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
+  initialize_database "$@"
+else
+  start_local_mysql "$@"
+fi
+
+log_info 'Setting passwords ...'
+[ -f ${CONTAINER_SCRIPTS_PATH}/passwd-change.sh ] && source ${CONTAINER_SCRIPTS_PATH}/passwd-change.sh
+
+# Setup the 'master' replication on the MySQL server
+mysql $mysql_flags <<EOSQL
+  GRANT REPLICATION SLAVE ON *.* TO '${MYSQL_MASTER_USER}'@'%' IDENTIFIED BY '${MYSQL_MASTER_PASSWORD}';
+  FLUSH PRIVILEGES;
+EOSQL
+
+# init files
+process_extending_files ${APP_DATA}/mysql-init/ ${CONTAINER_SCRIPTS_PATH}/init/
+
+# Restart the MySQL server with public IP bindings
+shutdown_local_mysql
+unset_env_vars
+log_volume_info $MYSQL_DATADIR
+log_info 'Running final exec -- Only MySQL server logs after this point'
+exec ${MYSQL_PREFIX}/libexec/mysqld --defaults-file=$MYSQL_DEFAULTS_FILE "$@" 2>&1
