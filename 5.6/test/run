@@ -1,0 +1,629 @@
+#!/bin/bash
+#
+# Test the MySQL image.
+#
+# IMAGE_NAME specifies the name of the candidate image used for testing.
+# The image has to be available before this script is executed.
+#
+
+set -o errexit
+set -o nounset
+shopt -s nullglob
+
+THISDIR=$(dirname ${BASH_SOURCE[0]})
+source ${THISDIR}/test-lib.sh
+
+TEST_LIST="\
+run_container_creation_tests
+run_configuration_tests
+run_general_tests
+run_change_password_test
+run_replication_test
+run_doc_test
+run_s2i_test
+run_ssl_test
+run_upgrade_test
+"
+
+if [ -e "${IMAGE_NAME:-}" ] ; then
+  echo "Error: IMAGE_NAME must be specified"
+  exit 1
+fi
+
+CID_FILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
+TESTSUITE_RESULT=1
+test_dir="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))"
+
+s2i_args="--pull-policy=never "
+
+function cleanup() {
+  ct_cleanup
+
+  if [ $TESTSUITE_RESULT -eq 0 ] ; then
+    echo "Tests for ${IMAGE_NAME} succeeded."
+  else
+    echo "Tests for ${IMAGE_NAME} failed."
+  fi
+}
+trap cleanup EXIT SIGINT
+
+function mysql_cmd() {
+  local container_ip="$1"; shift
+  local login="$1"; shift
+  local password="$1"; shift
+  docker run --rm ${CONTAINER_EXTRA_ARGS:-} "$IMAGE_NAME" mysql --host "$container_ip" -u"$login" -p"$password" "$@" db
+}
+
+function test_connection() {
+  local name=$1 ; shift
+  local login=$1 ; shift
+  local password=$1 ; shift
+  local ip
+  ip=$(ct_get_cip $name)
+  echo "  Testing MySQL connection to $ip..."
+  local max_attempts=20
+  local sleep_time=2
+  local i
+  local status=''
+  echo -n "    Trying to connect..."
+  for i in $(seq $max_attempts); do
+    local status=$(docker inspect -f '{{.State.Status}}' $(ct_get_cid "${name}"))
+    if [ "${status}" != 'running' ] ; then
+      break;
+    fi
+    echo -n "."
+    if mysql_cmd "$ip" "$login" "$password" &>/dev/null <<< 'SELECT 1;'; then
+      echo " OK"
+      echo "  Success!"
+      return 0
+    fi
+    sleep $sleep_time
+  done
+  echo " FAIL"
+  echo "  Giving up: Failed to connect."
+  if [ "${status}" == 'running' ] ; then
+    echo "  Container is still running."
+  else
+    local exit_status=$(docker inspect -f '{{.State.ExitCode}}' ${name})
+    echo "  Container finised with exit code ${exit_status}."
+  fi
+  echo "Logs:"
+  docker logs $(ct_get_cid $name)
+  return 1
+}
+
+function test_mysql() {
+  local container_ip="$1"
+  local login="$2"
+  local password="$3"
+
+  echo "  Testing MySQL"
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo1", "bar1");'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo2", "bar2");'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo3", "bar3");'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'SELECT * FROM tbl;'
+  mysql_cmd "$container_ip" "$login" "$password" <<< 'DROP TABLE tbl;'
+  echo "  Success!"
+}
+
+function create_container() {
+  local name=$1 ; shift
+  cidfile="$CID_FILE_DIR/$name"
+  # create container with a cidfile in a directory for cleanup
+  local container_id
+  container_id="$(docker run ${DOCKER_ARGS:-} --cidfile $cidfile -d "$@" $IMAGE_NAME ${CONTAINER_ARGS:-})"
+  echo "    Created container $container_id"
+}
+
+function run_change_password_test() {
+  local tmpdir=$(mktemp -d)
+  chmod -R a+rwx "${tmpdir}"
+
+  # Create MySQL container with persistent volume and set the initial password
+  create_container "testpass1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
+  test_connection testpass1 user foo
+  docker stop $(ct_get_cid testpass1) >/dev/null
+
+  # Create second container with changed password
+  create_container "testpass2" -e MYSQL_USER=user -e MYSQL_PASSWORD=bar \
+    -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
+  test_connection testpass2 user bar
+
+  # The old password should not work anymore
+  if mysql_cmd "$(ct_get_cip testpass2)" user foo -e 'SELECT 1;'; then
+    return 1
+  fi
+}
+
+function run_replication_test() {
+  local cluster_args="-e MYSQL_MASTER_USER=master -e MYSQL_MASTER_PASSWORD=master -e MYSQL_DATABASE=db"
+  local max_attempts=30
+
+  # Run the MySQL master
+  docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_ROOT_PASSWORD=root \
+    -e MYSQL_INNODB_BUFFER_POOL_SIZE=5M \
+    -d --cidfile ${CID_FILE_DIR}/master.cid $IMAGE_NAME mysqld-master >/dev/null
+  local master_ip
+  master_ip=$(ct_get_cip master.cid)
+
+  # Run the MySQL slave
+  docker run $cluster_args -e MYSQL_MASTER_SERVICE_NAME=${master_ip} \
+    -e MYSQL_INNODB_BUFFER_POOL_SIZE=5M \
+    -d --cidfile ${CID_FILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave >/dev/null
+  local slave_ip
+  slave_ip=$(ct_get_cip slave.cid)
+
+  # Now wait till the MASTER will see the SLAVE
+  local i
+  for i in $(seq $max_attempts); do
+    result="$(mysql_cmd "$master_ip" root root -e 'SHOW SLAVE HOSTS;' | grep "$slave_ip" || true)"
+    if [[ -n "${result}" ]]; then
+      echo "${slave_ip} successfully registered as SLAVE for ${master_ip}"
+      break
+    fi
+    if [[ "${i}" == "${max_attempts}" ]]; then
+      echo "The ${slave_ip} failed to register in MASTER"
+      echo "Dumping logs for $(ct_get_cid slave.cid)"
+      docker logs $(ct_get_cid slave.cid)
+      return 1
+    fi
+    sleep 1
+  done
+
+  # do some real work to test replication in practice
+  mysql_cmd "$master_ip" root root -e "CREATE TABLE t1 (a INT); INSERT INTO t1 VALUES (24);"
+
+  # read value from slave and check whether it is expectd
+  for i in $(seq $max_attempts); do
+    set +e
+    result="$(mysql_cmd "${slave_ip}" root root -e "select * from t1 \G" | grep -e ^a | grep 24)"
+    set -e
+    if [[ ! -z "${result}" ]]; then
+      echo "${slave_ip} successfully got value from MASTER ${master_ip}"
+      break
+    fi
+    if [[ "${i}" == "${max_attempts}" ]]; then
+      echo "The ${slave_ip} failed to see value added on MASTER"
+      echo "Dumping logs for $(ct_get_cid slave.cid)"
+      docker logs $(ct_get_cid slave.cid)
+      return 1
+    fi
+    sleep 1
+  done
+}
+
+function assert_login_access() {
+  local container_ip=$1; shift
+  local USER=$1 ; shift
+  local PASS=$1 ; shift
+  local success=$1 ; shift
+
+  if mysql_cmd "$container_ip" "$USER" "$PASS" <<< 'SELECT 1;' ; then
+    if $success ; then
+      echo "    $USER($PASS) access granted as expected"
+      return
+    fi
+  else
+    if ! $success ; then
+      echo "    $USER($PASS) access denied as expected"
+      return
+    fi
+  fi
+  echo "    $USER($PASS) login assertion failed"
+  exit 1
+}
+
+function assert_local_access() {
+  local id="$1" ; shift
+  if docker exec $(ct_get_cid "$id") bash -c 'mysql -uroot <<< "SELECT 1;"' ; then
+    echo "    local access granted as expected"
+    return
+  fi
+  echo "    local access assertion failed"
+  return 1
+}
+
+# Make sure the invocation of docker run fails.
+function assert_container_creation_fails() {
+
+  # Time the docker run command. It should fail. If it doesn't fail,
+  # mysqld will keep running so we kill it with SIGKILL to make sure
+  # timeout returns a non-zero value.
+  local ret=0
+  timeout -s 9 --preserve-status 60s docker run --rm "$@" $IMAGE_NAME >/dev/null || ret=$?
+
+  # Timeout will exit with a high number.
+  if [ $ret -gt 30 ]; then
+    return 1
+  fi
+  echo "  Success!"
+}
+
+function try_image_invalid_combinations() {
+  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_DATABASE=db "$@"
+  assert_container_creation_fails -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db "$@"
+}
+
+function run_container_creation_tests() {
+  echo "  Testing image entrypoint usage"
+  assert_container_creation_fails
+  try_image_invalid_combinations
+  try_image_invalid_combinations  -e MYSQL_ROOT_PASSWORD=root_pass
+
+  local VERY_LONG_DB_NAME="very_long_database_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  local VERY_LONG_USER_NAME="very_long_user_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass
+  assert_container_creation_fails -e MYSQL_USER=\$invalid -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
+  assert_container_creation_fails -e MYSQL_USER=$VERY_LONG_USER_NAME -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
+  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD="\"" -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=root_pass
+  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=\$invalid -e MYSQL_ROOT_PASSWORD=root_pass
+  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=$VERY_LONG_DB_NAME -e MYSQL_ROOT_PASSWORD=root_pass
+  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD="\""
+  assert_container_creation_fails -e MYSQL_USER=root -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=pass
+  echo "  Success!"
+}
+
+function test_config_option() {
+  local container_name="$1"
+  local configuration="$2"
+  local option_name="$3"
+  local option_value="$4"
+
+  if ! echo "$configuration" | grep -qx "$option_name[[:space:]]*=[[:space:]]*$option_value"; then
+    local configs="$(docker exec -t "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; echo /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/* | paste -s')"
+    echo >&2 "FAIL: option '$option_name' should have value '$option_value', but it wasn't found in any of the configuration files ($configs):"
+    echo >&2
+    echo >&2 "$configuration"
+    echo >&2
+    return 1
+  fi
+
+  return 0
+}
+
+function run_configuration_tests() {
+  echo "  Testing image configuration settings"
+
+  local container_name=config_test
+
+  create_container \
+    "$container_name" \
+    --env MYSQL_USER=config_test_user \
+    --env MYSQL_PASSWORD=config_test \
+    --env MYSQL_DATABASE=db \
+    --env MYSQL_LOWER_CASE_TABLE_NAMES=1 \
+    --env MYSQL_LOG_QUERIES_ENABLED=1 \
+    --env MYSQL_MAX_CONNECTIONS=1337 \
+    --env MYSQL_FT_MIN_WORD_LEN=8 \
+    --env MYSQL_FT_MAX_WORD_LEN=15 \
+    --env MYSQL_MAX_ALLOWED_PACKET=10M \
+    --env MYSQL_TABLE_OPEN_CACHE=100 \
+    --env MYSQL_SORT_BUFFER_SIZE=256K \
+    --env MYSQL_KEY_BUFFER_SIZE=16M \
+    --env MYSQL_READ_BUFFER_SIZE=16M \
+    --env MYSQL_INNODB_BUFFER_POOL_SIZE=16M \
+    --env MYSQL_INNODB_LOG_FILE_SIZE=4M \
+    --env MYSQL_INNODB_LOG_BUFFER_SIZE=4M \
+    --env WORKAROUND_DOCKER_BUG_14203=
+    #
+
+  test_connection "$container_name" config_test_user config_test
+
+  # TODO: this check is far from perfect and could be improved:
+  # - we should look for an option in the desired config, not in all of them
+  # - we should respect section of the config (now we have duplicated options from a different sections)
+  local configuration
+  configuration="$(docker exec -t "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+
+  test_config_option "$container_name" "$configuration" lower_case_table_names 1
+  test_config_option "$container_name" "$configuration" general_log 1
+  test_config_option "$container_name" "$configuration" max_connections 1337
+  test_config_option "$container_name" "$configuration" ft_min_word_len 8
+  test_config_option "$container_name" "$configuration" ft_max_word_len 15
+  test_config_option "$container_name" "$configuration" max_allowed_packet 10M
+  test_config_option "$container_name" "$configuration" table_open_cache 100
+  test_config_option "$container_name" "$configuration" sort_buffer_size 256K
+  test_config_option "$container_name" "$configuration" key_buffer_size 16M
+  test_config_option "$container_name" "$configuration" read_buffer_size 16M
+  test_config_option "$container_name" "$configuration" innodb_buffer_pool_size 16M
+  test_config_option "$container_name" "$configuration" innodb_log_file_size 4M
+  test_config_option "$container_name" "$configuration" innodb_log_buffer_size 4M
+
+  docker stop "$(ct_get_cid $container_name)" >/dev/null
+
+  echo "  Success!"
+  echo "  Testing image auto-calculated configuration settings"
+
+  container_name=dynamic_config_test
+
+  DOCKER_ARGS='--memory=256m' create_container \
+    "$container_name" \
+    --env MYSQL_USER=config_test_user \
+    --env MYSQL_PASSWORD=config_test \
+    --env MYSQL_DATABASE=db
+
+  test_connection "$container_name" config_test_user config_test
+
+  configuration="$(docker exec -t "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+
+  test_config_option "$container_name" "$configuration" key_buffer_size 25M
+  test_config_option "$container_name" "$configuration" read_buffer_size 12M
+  test_config_option "$container_name" "$configuration" innodb_buffer_pool_size 128M
+  test_config_option "$container_name" "$configuration" innodb_log_file_size 38M
+  test_config_option "$container_name" "$configuration" innodb_log_buffer_size 38M
+
+  docker stop "$(ct_get_cid $container_name)" >/dev/null
+
+  echo "  Success!"
+}
+
+function run_tests() {
+  local name=$1 ; shift
+  envs="-e MYSQL_USER=$USER -e MYSQL_PASSWORD=$PASS -e MYSQL_DATABASE=db"
+  if [ -v ROOT_PASS ]; then
+    envs="$envs -e MYSQL_ROOT_PASSWORD=$ROOT_PASS"
+  fi
+  create_container $name $envs
+  test_connection "$name" "$USER" "$PASS"
+  echo "  Testing scl usage"
+  ct_scl_usage_old $name 'mysql --version' "$VERSION"
+  echo "  Testing login accesses"
+  local container_ip
+  container_ip=$(ct_get_cip $name)
+  assert_login_access "$container_ip" "$USER" "$PASS" true
+  assert_login_access "$container_ip" "$USER" "${PASS}_foo" false
+  if [ -v ROOT_PASS ]; then
+    assert_login_access "$container_ip" root "$ROOT_PASS" true
+    assert_login_access "$container_ip" root "${ROOT_PASS}_foo" false
+  else
+    assert_login_access "$container_ip" root 'foo' false
+    assert_login_access "$container_ip" root '' false
+  fi
+  assert_local_access "$name"
+  echo "  Success!"
+  test_mysql "$container_ip" "$USER" "$PASS"
+}
+
+run_doc_test() {
+  echo "  Testing documentation in the container image"
+  ct_doc_content_old "MYSQL\_ROOT\_PASSWORD" volume 3306
+  echo "  Success!"
+  echo
+}
+
+_s2i_test_image() {
+  local container_name="$1"
+  local mount_opts="$2"
+  echo "  Testing s2i app image with invalid configuration"
+  assert_container_creation_fails -e MYSQL_USER=root -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=pass
+  echo "  Testing s2i app image with correct configuration"
+  create_container \
+    "$container_name" \
+    --env MYSQL_USER=config_test_user \
+    --env MYSQL_PASSWORD=config_test \
+    --env MYSQL_DATABASE=db \
+    --env MYSQL_OPERATIONS_USER=operations_user \
+    --env MYSQL_OPERATIONS_PASSWORD=operations_pass \
+    ${mount_opts}
+
+  test_connection "$container_name" operations_user operations_pass
+
+  configuration="$(docker exec -t "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+
+  docker stop "$(ct_get_cid $container_name)" >/dev/null
+}
+
+run_s2i_test() {
+  echo "  Testing s2i usage"
+  s2i usage ${s2i_args} ${IMAGE_NAME} &>/dev/null
+
+  echo "  Testing s2i build"
+  s2i build file://${test_dir}/test-app ${IMAGE_NAME} ${IMAGE_NAME}-testapp
+  local image_name_backup=${IMAGE_NAME}
+  export IMAGE_NAME=${IMAGE_NAME}-testapp
+
+  local container_name=s2i_config_build
+  _s2i_test_image "s2i_config_build" ""
+
+  # return back original value for IMAGE_NAME
+  export IMAGE_NAME=${image_name_backup}
+
+  echo "  Testing s2i mount"
+  test_app_dir=$(mktemp -d)
+  cp -Lr ${test_dir}/test-app ${test_app_dir}/
+  chown -R 27:27 ${test_app_dir}
+  _s2i_test_image "_s2i_test_mount" "-v ${test_app_dir}/test-app:/opt/app-root/src/:z"
+  rm -rf ${test_app_dir}
+  echo "  Success!"
+}
+
+gen_self_signed_cert() {
+  local output_dir=$1 ; shift
+  local base_name=$1 ; shift
+  mkdir -p ${output_dir}
+  openssl req -newkey rsa:2048 -nodes -keyout ${output_dir}/${base_name}-key.pem -subj '/C=GB/ST=Berkshire/L=Newbury/O=My Server Company' > ${base_name}-req.pem
+  openssl req -new -x509 -nodes -key ${output_dir}/${base_name}-key.pem -batch > ${output_dir}/${base_name}-cert-selfsigned.pem
+}
+
+run_ssl_test() {
+  echo "  Testing ssl usage"
+  test_app_dir=$(mktemp -d)
+  mkdir -p ${test_app_dir}/{mysql-certs,mysql-cfg}
+  gen_self_signed_cert ${test_app_dir}/mysql-certs server
+  echo "[mysqld]
+ssl-key=\${APP_DATA}/mysql-certs/server-key.pem
+ssl-cert=\${APP_DATA}/mysql-certs/server-cert-selfsigned.pem
+" >${test_app_dir}/mysql-cfg/ssl.cnf
+  chown -R 27:27 ${test_app_dir}
+  local ca_cert_path="/opt/app-root/src/mysql-certs/server-cert-selfsigned.pem"
+
+  create_container \
+    "_s2i_test_ssl" \
+    --env MYSQL_USER=ssl_test_user \
+    --env MYSQL_PASSWORD=ssl_test \
+    --env MYSQL_DATABASE=db \
+    -v ${test_app_dir}:/opt/app-root/src/:z
+
+  test_connection "_s2i_test_ssl" ssl_test_user ssl_test
+  ip=$(ct_get_cip _s2i_test_ssl)
+
+  # At least MySQL 5.6 requires ssl-ca option on client side, otherwise the ssl is not used
+  CONTAINER_EXTRA_ARGS="-v ${test_app_dir}:/opt/app-root/src/:z"
+
+  # MySQL requires --ssl-mode to be set in order to require SSL
+  case ${VERSION} in
+    5*) ssl_mode_opt='--ssl-mode=REQUIRED'
+  esac
+
+  if mysql_cmd "$ip" "ssl_test_user" "ssl_test" ${ssl_mode_opt:-} --ssl-ca=${ca_cert_path} -e 'show status like "Ssl_cipher" \G' | grep 'Value: [A-Z][A-Z0-9-]*' ; then
+    echo "  Success!"
+    rm -rf ${test_app_dir}
+  else
+    echo "  FAIL!"
+    mysql_cmd "$ip" "ssl_test_user" "ssl_test" --ssl-ca=${ca_cert_path} -e 'show status like "%ssl%" \G'
+    return 1
+  fi
+}
+
+function run_general_tests() {
+  # Set lower buffer pool size to avoid running out of memory.
+  export CONTAINER_ARGS="run-mysqld --innodb_buffer_pool_size=5242880"
+
+  # Normal tests
+  USER=user PASS=pass run_tests no_root
+  USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
+  # Test with arbitrary uid for the container
+  DOCKER_ARGS="-u 12345" USER=user PASS=pass run_tests no_root_altuid
+  DOCKER_ARGS="-u 12345" USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root_altuid
+}
+
+function get_previous_major_version() {
+  case "${1}" in
+    5.5) echo "5.1" ;;
+    5.6) echo "5.5" ;;
+    5.7) echo "5.6" ;;
+    8.0) echo "5.7" ;;
+    10.0) echo "5.5" ;;
+    10.1) echo "10.0" ;;
+    10.2) echo "10.1" ;;
+    10.3) echo "10.2" ;;
+    *) echo "Non expected version '${1}'" ; return 1 ;;
+  esac
+}
+
+function run_upgrade_test() {
+  local tmpdir=$(mktemp -d)
+  echo "  Testing upgrade of the container image"
+  mkdir "${tmpdir}/data" && chmod -R a+rwx "${tmpdir}"
+
+  # Create MySQL container with persistent volume and set the version from too old version
+  local datadir=${tmpdir}/data
+  create_container "testupg1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z
+  test_connection testupg1 user foo
+  docker stop $(ct_get_cid testupg1) >/dev/null
+
+  # Simulate datadir without version information
+  rm -f ${datadir}/mysql_upgrade_info
+  echo "  Testing upgrade from data without version"
+  # This should work, but warning should be printed
+  create_container "testupg2" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z
+  test_connection testupg2 user foo
+  docker stop $(ct_get_cid testupg2) >/dev/null
+  # Check whether some information is provided
+  if ! docker logs $(ct_get_cid testupg2) 2>&1 | grep -e 'Version of the data could not be determined' &>/dev/null ; then
+    echo "Information about missing version file is not available in the logs"
+    return 1
+  fi
+  # Check whether upgrade did not happen
+  if docker logs $(ct_get_cid testupg2) 2>&1 | grep -e 'Running mysql_upgrade' &>/dev/null ; then
+    echo "Upgrade should not be run when information about version is missing"
+    return 1
+  fi
+
+  # Create version file that is too old
+  echo "  Testing upgrade from too old data"
+  echo "5.0.12" >${datadir}/mysql_upgrade_info
+  # Create another container with same data and upgrade set to 'upgrade-auto'
+  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto 2>/dev/null
+
+  # Create version file that we can upgrade from
+  echo "  Testing upgrade from previous version"
+  echo "$(get_previous_major_version ${VERSION}).12" >${datadir}/mysql_upgrade_info
+  # Create another container with same data and upgrade set to 'upgrade-aauto'
+  create_container "testupg3" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto
+  test_connection testupg3 user foo
+  docker stop $(ct_get_cid testupg3) >/dev/null
+  # Check whether some upgrade happened
+  if ! docker logs $(ct_get_cid testupg3) 2>&1 | grep -qe 'Running mysql_upgrade' ; then
+    echo "Upgrade did not happen but it should when upgrading from previous version"
+    docker logs $(ct_get_cid testupg3)
+    return 1
+  fi
+
+  # Create version file that we don't need to upgrade from
+  echo "  Testing upgrade from the same version"
+  echo "${VERSION}.12" >${datadir}/mysql_upgrade_info
+  # Create another container with same data and upgrade set to 'upgrade-aauto'
+  create_container "testupg4" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto
+  test_connection testupg4 user foo
+  docker stop $(ct_get_cid testupg4) >/dev/null
+  # Check whether some upgrade happened
+  if docker logs $(ct_get_cid testupg4) 2>&1 | grep -e 'Running mysql_upgrade' &>/dev/null ; then
+    echo "Upgrade happened but it should not when upgrading from current version"
+    return 1
+  fi
+
+  # Create second container with same data and upgrade set to 'analyze'
+  echo "  Testing running --analyze"
+  create_container "testupg5" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=analyze
+  test_connection testupg5 user foo
+  docker stop $(ct_get_cid testupg5) >/dev/null
+  # Check whether analyze happened
+  if ! docker logs $(ct_get_cid testupg5) 2>&1 | grep -e '--analyze --all-databases' &>/dev/null ; then
+    echo "Analyze did not happen but it should"
+    return 1
+  fi
+
+  # Create another container with same data and upgrade set to 'optimize'
+  echo "  Testing running --optimize"
+  create_container "testupg6" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=optimize
+  test_connection testupg6 user foo
+  docker stop $(ct_get_cid testupg6) >/dev/null
+  # Check whether optimize happened
+  if ! docker logs $(ct_get_cid testupg6) 2>&1 | grep -e '--optimize --all-databases' &>/dev/null ; then
+    echo "Optimize did not happen but it should"
+    return 1
+  fi
+
+  # Create version file that we cannot upgrade from
+  echo "  Testing upgrade from the future version"
+  echo "20.1.12" >${datadir}/mysql_upgrade_info
+  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto 2>/dev/null
+
+  echo "  Upgrade tests succeeded!"
+  echo
+}
+
+function run_all_tests() {
+  for test_case in $TEST_LIST; do
+    echo "Running test $test_case for ${IMAGE_NAME}"
+    $test_case
+  done;
+}
+
+# Run the chosen tests
+TEST_LIST=${@:-$TEST_LIST} run_all_tests
+
+TESTSUITE_RESULT=0
+
