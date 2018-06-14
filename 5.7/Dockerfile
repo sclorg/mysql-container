@@ -26,7 +26,7 @@ LABEL summary="$SUMMARY" \
       io.k8s.display-name="MySQL 5.7" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql57,rh-mysql57" \
-      com.redhat.component="rh-mysql57-docker" \
+      com.redhat.component="rh-mysql57-container" \
       name="centos/mysql-57-centos7" \
       version="5.7" \
       usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 centos/mysql-57-centos7" \
