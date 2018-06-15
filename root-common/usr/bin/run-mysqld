@@ -20,6 +20,14 @@ else
   start_local_mysql "$@"
 fi
 
+# set mysql_flags and admin_flagsadmin_flags properly
+if [ -z "${MYSQL_ROOT_PASSWORD:-}" || is_allowing_connection_with_empty_password ]; then
+  mysql_flags="-u root --socket=$MYSQL_LOCAL_SOCKET"
+else
+  mysql_flags="-u root --socket=$MYSQL_LOCAL_SOCKET -p${MYSQL_ROOT_PASSWORD}"
+fi
+admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
+
 # init files
 process_extending_files ${APP_DATA}/mysql-init/ ${CONTAINER_SCRIPTS_PATH}/init/
 
