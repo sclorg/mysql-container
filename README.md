@@ -5,7 +5,7 @@ This repository contains Dockerfiles for MySQL images for OpenShift and general 
 Users can choose between RHEL, Fedora and CentOS based images.
 
 For more information about using these images with OpenShift, please see the
-official [OpenShift Documentation](https://docs.openshift.org/latest/using_images/db_images/mysql.html).
+official [OpenShift Documentation](https://docs.okd.io/latest/using_images/db_images/mysql.html).
 
 For more information about contributing, see
 [the Contribution Guidelines](https://github.com/sclorg/welcome/blob/master/contribution.md).

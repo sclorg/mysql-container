@@ -30,7 +30,7 @@ persistent volumes of at least 512 MiB each.
 
 The OpenShift cluster administrator needs to create persistent volumes to be
 claimed when the template is instantiated. Refer to the [OpenShift
-documentation](https://docs.openshift.org/latest/install_config/persistent_storage/persistent_storage_nfs.html)
+documentation](https://docs.okd.io/latest/install_config/persistent_storage/persistent_storage_nfs.html)
 to learn how to create persistent volumes.
 
 ### Service 'mysql-master'
