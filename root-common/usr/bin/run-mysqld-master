@@ -34,7 +34,8 @@ log_info 'Setting passwords ...'
 
 # Setup the 'master' replication on the MySQL server
 mysql $mysql_flags <<EOSQL
-  GRANT REPLICATION SLAVE ON *.* TO '${MYSQL_MASTER_USER}'@'%' IDENTIFIED BY '${MYSQL_MASTER_PASSWORD}';
+  CREATE USER IF NOT EXISTS '${MYSQL_MASTER_USER}'@'%' IDENTIFIED BY '${MYSQL_MASTER_PASSWORD}';
+  GRANT REPLICATION SLAVE ON *.* TO '${MYSQL_MASTER_USER}'@'%';
   FLUSH PRIVILEGES;
 EOSQL
 
