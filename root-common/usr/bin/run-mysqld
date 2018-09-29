@@ -21,7 +21,7 @@ else
 fi
 
 # set mysql_flags and admin_flagsadmin_flags properly
-if [ -z "${MYSQL_ROOT_PASSWORD:-}" ] || [ is_allowing_connection_with_empty_password ]; then
+if [ -z "${MYSQL_ROOT_PASSWORD:-}" ] || is_allowing_connection_with_empty_password; then
   mysql_flags="-u root --socket=$MYSQL_LOCAL_SOCKET"
 else
   mysql_flags="-u root --socket=$MYSQL_LOCAL_SOCKET -p${MYSQL_ROOT_PASSWORD}"
