@@ -97,11 +97,10 @@ function shutdown_local_mysql() {
 # Initialize the MySQL database (create user accounts and the initial database)
 function initialize_database() {
   log_info 'Initializing database ...'
-  if [[ "$MYSQL_VERSION" < "5.7" ]] ; then
-    # Using --rpm since we need mysql_install_db behaves as in RPM
-    log_and_run mysql_install_db --rpm --datadir=$MYSQL_DATADIR
-  else
+  if [ "`version2number $MYSQL_VERSION`" -lt '800' ] ; then
     log_initialization ${MYSQL_PREFIX}/libexec/mysqld --initialize --datadir=$MYSQL_DATADIR --ignore-db-dir=lost+found
+  else
+    log_initialization ${MYSQL_PREFIX}/libexec/mysqld --initialize --datadir=$MYSQL_DATADIR
   fi
 
   # The '--initialize' option sets an auto generated root password.
@@ -134,7 +133,7 @@ function initialize_database() {
 
     mysql $mysql_flags <<EOSQL
       CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-      GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' WITH GRANT OPTION;
+      GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
 EOSQL
   else
     mysql $mysql_flags -e "ALTER USER 'root'@'localhost' IDENTIFIED BY ''";

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ${CONTAINER_SCRIPTS_PATH}/common.sh
+
 # This function returns all config files that daemon uses and their path
 # includes /opt. It is used to get correct path to the config file.
 mysql_get_config_files_scl() {
@@ -45,10 +47,18 @@ if [ "$MYSQL_CONFIG_FILE" != "/etc/my.cnf" ] ; then
     ln -s ${MYSQL_CONFIG_FILE}.d /etc/my.cnf.d
 fi
 
+# some config options are only valid for particular versions
+if [ "`version2number $MYSQL_VERSION`" -ge "800" ] ; then
+    rm -f "${CONTAINER_SCRIPTS_PATH}/cnf/10-mysql57.cnf"
+fi
+
 # setup directory for data
 mkdir -p /var/lib/mysql/data
 chown -R mysql:0 /var/lib/mysql
 restorecon -R /var/lib/mysql
+
+# remove linux capability of the daemon, since it does not work in the container
+setcap -r ${MYSQL_PREFIX}/libexec/mysqld
 
 # Loosen permission bits for group to avoid problems running container with
 # arbitrary UID
