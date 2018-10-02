@@ -418,10 +418,10 @@ _s2i_test_image() {
 
 run_s2i_test() {
   echo "  Testing s2i usage"
-  s2i usage ${s2i_args} ${IMAGE_NAME} &>/dev/null
+  ct_s2i_usage ${IMAGE_NAME} ${s2i_args} &>/dev/null
 
   echo "  Testing s2i build"
-  s2i build file://${test_dir}/test-app ${IMAGE_NAME} ${IMAGE_NAME}-testapp
+  ct_s2i_build_as_df file://${test_dir}/test-app ${IMAGE_NAME} ${IMAGE_NAME}-testapp
   local image_name_backup=${IMAGE_NAME}
   export IMAGE_NAME=${IMAGE_NAME}-testapp
 
@@ -486,6 +486,8 @@ ssl-cert=\${APP_DATA}/mysql-certs/server-cert-selfsigned.pem
     mysql_cmd "$ip" "ssl_test_user" "ssl_test" --ssl-ca=${ca_cert_path} -e 'show status like "%ssl%" \G'
     return 1
   fi
+  # Clear the global variable content after we are done using it
+  CONTAINER_EXTRA_ARGS=""
 }
 
 function run_general_tests() {
@@ -496,8 +498,8 @@ function run_general_tests() {
   USER=user PASS=pass run_tests no_root
   USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root
   # Test with arbitrary uid for the container
-  DOCKER_ARGS="-u 12345" USER=user PASS=pass run_tests no_root_altuid
-  DOCKER_ARGS="-u 12345" USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root_altuid
+  DOCKER_ARGS="--user 12345" USER=user PASS=pass run_tests no_root_altuid
+  DOCKER_ARGS="--user 12345" USER=user1 PASS=pass1 ROOT_PASS=r00t run_tests root_altuid
 }
 
 function get_previous_major_version() {
