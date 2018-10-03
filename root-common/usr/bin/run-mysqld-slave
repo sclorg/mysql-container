@@ -44,4 +44,4 @@ unset_env_vars
 log_volume_info $MYSQL_DATADIR
 log_info 'Running final exec -- Only MySQL server logs after this point'
 exec ${MYSQL_PREFIX}/libexec/mysqld --defaults-file=$MYSQL_DEFAULTS_FILE \
-  --report-host=$(hostname -i) "$@" 2>&1
+  --report-host=$(hostname -I) "$@" 2>&1

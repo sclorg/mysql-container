@@ -183,7 +183,7 @@ EOSQL
 # into the number.
 # See: https://dev.mysql.com/doc/refman/en/replication-options.html#option_mysqld_server-id
 function server_id() {
-  checksum=$(sha256sum <<< $(hostname -i))
+  checksum=$(sha256sum <<< $(hostname -I))
   checksum=${checksum:0:14}
   echo -n $((0x${checksum}%4294967295))
 }
