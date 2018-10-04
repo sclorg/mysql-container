@@ -31,11 +31,7 @@ function validate_variables() {
   # Check basic sanity of specified variables
   if [[ -v MYSQL_USER && -v MYSQL_PASSWORD ]]; then
     [[ "$MYSQL_USER"     =~ $mysql_identifier_regex ]] || usage "Invalid MySQL username"
-    if [[ "$MYSQL_VERSION" < "5.7" ]] ; then
-      [ ${#MYSQL_USER} -le 16 ] || usage "MySQL username too long (maximum 16 characters)"
-    else
-      [ ${#MYSQL_USER} -le 32 ] || usage "MySQL username too long (maximum 32 characters)"
-    fi
+    [ ${#MYSQL_USER} -le 32 ] || usage "MySQL username too long (maximum 32 characters)"
     [[ "$MYSQL_PASSWORD" =~ $mysql_password_regex   ]] || usage "Invalid password"
     user_specified=1
   fi

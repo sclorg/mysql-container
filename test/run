@@ -61,8 +61,8 @@ function test_connection() {
   local ip
   ip=$(ct_get_cip $name)
   echo "  Testing MySQL connection to $ip..."
-  local max_attempts=20
-  local sleep_time=2
+  local max_attempts=60
+  local sleep_time=3
   local i
   local status=''
   echo -n "    Trying to connect..."
@@ -139,7 +139,7 @@ function run_change_password_test() {
 
 function run_replication_test() {
   local cluster_args="-e MYSQL_MASTER_USER=master -e MYSQL_MASTER_PASSWORD=master -e MYSQL_DATABASE=db"
-  local max_attempts=30
+  local max_attempts=60
 
   # Run the MySQL master
   docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
@@ -170,7 +170,7 @@ function run_replication_test() {
       docker logs $(ct_get_cid slave.cid)
       return 1
     fi
-    sleep 1
+    sleep 3
   done
 
   # do some real work to test replication in practice
@@ -191,7 +191,7 @@ function run_replication_test() {
       docker logs $(ct_get_cid slave.cid)
       return 1
     fi
-    sleep 1
+    sleep 3
   done
 }
 
