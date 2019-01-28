@@ -20,7 +20,7 @@
         },
         "from": {
           "kind": "ImageStreamTag",
-          "name": "5.7"
+          "name": "8.0"
         },
         "referencePolicy": {
           "type": "Local"
@@ -75,6 +75,24 @@
         "from": {
           "kind": "DockerImage",
           "name": "registry.redhat.io/rhscl/mysql-57-rhel7:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
+        "name": "8.0",
+        "annotations": {
+          "openshift.io/display-name": "MySQL 8.0",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a MySQL 8.0 database on RHEL 7. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/mysql-container/blob/master/README.md.",
+          "iconClass": "icon-mysql-database",
+          "tags": "mysql",
+          "version": "8.0"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "registry.redhat.io/rhscl/mysql-80-rhel7:latest"
         },
         "referencePolicy": {
           "type": "Local"
