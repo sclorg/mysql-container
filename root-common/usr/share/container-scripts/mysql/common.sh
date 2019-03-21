@@ -78,6 +78,13 @@ function wait_for_mysql() {
   done
 }
 
+function wait_for_mysql_shutdown() {
+  while pgrep -f "${MYSQL_PREFIX}/libexec/mysqld" >/dev/null; do
+    log_info "Waiting for MySQL to shutdown ..."
+    sleep 1
+  done
+}
+
 # Start local MySQL server with a defaults file
 function start_local_mysql() {
   log_info 'Starting MySQL server with disabled networking ...'
@@ -92,6 +99,7 @@ function start_local_mysql() {
 function shutdown_local_mysql() {
   log_info 'Shutting down MySQL ...'
   mysqladmin $admin_flags flush-privileges shutdown
+  wait_for_mysql_shutdown
 }
 
 # Initialize the MySQL database (create user accounts and the initial database)
