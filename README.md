@@ -35,7 +35,7 @@ Choose either the CentOS7 or RHEL7 based image:
     To download it run:
 
     ```
-    $ docker pull registry.access.redhat.com/rhscl/mysql-57-rhel7
+    $ podman pull registry.access.redhat.com/rhscl/mysql-57-rhel7
     ```
 
     To build a RHEL7 based MySQL image, you need to run Docker build on a properly
@@ -53,7 +53,7 @@ Choose either the CentOS7 or RHEL7 based image:
     This image is available on DockerHub. To download it run:
 
     ```
-    $ docker pull centos/mysql-57-centos7
+    $ podman pull centos/mysql-57-centos7
     ```
 
     To build a CentOS based MySQL image from scratch, run:
@@ -67,6 +67,8 @@ Choose either the CentOS7 or RHEL7 based image:
 
 For using other versions of MySQL, just replace the `5.7` value by particular version
 in the commands above.
+
+Note: while the installation steps are calling `podman`, you can replace any such calls by `docker` with the same arguments.
 
 **Notice: By omitting the `VERSIONS` parameter, the build/test action will be performed
 on all provided versions of MySQL, which must be specified in  `VERSIONS` variable.

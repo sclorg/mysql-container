@@ -2,12 +2,13 @@ MySQL 5.7 SQL Database Server container image
 ==========================================
 
 This container image includes MySQL 5.7 SQL database server for OpenShift and general usage.
-Users can choose between RHEL and CentOS based images.
-The RHEL image is available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/mysql-57-rhel7)
-as registry.access.redhat.com/rhscl/mysql-57-rhel7.
-The CentOS image is then available on [Docker Hub](https://hub.docker.com/r/centos/mysql-57-centos7/)
-as centos/mysql-57-centos7.
+Users can choose between RHEL, CentOS and Fedora based images.
+The RHEL images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/),
+the CentOS images are available on [Docker Hub](https://hub.docker.com/r/centos/),
+and the Fedora images are available in [Fedora Registry](https://registry.fedoraproject.org/).
+The resulting image can be run using [podman](https://github.com/containers/libpod).
 
+Note: while the examples in this README are calling `podman`, you can replace any such calls by `docker` with the same arguments.
 
 Description
 -----------
@@ -28,7 +29,7 @@ If you want to set only the mandatory environment variables and not store
 the database in a host directory, execute the following command:
 
 ```
-$ docker run -d --name mysql_database -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhscl/mysql-57-rhel7
+$ podman run -d --name mysql_database -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhscl/mysql-57-rhel7
 ```
 
 This will create a container named `mysql_database` running MySQL with database
@@ -41,7 +42,7 @@ If the database directory is not initialized, the entrypoint script will first
 run [`mysql_install_db`](https://dev.mysql.com/doc/refman/en/mysql-install-db.html)
 and setup necessary database users and passwords. After the database is initialized,
 or if it was already present, `mysqld` is executed and will run as PID 1. You can
- stop the detached container by running `docker stop mysql_database`.
+ stop the detached container by running `podman stop mysql_database`.
 
 
 Environment variables and volumes
@@ -187,16 +188,25 @@ location is `/etc/my.cnf` but you can change it to `/etc/mysql/my.cnf` by settin
 
 Extending image
 ---------------
-This image can be extended using [source-to-image](https://github.com/openshift/source-to-image).
+This image can be extended in Openshift using the `Source` build strategy or via the standalone
+[source-to-image](https://github.com/openshift/source-to-image) application (where available).
+For this, we will assume that you are using the `rhscl/mysql-57-rhel7` image,
+available via `mysql:5.7` imagestream tag in Openshift.
 
-For example, to build a customized MariaDB database image `my-mysql-rhel7`
-with a configuration in `~/image-configuration/` run:
+For example, to build a customized MySQL database image `my-mysql-rhel7`
+with a configuration in `image-configuration/` run:
 
 ```
-$ s2i build ~/image-configuration/ rhscl/mysql-57-rhel7 my-mysql-rhel7
+$ oc new-app mysql:5.7~./image-configuration/ --name my-mysql-rhel7
 ```
 
-The directory passed to `s2i build` can contain these directories:
+or via s2i:
+
+```
+$ s2i build ./image-configuration/ rhscl/mysql-57-rhel7 my-mysql-rhel7
+```
+
+The directory passed to Openshift can contain these directories:
 
 `mysql-cfg/`
     When starting the container, files from this directory will be used as
@@ -235,7 +245,7 @@ provided files are preferred over default files in
 `/usr/share/container-scripts/mysql/`- so it is possible to overwrite them.
 
 Same configuration directory structure can be used to customize the image
-every time the image is started using `docker run`. The directory has to be
+every time the image is started using `podman run`. The directory has to be
 mounted into `/opt/app-root/src/` in the image
 (`-v ./image-configuration/:/opt/app-root/src/`).
 This overwrites customization built into the image.
@@ -329,12 +339,13 @@ Troubleshooting
 ---------------
 The mysqld deamon in the container logs to the standard output, so the log is available in the container log. The log can be examined by running:
 
-    docker logs <container>
+    podman logs <container>
 
 
 See also
 --------
 Dockerfile and other sources for this container image are available on
 https://github.com/sclorg/mysql-container.
-In that repository, Dockerfile for CentOS is called Dockerfile, Dockerfile
-for RHEL is called Dockerfile.rhel7.
+In that repository, the Dockerfile for CentOS is called Dockerfile, the Dockerfile
+for RHEL7 is called Dockerfile.rhel7, the Dockerfile for RHEL8 is called Dockerfile.rhel8,
+and the Dockerfile for Fedora is called Dockerfile.fedora.
