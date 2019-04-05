@@ -195,16 +195,23 @@ available via `mysql:8.0` imagestream tag in Openshift.
 
 
 For example, to build a customized MySQL database image `my-mysql-rhel7`
-with a configuration in `image-configuration/` run:
+with a configuration from `https://github.com/sclorg/mysql-container/tree/master/examples/extend-image` run:
 
 ```
-$ oc new-app mysql:8.0~./image-configuration/ --name my-mysql-rhel7
+$ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git \
+	--name my-mysql-rhel7 \
+	--context-dir=examples/extend-image \
+	--env MYSQL_OPERATIONS_USER=opuser \
+	--env MYSQL_OPERATIONS_PASSWORD=oppass \
+	--env MYSQL_DATABASE=opdb \
+	--env MYSQL_USER=user \
+	--env MYSQL_PASSWORD=pass
 ```
 
 or via s2i:
 
 ```
-$ s2i build ./image-configuration/ rhscl/mysql-80-rhel7 my-mysql-rhel7
+$ s2i build --context-dir=examples/extend-image https://github.com/sclorg/mysql-container.git rhscl/mysql-80-rhel7 my-mysql-rhel7
 ```
 
 The directory passed to Openshift can contain these directories:
