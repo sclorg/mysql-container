@@ -99,7 +99,7 @@ The following environment variables influence the MySQL configuration file. They
 **`MYSQL_INNODB_BUFFER_POOL_SIZE (default: 32M or 50% of available memory)`**  
        The size of the buffer pool where InnoDB caches table and index data
 
-**`MYSQL_INNODB_LOG_FILE_SIZE (default: 8M or 15% of available available)`**  
+**`MYSQL_INNODB_LOG_FILE_SIZE (default: 8M or 15% of available memory)`**  
        The size of each log file in a log group
 
 **`MYSQL_INNODB_LOG_BUFFER_SIZE (default: 8M or 15% of available memory)`**  
