@@ -139,7 +139,7 @@ function run_change_password_test() {
 
 function run_replication_test() {
   local cluster_args="-e MYSQL_MASTER_USER=master -e MYSQL_MASTER_PASSWORD=master -e MYSQL_DATABASE=db"
-  local max_attempts=60
+  local max_attempts=120
 
   # Run the MySQL master
   docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
