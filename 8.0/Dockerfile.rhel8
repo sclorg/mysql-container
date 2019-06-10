@@ -1,4 +1,4 @@
-FROM rhel8/s2i-core
+FROM ubi8/s2i-core
 
 # MySQL image for OpenShift.
 #
@@ -29,7 +29,7 @@ LABEL summary="$SUMMARY" \
       com.redhat.component="mysql-80-container" \
       name="rhel8/mysql-80" \
       version="1" \
-      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel8/mysql-80" \
+      usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel8/mysql-80" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
@@ -38,8 +38,8 @@ EXPOSE 3306
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum -y module enable mysql:$MYSQL_VERSION && \
-    INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind-utils groff-base shadow-utils mysql-server" && \
-    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
+    INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind-utils groff-base mysql-server" && \
+    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS shadow-utils && \
     rpm -V $INSTALL_PKGS && \
     yum clean all && \
     mkdir -p /var/lib/mysql/data && chown -R mysql.0 /var/lib/mysql && \
