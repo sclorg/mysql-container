@@ -42,7 +42,7 @@ RUN yum install -y yum-utils && \
     INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base shadow-utils rh-mysql56" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    yum clean all && \
+    yum -y clean all --enablerepo='*' && \
     mkdir -p /var/lib/mysql/data && chown -R mysql.0 /var/lib/mysql && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
