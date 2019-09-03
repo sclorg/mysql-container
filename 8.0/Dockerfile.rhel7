@@ -29,6 +29,7 @@ LABEL summary="$SUMMARY" \
       com.redhat.component="rh-mysql80-container" \
       name="rhscl/mysql-80-rhel7" \
       version="8.0" \
+      com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
       usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhscl/mysql-80-rhel7" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 

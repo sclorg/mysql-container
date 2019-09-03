@@ -29,6 +29,7 @@ LABEL summary="$SUMMARY" \
       com.redhat.component="mysql-80-container" \
       name="rhel8/mysql-80" \
       version="1" \
+      com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
       usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel8/mysql-80" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
