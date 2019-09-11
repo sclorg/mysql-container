@@ -39,7 +39,6 @@ EXPOSE 3306
 # to make sure of that.
 RUN yum install -y yum-utils && \
     yum install -y centos-release-scl && \
-    yum-config-manager --add-repo https://cbs.centos.org/repos/sclo7-rh-mysql80-rh-candidate/x86_64/os/ && \
     INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base rh-mysql80" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
