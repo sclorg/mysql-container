@@ -39,7 +39,7 @@ EXPOSE 3306
 # to make sure of that.
 RUN yum install -y yum-utils && \
     yum install -y centos-release-scl && \
-    INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base shadow-utils rh-mysql57" && \
+    INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base rh-mysql57" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum -y clean all --enablerepo='*' && \

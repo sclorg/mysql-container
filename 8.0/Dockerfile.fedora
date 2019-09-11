@@ -44,7 +44,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base shadow-utils community-mysql-server policycoreutils" && \
+RUN INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base community-mysql-server policycoreutils" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum -y clean all --enablerepo='*' && \
