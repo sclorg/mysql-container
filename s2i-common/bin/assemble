@@ -17,3 +17,10 @@ if [ -d "/var/lib/mysql/data" ]; then
     ln -s /silo/data /var/lib/mysql/data
     
 fi
+
+# /etc/my.cnf
+if [ -f "/etc/my.cnf" ]; then
+    mv /etc/my.cnf /silo
+    ln -s /silo/my.cnf /etc/my.cnf
+    
+fi

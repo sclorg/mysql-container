@@ -27,7 +27,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql80,rh-mysql80" \
       com.redhat.component="rh-mysql80-container" \
-      name="centos/mysql-80-centos7" \
+      name="centos/mysql-80-cetnos7" \
       version="8.0" \
       usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 centos/mysql-80-centos7" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
@@ -77,7 +77,7 @@ RUN rm -rf /etc/my.cnf.d/* && \
 
 
 # Creo el directorio /silo
-RUN mkdir -p /silo/data
+RUN mkdir -p /silo
 RUN chmod -R a+rwx /silo && \
 chmod -R ug+r  /silo && \
 chmod -R ug+r  /silo && \
