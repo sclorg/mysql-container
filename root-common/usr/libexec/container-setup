@@ -67,15 +67,16 @@ setcap -r ${MYSQL_PREFIX}/libexec/mysqld
 /usr/libexec/fix-permissions /var/lib/mysql ${MYSQL_CONFIG_FILE}.d ${APP_DATA}/..
 usermod -a -G root mysql
 
-# /var/lib/mysql/data
-if [ -d "/var/lib/mysql/data" ]; then
-    mv /var/lib/mysql /silo
-    ln -s /silo/mysql /var/lib
-    
-fi
 
-# /etc/opt/rh/rh-mysql80/my.cnf
-if [ -f "/etc/opt/rh/rh-mysql80/my.cnf" ]; then
-    mv /etc/opt/rh/rh-mysql80/my.cnf /silo
-    ln -s /silo/my.cnf /etc/opt/rh/rh-mysql80
-fi
+# # /var/lib/mysql/data
+# if [ -d "/var/lib/mysql/data" ]; then
+#     mv /var/lib/mysql /silo
+#     ln -s /silo/mysql /var/lib
+    
+# fi
+
+# # /etc/opt/rh/rh-mysql80/my.cnf
+# if [ -f "/etc/opt/rh/rh-mysql80/my.cnf" ]; then
+#     mv /etc/opt/rh/rh-mysql80/my.cnf /silo
+#     ln -s /silo/my.cnf /etc/opt/rh/rh-mysql80
+# fi
