@@ -1,3 +1,37 @@
+##Básicamente no hemos cambiado nada. Hemos añadido los scripts en /mysql-container_mysql-wp/8.0/root/usr/share/container-scripts/mysql/backup.sh y restore.sh para hacer copias de seguridad y restaurlas en /var/lib/mysql/backup. Para crear este directorio añadimos a /mysql-container_mysql-wp/root-common/usr/libexec/container-setup.sh "mkdir -p /var/lib/mysql/backup".
+
+
+Tenemos para trabajar con la imagen básicamente dar valor a las siguientes variables de entorno:
+MYSQL_OPERATIONS_USER=opuser
+MYSQL_OPERATIONS_PASSWORD=oppass
+MYSQL_DATABASE=opdb
+MYSQL_USER=user
+MYSQL_PASSWORD=pass
+MYSQL_ROOT_PASSWORD=pass
+
+Compilamos la imagen-builder:
+
+make build TARGET=centos7 VERSIONS=8.0
+
+Para testear la imagen:
+
+
+docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=pass -p 3306:3306 3f6cf193f925
+
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+e3980c84d9e9        3f6cf193f925        "container-entrypoin…"   4 seconds ago       Up 3 seconds        0.0.0.0:3306->3306/tcp   hungry_margulis
+$ 
+
+
+$ docker exec -it e3980c84d9e9 bash
+
+
+
+==========================================================================================
+
+
+
 $ git clone git@github.com:samyunodos/mysql-container.git
 
 $ cd mysql-container/

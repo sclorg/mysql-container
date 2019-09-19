@@ -1,0 +1,475 @@
+.TH MySQL 5.7 SQL Database Server container image
+.PP
+This container image includes MySQL 5.7 SQL database server for OpenShift and general usage.
+Users can choose between RHEL, CentOS and Fedora based images.
+The RHEL images are available in the Red Hat Container Catalog
+\[la]https://access.redhat.com/containers/\[ra],
+the CentOS images are available on Docker Hub
+\[la]https://hub.docker.com/r/centos/\[ra],
+and the Fedora images are available in Fedora Registry
+\[la]https://registry.fedoraproject.org/\[ra]\&.
+The resulting image can be run using podman
+\[la]https://github.com/containers/libpod\[ra]\&.
+
+.PP
+Note: while the examples in this README are calling \fB\fCpodman\fR, you can replace any such calls by \fB\fCdocker\fR with the same arguments.
+
+.SH Description
+.PP
+This container image provides a containerized packaging of the MySQL mysqld daemon
+and client application. The mysqld server daemon accepts connections from clients
+and provides access to content from MySQL databases on behalf of the clients.
+You can find more information on the MySQL project from the project Web site
+(
+\[la]https://www.mysql.com/\[ra]).
+
+.SH Usage
+.PP
+For this, we will assume that you are using the MySQL 5.7 container image from the
+Red Hat Container Catalog called \fB\fCrhscl/mysql\-57\-rhel7\fR\&.
+If you want to set only the mandatory environment variables and not store
+the database in a host directory, execute the following command:
+
+.PP
+.RS
+
+.nf
+$ podman run \-d \-\-name mysql\_database \-e MYSQL\_USER=user \-e MYSQL\_PASSWORD=pass \-e MYSQL\_DATABASE=db \-p 3306:3306 rhscl/mysql\-57\-rhel7
+
+.fi
+.RE
+
+.PP
+This will create a container named \fB\fCmysql\_database\fR running MySQL with database
+\fB\fCdb\fR and user with credentials \fB\fCuser:pass\fR\&. Port 3306 will be exposed and mapped
+to the host. If you want your database to be persistent across container executions,
+also add a \fB\fC\-v /host/db/path:/var/lib/mysql/data\fR argument. This will be the MySQL
+data directory.
+
+.PP
+If the database directory is not initialized, the entrypoint script will first
+run \fB\fCmysql\_install\_db\fR
+\[la]https://dev.mysql.com/doc/refman/en/mysql-install-db.html\[ra]
+and setup necessary database users and passwords. After the database is initialized,
+or if it was already present, \fB\fCmysqld\fR is executed and will run as PID 1. You can
+ stop the detached container by running \fB\fCpodman stop mysql\_database\fR\&.
+
+.SH Environment variables and volumes
+.PP
+The image recognizes the following environment variables that you can set during
+initialization by passing \fB\fC\-e VAR=VALUE\fR to the Docker run command.
+
+.PP
+\fB\fB\fCMYSQL\_USER\fR\fP
+.br
+       User name for MySQL account to be created
+
+.PP
+\fB\fB\fCMYSQL\_PASSWORD\fR\fP
+.br
+       Password for the user account
+
+.PP
+\fB\fB\fCMYSQL\_DATABASE\fR\fP
+.br
+       Database name
+
+.PP
+\fB\fB\fCMYSQL\_ROOT\_PASSWORD\fR\fP
+.br
+       Password for the root user (optional)
+
+.PP
+The following environment variables influence the MySQL configuration file. They are all optional.
+
+.PP
+\fB\fB\fCMYSQL\_LOWER\_CASE\_TABLE\_NAMES (default: 0)\fR\fP
+.br
+       Sets how the table names are stored and compared
+
+.PP
+\fB\fB\fCMYSQL\_MAX\_CONNECTIONS (default: 151)\fR\fP
+.br
+       The maximum permitted number of simultaneous client connections
+
+.PP
+\fB\fB\fCMYSQL\_MAX\_ALLOWED\_PACKET (default: 200M)\fR\fP
+.br
+       The maximum size of one packet or any generated/intermediate string
+
+.PP
+\fB\fB\fCMYSQL\_FT\_MIN\_WORD\_LEN (default: 4)\fR\fP
+.br
+       The minimum length of the word to be included in a FULLTEXT index
+
+.PP
+\fB\fB\fCMYSQL\_FT\_MAX\_WORD\_LEN (default: 20)\fR\fP
+.br
+       The maximum length of the word to be included in a FULLTEXT index
+
+.PP
+\fB\fB\fCMYSQL\_AIO (default: 1)\fR\fP
+.br
+       Controls the \fB\fCinnodb\_use\_native\_aio\fR setting value in case the native AIO is broken. See 
+\[la]http://help.directadmin.com/item.php?id=529\[ra]
+
+.PP
+\fB\fB\fCMYSQL\_TABLE\_OPEN\_CACHE (default: 400)\fR\fP
+.br
+       The number of open tables for all threads
+
+.PP
+\fB\fB\fCMYSQL\_KEY\_BUFFER\_SIZE (default: 32M or 10% of available memory)\fR\fP
+.br
+       The size of the buffer used for index blocks
+
+.PP
+\fB\fB\fCMYSQL\_SORT\_BUFFER\_SIZE (default: 256K)\fR\fP
+.br
+       The size of the buffer used for sorting
+
+.PP
+\fB\fB\fCMYSQL\_READ\_BUFFER\_SIZE (default: 8M or 5% of available memory)\fR\fP
+.br
+       The size of the buffer used for a sequential scan
+
+.PP
+\fB\fB\fCMYSQL\_INNODB\_BUFFER\_POOL\_SIZE (default: 32M or 50% of available memory)\fR\fP
+.br
+       The size of the buffer pool where InnoDB caches table and index data
+
+.PP
+\fB\fB\fCMYSQL\_INNODB\_LOG\_FILE\_SIZE (default: 8M or 15% of available memory)\fR\fP
+.br
+       The size of each log file in a log group
+
+.PP
+\fB\fB\fCMYSQL\_INNODB\_LOG\_BUFFER\_SIZE (default: 8M or 15% of available memory)\fR\fP
+.br
+       The size of the buffer that InnoDB uses to write to the log files on disk
+
+.PP
+\fB\fB\fCMYSQL\_DEFAULTS\_FILE (default: /etc/my.cnf)\fR\fP
+.br
+       Point to an alternative configuration file
+
+.PP
+\fB\fB\fCMYSQL\_BINLOG\_FORMAT (default: statement)\fR\fP
+.br
+       Set sets the binlog format, supported values are \fB\fCrow\fR and \fB\fCstatement\fR
+
+.PP
+\fB\fB\fCMYSQL\_LOG\_QUERIES\_ENABLED (default: 0)\fR\fP
+.br
+       To enable query logging set this to \fB\fC1\fR
+
+.PP
+You can also set the following mount points by passing the \fB\fC\-v /host:/container\fR flag to Docker.
+
+.PP
+\fB\fB\fC/var/lib/mysql/data\fR\fP
+.br
+       MySQL data directory
+
+.PP
+\fBNotice: When mouting a directory from the host into the container, ensure that the mounted
+directory has the appropriate permissions and that the owner and group of the directory
+matches the user UID or name which is running inside the container.\fP
+
+.SH MySQL auto\-tuning
+.PP
+When the MySQL image is run with the \fB\fC\-\-memory\fR parameter set and you didn't
+specify value for some parameters, their values will be automatically
+calculated based on the available memory.
+
+.PP
+\fB\fB\fCMYSQL\_KEY\_BUFFER\_SIZE (default: 10%)\fR\fP
+.br
+       \fB\fCkey\_buffer\_size\fR
+
+.PP
+\fB\fB\fCMYSQL\_READ\_BUFFER\_SIZE (default: 5%)\fR\fP
+.br
+       \fB\fCread\_buffer\_size\fR
+
+.PP
+\fB\fB\fCMYSQL\_INNODB\_BUFFER\_POOL\_SIZE (default: 50%)\fR\fP
+.br
+       \fB\fCinnodb\_buffer\_pool\_size\fR
+
+.PP
+\fB\fB\fCMYSQL\_INNODB\_LOG\_FILE\_SIZE (default: 15%)\fR\fP
+.br
+       \fB\fCinnodb\_log\_file\_size\fR
+
+.PP
+\fB\fB\fCMYSQL\_INNODB\_LOG\_BUFFER\_SIZE (default: 15%)\fR\fP
+.br
+       \fB\fCinnodb\_log\_buffer\_size\fR
+
+.SH MySQL root user
+.PP
+The root user has no password set by default, only allowing local connections.
+You can set it by setting the \fB\fCMYSQL\_ROOT\_PASSWORD\fR environment variable. This
+will allow you to login to the root account remotely. Local connections will
+still not require a password.
+
+.PP
+To disable remote root access, simply unset \fB\fCMYSQL\_ROOT\_PASSWORD\fR and restart
+the container.
+
+.SH Changing passwords
+.PP
+Since passwords are part of the image configuration, the only supported method
+to change passwords for the database user (\fB\fCMYSQL\_USER\fR) and root user is by
+changing the environment variables \fB\fCMYSQL\_PASSWORD\fR and \fB\fCMYSQL\_ROOT\_PASSWORD\fR,
+respectively.
+
+.PP
+Changing database passwords through SQL statements or any way other than through
+the environment variables aforementioned will cause a mismatch between the
+values stored in the variables and the actual passwords. Whenever a database
+container starts it will reset the passwords to the values stored in the
+environment variables.
+
+.SH Default my.cnf file
+.PP
+With environment variables we are able to customize a lot of different parameters
+or configurations for the mysql bootstrap configurations. If you'd prefer to use
+your own configuration file, you can override the \fB\fCMYSQL\_DEFAULTS\_FILE\fR env
+variable with the full path of the file you wish to use. For example, the default
+location is \fB\fC/etc/my.cnf\fR but you can change it to \fB\fC/etc/mysql/my.cnf\fR by setting
+ \fB\fCMYSQL\_DEFAULTS\_FILE=/etc/mysql/my.cnf\fR
+
+.SH Extending image
+.PP
+This image can be extended in Openshift using the \fB\fCSource\fR build strategy or via the standalone
+source\-to\-image
+\[la]https://github.com/openshift/source-to-image\[ra] application (where available).
+For this, we will assume that you are using the \fB\fCrhscl/mysql\-57\-rhel7\fR image,
+available via \fB\fCmysql:5.7\fR imagestream tag in Openshift.
+
+.PP
+For example, to build a customized MySQL database image \fB\fCmy\-mysql\-rhel7\fR
+with a configuration from \fB\fChttps://github.com/sclorg/mysql\-container/tree/master/examples/extend\-image\fR run:
+
+.PP
+.RS
+
+.nf
+$ oc new\-app mysql:5.7\~https://github.com/sclorg/mysql\-container.git \\
+	\-\-name my\-mysql\-rhel7 \\
+	\-\-context\-dir=examples/extend\-image \\
+	\-\-env MYSQL\_OPERATIONS\_USER=opuser \\
+	\-\-env MYSQL\_OPERATIONS\_PASSWORD=oppass \\
+	\-\-env MYSQL\_DATABASE=opdb \\
+	\-\-env MYSQL\_USER=user \\
+	\-\-env MYSQL\_PASSWORD=pass
+
+.fi
+.RE
+
+.PP
+or via s2i:
+
+.PP
+.RS
+
+.nf
+$ s2i build \-\-context\-dir=examples/extend\-image https://github.com/sclorg/mysql\-container.git rhscl/mysql\-57\-rhel7 my\-mysql\-rhel7
+
+.fi
+.RE
+
+.PP
+The directory passed to Openshift can contain these directories:
+
+.PP
+\fB\fCmysql\-cfg/\fR
+    When starting the container, files from this directory will be used as
+    a configuration for the \fB\fCmysqld\fR daemon.
+    \fB\fCenvsubst\fR command is run on this file to still allow customization of
+    the image using environmental variables
+
+.PP
+\fB\fCmysql\-pre\-init/\fR
+    Shell scripts (\fB\fC*.sh\fR) available in this directory are sourced before
+    \fB\fCmysqld\fR daemon is started.
+
+.PP
+\fB\fCmysql\-init/\fR
+    Shell scripts (\fB\fC*.sh\fR) available in this directory are sourced when
+    \fB\fCmysqld\fR daemon is started locally. In this phase, use \fB\fC${mysql\_flags}\fR
+    to connect to the locally running daemon, for example \fB\fCmysql $mysql\_flags < dump.sql\fR
+
+.PP
+Variables that can be used in the scripts provided to s2i:
+
+.PP
+\fB\fC$mysql\_flags\fR
+    arguments for the \fB\fCmysql\fR tool that will connect to the locally running \fB\fCmysqld\fR during initialization
+
+.PP
+\fB\fC$MYSQL\_RUNNING\_AS\_MASTER\fR
+    variable defined when the container is run with \fB\fCrun\-mysqld\-master\fR command
+
+.PP
+\fB\fC$MYSQL\_RUNNING\_AS\_SLAVE\fR
+    variable defined when the container is run with \fB\fCrun\-mysqld\-slave\fR command
+
+.PP
+\fB\fC$MYSQL\_DATADIR\_FIRST\_INIT\fR
+    variable defined when the container was initialized from the empty data dir
+
+.PP
+During \fB\fCs2i build\fR all provided files are copied into \fB\fC/opt/app\-root/src\fR
+directory into the resulting image. If some configuration files are present
+in the destination directory, files with the same name are overwritten.
+Also only one file with the same name can be used for customization and user
+provided files are preferred over default files in
+\fB\fC/usr/share/container\-scripts/mysql/\fR\- so it is possible to overwrite them.
+
+.PP
+Same configuration directory structure can be used to customize the image
+every time the image is started using \fB\fCpodman run\fR\&. The directory has to be
+mounted into \fB\fC/opt/app\-root/src/\fR in the image
+(\fB\fC\-v ./image\-configuration/:/opt/app\-root/src/\fR).
+This overwrites customization built into the image.
+
+.SH Securing the connection with SSL
+.PP
+In order to secure the connection with SSL, use the extending feature described
+above. In particular, put the SSL certificates into a separate directory:
+
+.PP
+.RS
+
+.nf
+sslapp/mysql\-certs/server\-cert\-selfsigned.pem
+sslapp/mysql\-certs/server\-key.pem
+
+.fi
+.RE
+
+.PP
+And then put a separate configuration file into mysql\-cfg:
+
+.PP
+.RS
+
+.nf
+$> cat sslapp/mysql\-cfg/ssl.cnf
+[mysqld]
+ssl\-key=${APP\_DATA}/mysql\-certs/server\-key.pem
+ssl\-cert=${APP\_DATA}/mysql\-certs/server\-cert\-selfsigned.pem
+
+.fi
+.RE
+
+.PP
+Such a directory \fB\fCsslapp\fR can then be mounted into the container with \-v,
+or a new container image can be built using s2i.
+
+.SH Upgrading and data directory version checking
+.PP
+MySQL and MariaDB use versions that consist of three numbers X.Y.Z (e.g. 5.6.23).
+For version changes in Z part, the server's binary data format stays compatible and thus no
+special upgrade procedure is needed. For upgrades from X.Y to X.Y+1, consider doing manual
+steps as described at
+
+\[la]https://dev.mysql.com/doc/refman/5.7/en/upgrading-from-previous-series.html\[ra]\&.
+
+.PP
+Skipping versions like from X.Y to X.Y+2 or downgrading to lower version is not supported;
+the only exception is ugrading from MariaDB 5.5 to MariaDB 10.0.
+
+.PP
+\fBImportant\fP: Upgrading to a new version is always risky and users are expected to make a full
+back\-up of all data before.
+
+.PP
+A safer solution to upgrade is to dump all data using \fB\fCmysqldump\fR or \fB\fCmysqldbexport\fR and then
+load the data using \fB\fCmysql\fR or \fB\fCmysqldbimport\fR into an empty (freshly initialized) database.
+
+.PP
+Another way of proceeding with the upgrade is starting the new version of the \fB\fCmysqld\fR daemon
+and run \fB\fCmysql\_upgrade\fR right after the start. This so called in\-place upgrade is generally
+faster for large data directory, but only possible if upgrading from the very previous version,
+so skipping versions is not supported.
+
+.PP
+This container detects whether the data needs to be upgraded using \fB\fCmysql\_upgrade\fR and
+we can control it by setting \fB\fCMYSQL\_DATADIR\_ACTION\fR variable, which can have one or more of the following values:
+
+.RS
+.IP \(bu 2
+\fB\fCupgrade\-warn\fR \-\- If the data version can be determined and the data come from a different version
+of the daemon, a warning is printed but the container starts. This is the default value.
+Since historically the version file \fB\fCmysql\_upgrade\_info\fR was not created, when using this option,
+the version file is created if not exist, but no \fB\fCmysql\_upgrade\fR will be called.
+However, this automatic creation will be removed after few months, since the version should be
+created on most deployments at that point.
+.IP \(bu 2
+\fB\fCupgrade\-auto\fR \-\- \fB\fCmysql\_upgrade\fR is run at the beginning of the container start, when the local
+daemon is running, but only if the data version can be determined and the data come
+with the very previous version. A warning is printed if the data come from even older
+or newer version. This value effectively enables automatic upgrades,
+but it is always risky and users should still back\-up all the data before starting the newer container.
+Set this option only if you have very good back\-ups at any moment and you are fine to fail\-over
+from the back\-up.
+.IP \(bu 2
+\fB\fCupgrade\-force\fR \-\- \fB\fCmysql\_upgrade \-\-force\fR is run at the beginning of the container start, when the local
+daemon is running, no matter what version of the daemon the data come from.
+This is also the way to create the missing version file \fB\fCmysql\_upgrade\_info\fR if not present
+in the root of the data directory; this file holds information about the version of the data.
+
+.RE
+
+.PP
+There are also some other actions that you may want to run at the beginning of the container start,
+when the local daemon is running, no matter what version of the data is detected:
+
+.RS
+.IP \(bu 2
+\fB\fCoptimize\fR \-\- runs \fB\fCmysqlcheck \-\-optimize\fR\&. It optimizes all the tables.
+.IP \(bu 2
+\fB\fCanalyze\fR \-\- runs \fB\fCmysqlcheck \-\-analyze\fR\&. It analyzes all the tables.
+.IP \(bu 2
+\fB\fCdisable\fR \-\- nothing is done regarding data directory version.
+
+.RE
+
+.PP
+Multiple values are separated by comma and run in\-order, e.g. \fB\fCMYSQL\_DATADIR\_ACTION="optimize,analyze"\fR\&.
+
+.SH Changing the replication binlog\_format
+.PP
+Some applications may wish to use \fB\fCrow\fR binlog\_formats (for example, those built
+  with change\-data\-capture in mind). The default replication/binlog format is
+  \fB\fCstatement\fR but to change it you can set the \fB\fCMYSQL\_BINLOG\_FORMAT\fR environment
+  variable. For example \fB\fCMYSQL\_BINLOG\_FORMAT=row\fR\&. Now when you run the database
+  with \fB\fCmaster\fR replication turned on (ie, set the Docker/container \fB\fCcmd\fR to be
+\fB\fCrun\-mysqld\-master\fR) the binlog will emit the actual data for the rows that change
+as opposed to the statements (ie, DML like insert...) that caused the change.
+
+.SH Troubleshooting
+.PP
+The mysqld deamon in the container logs to the standard output, so the log is available in the container log. The log can be examined by running:
+
+.PP
+.RS
+
+.nf
+podman logs <container>
+
+.fi
+.RE
+
+.SH See also
+.PP
+Dockerfile and other sources for this container image are available on
+
+\[la]https://github.com/sclorg/mysql-container\[ra]\&.
+In that repository, the Dockerfile for CentOS is called Dockerfile, the Dockerfile
+for RHEL7 is called Dockerfile.rhel7, the Dockerfile for RHEL8 is called Dockerfile.rhel8,
+and the Dockerfile for Fedora is called Dockerfile.fedora.

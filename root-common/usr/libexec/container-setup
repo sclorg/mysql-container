@@ -53,8 +53,9 @@ if [ "`version2number $MYSQL_VERSION`" -ge "800" ] ; then
 fi
 
 # setup directory for data
-mkdir -p /var/lib/mysql/backup
-mkdir -p /var/lib/mysql/data
+
+
+mkdir -p /var/lib/mysql/data/backup
 chown -R mysql:0 /var/lib/mysql
 restorecon -R /var/lib/mysql
 

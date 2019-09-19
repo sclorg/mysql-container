@@ -16,7 +16,7 @@ RESPALDO_A_RESTAURAR=$1
 
 # mysqldump -h${MYSQL_HOST_LOCAL} -uroot -p${MYSQL_ROOT_PASSWORD} --events ${MYSQL_DATABASE} --opt --routines --add-drop-database --table --complete-insert --create-options --master-data | gzip > backup_db_local/$SUB_DIR/${MYSQL_DATABASE}.sql.gz
 
-gunzip < ${RESPALDO_A_RESTAURAR} | mysql -uroot -p${MYSQL_ROOT_PASSWORD}
+gunzip < ${RESPALDO_A_RESTAURAR} | mysql -uroot -p${MYSQL_PASSWORD}
 #chown emilio:emilio backup_db_local/ -R
 
 
