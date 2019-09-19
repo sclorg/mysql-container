@@ -18,10 +18,10 @@ mv /tmp/src/* ./ 2>/dev/null || true
     
 # fi
 
-# # /etc/opt/rh/rh-mysql80/my.cnf
-if [ -f "/etc/opt/rh/rh-mysql80/my.cnf" ]; then
-    mv /etc/opt/rh/rh-mysql80/my.cnf /var/lib/mysql
-    ln -s /var/lib/mysql/my.cnf /etc/opt/rh/rh-mysql80
-    mv /etc/opt/rh/rh-mysql80/my.cnf.d /var/lib/mysql
-    ln -s /var/lib/mysql/my.cnf.d /etc/opt/rh/rh-mysql80
+# # # /etc/opt/rh/rh-mysql80/my.cnf
+# if [ -f "/etc/opt/rh/rh-mysql80/my.cnf" ]; then
+#     mv /etc/opt/rh/rh-mysql80/my.cnf /var/lib/mysql
+#     ln -s /var/lib/mysql/my.cnf /etc/opt/rh/rh-mysql80
+#     mv /etc/opt/rh/rh-mysql80/my.cnf.d /var/lib/mysql
+#     ln -s /var/lib/mysql/my.cnf.d /etc/opt/rh/rh-mysql80
 # fi

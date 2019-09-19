@@ -1,28 +1,22 @@
-#!/bin/bash -x
+#!/bin/bash
 
-source docker/mdb/mariadb.env
+set -o errexit
+set -o nounset
+set -o pipefail
 
-# NOMBRE_BD=$1
-# NOMBRE_USUARIO_BD=$2
-# PASSWORD_USUARIO_BD=$3
-# NOMBRE_SITIO_FTP=$4
-
-
-
+RESPALDO_A_RESTAURAR=$1
 
 #copia de seguridad base de datos
-SUB_DIR="$(date +"%Y%m%d%H%M")"
+# SUB_DIR="$(date +"%Y%m%d%H%M")"
 # "SUB_DIR="$(date +"%M%H%d%m%Y")_cierre"
 
-#rm -f /home/emilio/ftp/$NOMBRE_SITIO_FTP/backup/cierre/$SUB_DIR -R
-#mkdir -p /home/emilio/ftp/$NOMBRE_SITIO_FTP/backup/cierre/$SUB_DIR
-mkdir -p backup_db_local/$SUB_DIR
+# rm -f /home/emilio/ftp/$NOMBRE_SITIO_FTP/backup/cierre/$SUB_DIR -R
+# mkdir -p /home/emilio/ftp/$NOMBRE_SITIO_FTP/backup/cierre/$SUB_DIR
+# mkdir -p backup_db_local/$SUB_DIR
 
 # mysqldump -h${MYSQL_HOST_LOCAL} -uroot -p${MYSQL_ROOT_PASSWORD} --events ${MYSQL_DATABASE} --opt --routines --add-drop-database --table --complete-insert --create-options --master-data | gzip > backup_db_local/$SUB_DIR/${MYSQL_DATABASE}.sql.gz
 
-docker exec -it la29wordpress_mdb_1 bash -c 'mysqldump -h192.168.0.2 -uroot -ppla --events c93db1' > backup_db_local/$SUB_DIR/c93db1.sql
-
-
+gunzip < ${RESPALDO_A_RESTAURAR} | mysql -uroot -p${MYSQL_ROOT_PASSWORD}
 #chown emilio:emilio backup_db_local/ -R
 
 

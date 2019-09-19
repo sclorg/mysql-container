@@ -53,6 +53,7 @@ if [ "`version2number $MYSQL_VERSION`" -ge "800" ] ; then
 fi
 
 # setup directory for data
+mkdir -p /var/lib/mysql/backup
 mkdir -p /var/lib/mysql/data
 chown -R mysql:0 /var/lib/mysql
 restorecon -R /var/lib/mysql
@@ -79,4 +80,12 @@ usermod -a -G root mysql
 # if [ -f "/etc/opt/rh/rh-mysql80/my.cnf" ]; then
 #     mv /etc/opt/rh/rh-mysql80/my.cnf /silo
 #     ln -s /silo/my.cnf /etc/opt/rh/rh-mysql80
+# fi
+
+# # # /etc/opt/rh/rh-mysql80/my.cnf
+# if [ -f "/etc/opt/rh/rh-mysql80/my.cnf" ]; then
+#     mv /etc/opt/rh/rh-mysql80/my.cnf /var/lib/mysql
+#     ln -s /var/lib/mysql/my.cnf /etc/opt/rh/rh-mysql80
+#     mv /etc/opt/rh/rh-mysql80/my.cnf.d /var/lib/mysql
+#     ln -s /var/lib/mysql/my.cnf.d /etc/opt/rh/rh-mysql80
 # fi

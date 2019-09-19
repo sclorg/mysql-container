@@ -1,0 +1,33 @@
+$ git clone git@github.com:samyunodos/mysql-container.git
+
+$ cd mysql-container/
+
+$ git checkout -b mysql-wp
+Cambiado a nueva rama 'mysql-wp'
+
+$ emacs 8.0/Dockerfile &
+
+
+$ emacs s2i-common/bin/assemble &
+
+
+$ git add --all
+
+$ git commit -m all
+
+$ git push origin mysql-wp
+
+
+$ oc new-build git@github.com:samyunodos/mysql-container/#mysql-wp --context-dir=../examples/extend-image/ --name=mysql-builder
+
+
+
+$ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git \
+	--name my-mysql-centos7 \
+	--context-dir=examples/extend-image \
+	--env MYSQL_OPERATIONS_USER=opuser \
+	--env MYSQL_OPERATIONS_PASSWORD=oppass \
+	--env MYSQL_DATABASE=opdb \
+	--env MYSQL_USER=user \
+	--env MYSQL_PASSWORD=pass \
+  --strategy=source

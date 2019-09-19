@@ -76,16 +76,17 @@ RUN rm -rf /etc/my.cnf.d/* && \
 
 
 
-# Creo el directorio /silo
-RUN mkdir -p /silo
-RUN chmod -R a+rwx /silo && \
-chmod -R ug+r  /silo && \
-chmod -R ug+r  /silo && \
-chown -R 27:0 /silo && \
-chown -R 27:0 /silo 
+# # Creo el directorio /silo
+# RUN mkdir -p /silo
+# RUN chmod -R a+rwx /silo && \
+# chmod -R ug+r  /silo && \
+# chmod -R ug+r  /silo && \
+# chown -R 27:0 /silo && \
+# chown -R 27:0 /silo 
 
 
 USER 27
 
 ENTRYPOINT ["container-entrypoint"]
 CMD ["run-mysqld"]
+
