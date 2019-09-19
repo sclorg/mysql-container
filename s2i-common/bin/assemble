@@ -11,15 +11,15 @@ mv /tmp/src/* ./ 2>/dev/null || true
 # Fix source directory permissions
 /usr/libexec/fix-permissions ./
 
-# /var/lib/mysql/data
-if [ -d "/var/lib/mysql/data" ]; then
-    mv /var/lib/mysql /silo
-    ln -s /silo/mysql /var/lib
+# # /var/lib/mysql/data
+# if [ -d "/var/lib/mysql/data" ]; then
+#     mv /var/lib/mysql /silo
+#     ln -s /silo/mysql /var/lib
     
-fi
+# fi
 
-# /etc/opt/rh/rh-mysql80/my.cnf
-if [ -f "/etc/opt/rh/rh-mysql80/my.cnf" ]; then
-    mv /etc/opt/rh/rh-mysql80/my.cnf /silo
-    ln -s /silo/my.cnf /etc/opt/rh/rh-mysql80
-fi
+# # /etc/opt/rh/rh-mysql80/my.cnf
+# if [ -f "/etc/opt/rh/rh-mysql80/my.cnf" ]; then
+#     mv /etc/opt/rh/rh-mysql80/my.cnf /silo
+#     ln -s /silo/my.cnf /etc/opt/rh/rh-mysql80
+# fi
