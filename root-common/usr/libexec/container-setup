@@ -55,7 +55,7 @@ fi
 # setup directory for data
 
 
-mkdir -p /var/lib/mysql/data/bakup
+mkdir -p /var/lib/mysql/data
 chown -R mysql:0 /var/lib/mysql
 restorecon -R /var/lib/mysql
 

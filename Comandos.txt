@@ -35,6 +35,114 @@ $ docker exec -it e3980c84d9e9 bash
 
 
 
+bash-4.2$ ls /var/lib/mysql/data
+#innodb_temp	     ca.pem	       ibdata1		   server-cert.pem
+201909200407.sql.gz  client-cert.pem   ibtmp1		   server-key.pem
+auto.cnf	     client-key.pem    mysql		   sys
+binlog.000001	     db		       mysql.ibd	   undo_001
+binlog.000002	     f971571fb19d.pid  mysql_upgrade_info  undo_002
+binlog.index	     ib_buffer_pool    performance_schema
+bitacora.txt	     ib_logfile0       private_key.pem
+ca-key.pem	     ib_logfile1       public_key.pem
+bash-4.2$ 
+
+
+Como podemos observar binlog cambia cada vez que cambia la base de datos por lo que nos permite monitorizala mediante el log binario con browsersync.
+
+
+Bien ya tenemos al imagen. Vamos a subirla a nuestro openshift. Para ello comprobamos si existen y que contienen en su caso estos archivos de nuestro workstation:
+
+$ cat /etc/docker/daemon.json 
+{
+"insecure-registries" : ["172.30.0.0/16","172.30.1.1","docker-registry-default.apps.srv.world"]
+}
+
+
+Como vemos nos contiene "docker-registry-default.apps.srv.world" por lo que no nos rechazará las operaciones por no tener correctamente configurado el certificado.
+
+
+
+$ cat  /home/emilio/.docker/config.json 
+{
+	"auths": {
+		"docker-registry-default.apps.srv.world": {
+			"auth": "ZGV2OmtSNnBUR1VLYjJaWXFzMmh0YXF6N3YtblFpcmFHT290eXc3ZkVxMkcwMzg="
+		},
+		"docker.io": {
+			"auth": "c2FteXVub2RvczpQb2Nhc3MxMjM="
+		},
+		"https://index.docker.io/v1/": {
+			"auth": "c2FteXVub2RvczpQb2Nhc3MxMjM="
+		},
+		"registry.connect.redhat.com": {
+			"auth": "anVsaW9lbWlsaW86UG9jYXNzMTIz"
+		},
+		"registry.redhat.io": {
+			"auth": "SnVsaW9FbWlsaW86UG9jYXNzMTIz"
+		}
+	},
+	"HttpHeaders": {
+		"User-Agent": "Docker-Client/18.09.9 (linux)"
+	}
+}
+
+Que como vemos tiene la autorización para operar con "docker-registry-default.apps.srv.world". No obstante yo no se si esta autorización es temporal (token temporal) por lo que deberíamos loegearnos de nuevo mediante:
+
+Si estamos trabajando con el usuario dev, en principio debemos darle privilegios para trabajar con el registro docker de openshift:
+
+$ oc policy add-role-to-user registry-editor dev
+
+
+Una vez otorgados los privilegios, obtenemos el token como usuario dev:
+
+$ oc whoami -t
+LEAA28KHvitBRJ6HAtfxW7f5g4j-w2S2Tr83iCA8tQo
+
+y nos logeamos en el registro interno:
+
+$ docker login -u dev https://docker-registry-default.apps.srv.world
+Password: (LEAA28KHvitBRJ6HAtfxW7f5g4j-w2S2Tr83iCA8tQo)
+Login Succeeded
+
+creándose la correspondiente entrada en el archivo “ /home/emilio/.docker/config.json ”.
+
+
+Para poder subir la imagen, etiquetamos la imagen con el nombre del registro y además con el proyecto al que queremos que pertenezca. Si queremos que sea usada por todos los proyectos debemos subirla al proyecto openshift.
+
+
+$ docker images
+REPOSITORY                       TAG                 IMAGE ID            CREATED             SIZE
+<none>                           <none>              3ac7f80dc683        About an hour ago   569MB
+centos/s2i-core-centos7          latest              25edcea7e7c4        37 hours ago        236MB
+bitnami/wordpress                5.2.1               850d89931397        3 months ago        415MB
+openshift/origin-node            v3.11               37389629b6aa        7 months ago        1.17GB
+openshift/origin-control-plane   v3.11               5cd0e1999c8f        7 months ago        825MB
+openshift/origin-hyperkube       v3.11               19adb51612ce        7 months ago        506MB
+openshift/origin-pod             v3.11               a9a4af491b5b        7 months ago        258MB
+openshift/origin-hypershift      v3.11               7ad80d384403        7 months ago        546MB
+openshift/origin-cli             v3.11               5ccda8312cfe        7 months ago        381MB
+$ 
+
+
+
+la etiquetamos:
+
+$ docker tag 3ac7f80dc683 docker-registry-default.apps.srv.world/imagen-mysql/mysql-wp:v.0
+
+
+$ docker images
+REPOSITORY                                                     TAG                 IMAGE ID            CREATED             SIZE
+docker-registry-default.apps.srv.world/imagen-mysql/mysql-wp   v.0                 3ac7f80dc683        About an hour ago   569MB
+
+
+Ahora para subirla a openshift basta con:
+
+$ docker push docker-registry-default.apps.srv.world/imagen-mysql/mysql-wp:v.0
+
+Nos queda crear el desplegue mediante statefull y con volumen nfs:
+
+
+
 ==========================================================================================
 
 
