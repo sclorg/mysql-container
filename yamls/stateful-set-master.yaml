@@ -1,0 +1,89 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: my-release-mysql
+  labels:
+    app: "mysql"
+    component: "master"
+    release: "my-release"
+spec:
+  selector:
+    matchLabels:
+      release: "my-release"
+      component: "master"
+      app: "mysql"
+  serviceName: "my-release-mysql"
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: "mysql"
+        component: "master"
+        release: "my-release"
+    spec:
+      serviceAccountName: "default"
+      securityContext: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: "mysql"
+                  release: "my-release"      
+      initContainers:
+      containers:
+      - name: "mysql"
+        image: docker-registry.default.svc:5000/imagen-mysql/mysql-wp-imagen:latest
+        imagePullPolicy: "IfNotPresent"
+        env:
+        - name: MYSQL_USER
+          value: "user"
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: my-release-mysql
+              key: mysql-password
+        - name: MYSQL_DATABASE
+          value: "db"
+        ports:
+        - name: mysql
+          containerPort: 3306
+        livenessProbe:
+          exec:
+            command: ["sh", "-c", "exec mysqladmin status -u$MYSQL_USER -p$MYSQL_PASSWORD"]
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "exec mysqladmin status -u$MYSQL_USER -p$MYSQL_PASSWORD"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        resources: {}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql/data
+          subPath: data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: "mysql"
+          component: "master"
+          release: "my-release"
+      spec:
+        accessModes:
+          - "ReadWriteMany"
+        resources:
+          requests:
+            storage: "8Gi"

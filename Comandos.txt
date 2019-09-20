@@ -1,4 +1,4 @@
-##Básicamente no hemos cambiado nada. Hemos añadido los scripts en /mysql-container_mysql-wp/8.0/root/usr/share/container-scripts/mysql/backup.sh y restore.sh para hacer copias de seguridad y restaurlas en /var/lib/mysql/backup. Para crear este directorio añadimos a /mysql-container_mysql-wp/root-common/usr/libexec/container-setup.sh "mkdir -p /var/lib/mysql/backup".
+##Básicamente no hemos cambiado nada. Hemos añadido los scripts en /mysql-container_mysql-wp/8.0/root/usr/sshare/container-scripts/mysql/backup.sh y restore.sh para hacer copias de seguridad y restaurlas en /var/lib/mysql/backup. Para crear este directorio añadimos a /mysql-container_mysql-wp/root-common/usr/libexec/container-setup.sh "mkdir -p /var/lib/mysql/backup".
 
 
 Tenemos para trabajar con la imagen básicamente dar valor a las siguientes variables de entorno:
@@ -139,7 +139,42 @@ Ahora para subirla a openshift basta con:
 
 $ docker push docker-registry-default.apps.srv.world/imagen-mysql/mysql-wp:v.0
 
+
+
+$ oc  describe is/mysql-wp 
+Name:			mysql-wp
+Namespace:		imagen-mysql
+Created:		About a minute ago
+Labels:			<none>
+Annotations:		<none>
+Docker Pull Spec:	docker-registry.default.svc:5000/imagen-mysql/mysql-wp
+Image Lookup:		local=false
+Unique Images:		1
+Tags:			1
+
+v.0
+  no spec tag
+
+  * docker-registry.default.svc:5000/imagen-mysql/mysql-wp@sha256:976c76b757a02e7359f1272ffab54c7e7f282f4393e2cd48484ef87a969f6561
+      About a minute ago
+$ 
+
+
+
+
 Nos queda crear el desplegue mediante statefull y con volumen nfs:
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
