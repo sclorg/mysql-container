@@ -13,10 +13,17 @@ Compilamos la imagen-builder:
 
 make build TARGET=centos7 VERSIONS=8.0
 
+$ make clean TARGET=centos7  VERSIONS=8.0
+/usr/bin/env bash common/clean.sh 8.0
+make[1]: No se hace nada para 'clean-hook'.
+$ make clean-images TARGET=centos7  VERSIONS=8.0
+/usr/bin/env bash common/clean.sh 8.0
+
+
 Para testear la imagen:
 
 
-docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -e MYSQL_ROOT_PASSWORD=pass -p 3306:3306 3f6cf193f925
+docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db  -p 3306:3306 9a3861823af7
 
 $ docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
