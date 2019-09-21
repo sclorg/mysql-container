@@ -214,7 +214,37 @@ Tags:			1
 
 Como vemos ya tenemos la imagen stream subida a openshift. Debe de estar en el projecto opneshift para ser usada. Esta imagen no tiene ningún source en /opt/app-root/src.
 
+Nos funciona el comando con user pero no como root:
 
+$ mysql -u user -p
+Enter password: (pass)
+
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| db                 |
+| information_schema |
++--------------------+
+2 rows in set (0.00 sec)
+
+mysql> USE db;
+Database changed
+
+
+Vemos que no existe niguna tabla creada.
+
+mysql> CREATE TABLE Persons (     PersonID int,     LastName varchar(255),     FirstName varchar(255),     Address varchar(255),     City varchar(255) );
+
+
+mysql> show tables;
++--------------+
+| Tables_in_db |
++--------------+
+| Persons      |
++--------------+
+1 row in set (0.01 sec)
 
 ==========================================================================================
 
@@ -240,7 +270,7 @@ $ git commit -m all
 $ git push origin mysql-wp
 
 
-$ oc new-build git@github.com:samyunodos/mysql-container/#mysql-wp --context-dir=../examples/extend-image/ --name=mysql-builder
+$ oc new-build git@github.com:samyunodos/mysql-container/#mysql-wp --context-dir=examples/extend-image/ --name=mysql-builder
 
 
 
@@ -266,4 +296,17 @@ $ oc new-build git@github.com:samyunodos/mysql-container/#mysql-wp --context-dir
 ###   --env MYSQL_ROOT_PASSWORD=passs
 
 
-### $ oc new-build mysql:8.0~https://github.com/sclorg/mysql-container.git --name my-mysql-rhel7 --context-dir=examples/extend-image --env MYSQL_OPERATIONS_USER=opuser --env MYSQL_OPERATIONS_PASSWORD=oppass --env MYSQL_DATABASE=opdb --env MYSQL_USER=user --env MYSQL_PASSWORD=pass   --env MYSQL_ROOT_PASSWORD=passs --strategy=source
+### $ oc new-build mysql:8.0~https://github.com/sclorg/mysql-container.git --name my-mysql-centos7 --context-dir=examples/extend-image --env MYSQL_OPERATIONS_USER=opuser --env MYSQL_OPERATIONS_PASSWORD=oppass --env MYSQL_DATABASE=opdb --env MYSQL_USER=user --env MYSQL_PASSWORD=pass   --env MYSQL_ROOT_PASSWORD=passs --strategy=source
+
+$ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git --name my-mysql-centos7 --context-dir=examples/replica --env MYSQL_OPERATIONS_USER=opuser --env MYSQL_OPERATIONS_PASSWORD=oppass  --env MYSQL_MASTER_USER=master --env MYSQL_MASTER_PASSWORD=passmaster --env MYSQL_PASSWORD=pass    --env MYSQL_ROOT_PASSWORD=passroot --strategy=source
+
+
+
+$ oc process -n project  -f examples/replica/mysql_replica.json -p POSTGRESQL_USER=bob -p POSTGRESQL_USER=bob  | oc create -f -
+
+
+
+$
+
+
+oc process -n project -f examples/replica/mysql_replica.json | oc delete -f -
