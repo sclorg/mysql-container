@@ -38,18 +38,21 @@ spec:
       initContainers:
       containers:
       - name: "mysql"
-        image: docker-registry.default.svc:5000/imagen-mysql/mysql-wp-imagen:latest
+        image: docker-registry.default.svc:5000/imagen-mysql/my-mysql-rhel7@sha256:5d3373c2ef664f94d8d26ef4ca8c847133a85fab8c0fdc07452fbc1a558e60d4
         imagePullPolicy: "IfNotPresent"
         env:
+        - name: MYSQL_OPERATIONS_USER
+          value: "opdb"
+        - name: MYSQL_OPERATIONS_PASSWORD
+          value: "oppass"
+        - name: MYSQL_PASSWORD
+          value: "pass"
+        - name: MYSQL_DATABASE
+          value: "opdb"
+        - name: MYSQL_ROOT_PASSWORD
+          value: "passs"
         - name: MYSQL_USER
           value: "user"
-        - name: MYSQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: my-release-mysql
-              key: mysql-password
-        - name: MYSQL_DATABASE
-          value: "db"
         ports:
         - name: mysql
           containerPort: 3306
