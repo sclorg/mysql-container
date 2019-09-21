@@ -302,11 +302,132 @@ $ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git --name my-m
 
 
 
-$ oc process -n project  -f examples/replica/mysql_replica.json -p POSTGRESQL_USER=bob -p POSTGRESQL_USER=bob  | oc create -f -
+$ oc process -n project  -f examples/replica/mysql_replica.json -p MYSQL_MASTER_PASSWORD=passmaster -p MYSQL_PASSWORD=pass -p MYSQL_ROOT_PASSWORD=passroot -p VOLUME_CAPACITY=8Gi  -p IMAGEN_STREAM="mysql-80-centos7@sha256:0bfa59b436753dba1f52dae605db18188f8ca5247d21f00705ba0341f5b275a0" | oc create -f -
 
 
 
-$
 
 
-oc process -n project -f examples/replica/mysql_replica.json | oc delete -f -
+
+$ oc process -n project -f examples/replica/mysql_replica.json | oc delete -f -
+
+
+$ oc describe is/mysql-80-centos7 -n openshift
+
+$ oc apply -f os-nfs-mysql-pv01.yaml 
+$ oc apply -f os-nfs-mysql-pv02.yaml
+
+$ oc process -f mysql_replica.json -p MYSQL_MASTER_PASSWORD=passmaster -p MYSQL_PASSWORD=pass -p MYSQL_ROOT_PASSWORD=passroot -p VOLUME_CAPACITY=8Gi  -p IMAGEN_STREAM="docker-registry.default.svc:5000/openshift/mysql-80-centos7:8.0" | oc create -f -
+
+
+$ oc process -f mysql_replica.json | oc delete -f -
+
+$ oc delete -f os-nfs-mysql-pv01.yaml 
+$ oc delete -f os-nfs-mysql-pv02.yaml
+
+
+$ oc describe pod/mysql-master-1-bpdzg
+Name:               mysql-master-1-bpdzg
+Namespace:          imagen-mysql
+Priority:           0
+PriorityClassName:  <none>
+Node:               node01.srv.world/192.168.122.101
+Start Time:         Sat, 21 Sep 2019 22:26:50 +0200
+Labels:             deployment=mysql-master-1
+                    deploymentconfig=mysql-master
+                    name=mysql-master
+Annotations:        openshift.io/deployment-config.latest-version=1
+                    openshift.io/deployment-config.name=mysql-master
+                    openshift.io/deployment.name=mysql-master-1
+                    openshift.io/scc=restricted
+Status:             Running
+IP:                 10.130.0.83
+Controlled By:      ReplicationController/mysql-master-1
+Containers:
+  server:
+    Container ID:  docker://7a1844e1d35789494e6351e57b5f3e5fb41c143d6e6f52014f69758d572cbd41
+    Image:         docker-registry.default.svc:5000/openshift/mysql-80-centos7:8.0
+    Image ID:      docker-pullable://docker-registry.default.svc:5000/openshift/mysql-80-centos7@sha256:0bfa59b436753dba1f52dae605db18188f8ca5247d21f00705ba0341f5b275a0
+    Port:          3306/TCP
+    Host Port:     0/TCP
+    Args:
+      run-mysqld-master
+    State:          Running
+      Started:      Sat, 21 Sep 2019 22:27:02 +0200
+    Ready:          True
+    Restart Count:  0
+    Environment:
+      MYSQL_MASTER_USER:      master
+      MYSQL_MASTER_PASSWORD:  passmaster
+      MYSQL_USER:             user
+      MYSQL_PASSWORD:         pass
+      MYSQL_DATABASE:         userdb
+      MYSQL_ROOT_PASSWORD:    passroot
+    Mounts:
+      /var/lib/mysql/data from mysql-master-data (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-9vpp8 (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  mysql-master-data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  mysql-master
+    ReadOnly:   false
+  default-token-9vpp8:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-9vpp8
+    Optional:    false
+QoS Class:       BestEffort
+Node-Selectors:  node-role.kubernetes.io/compute=true
+Tolerations:     <none>
+Events:
+  Type    Reason     Age   From                       Message
+  ----    ------     ----  ----                       -------
+  Normal  Scheduled  12m   default-scheduler          Successfully assigned imagen-mysql/mysql-master-1-bpdzg to node01.srv.world
+  Normal  Pulling    12m   kubelet, node01.srv.world  pulling image "docker-registry.default.svc:5000/openshift/mysql-80-centos7:8.0"
+  Normal  Pulled     12m   kubelet, node01.srv.world  Successfully pulled image "docker-registry.default.svc:5000/openshift/mysql-80-centos7:8.0"
+  Normal  Created    12m   kubelet, node01.srv.world  Created container
+  Normal  Started    12m   kubelet, node01.srv.world  Started container
+
+## replication controller
+$ oc scale rc/mysql-master-1 --replicas=2
+replicationcontroller/mysql-master-1 scaled
+
+
+## deploymentconfig
+$ oc get dc
+NAME           REVISION   DESIRED   CURRENT   TRIGGERED BY
+mysql-master   1          1         1         config
+mysql-slave    1          1         1         config
+$ oc scale --replicas=2 dc mysql-slave
+deploymentconfig.apps.openshift.io/mysql-slave scaled
+$ 
+
+
+
+## nombre del host para poder entrar como root
+
+bash-4.2$ mysql -u root -h mysql-master-1-bpdzg -p
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| userdb             |
++--------------------+
+5 rows in set (0.00 sec)
+
+mysql> USE userdb;
+Database changed
+mysql> show tables;
+Empty set (0.01 sec)
+
+mysql>
