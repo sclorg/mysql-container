@@ -1,4 +1,6 @@
 {
+
+
   "kind": "Template",
   "apiVersion": "v1",
   "metadata": {
@@ -63,6 +65,40 @@
   ],
   "objects": [
     {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-master"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteMany"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "${VOLUME_CAPACITY}"
+          }
+        }
+      }
+    },
+    {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "mysql-slave"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteMany"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "${VOLUME_CAPACITY}"
+          }
+        }
+      }
+    },
+    {
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
@@ -105,17 +141,12 @@
       }
     },
     {
-      "kind": "StatefulSet",
-      "apiVersion": "apps/v1beta1",
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
       "metadata": {
-        "name": "mysql-master",
-        "labels": {
-          "app": "mysql-master"
-        }
+        "name": "mysql-master"
       },
       "spec": {
-        "serviceName": "mysql-master",
-        "replicas": 1,
         "strategy": {
           "type": "Recreate"
         },
@@ -124,20 +155,25 @@
             "type": "ConfigChange"
           }
         ],
+        "replicas": 1,
         "selector": {
-          "name": "mysql-master",
-          "matchLabels": {
-            "app": "mysql-master"
-          }
+          "name": "mysql-master"
         },
         "template": {
           "metadata": {
-            "name":  "mysql-master",
             "labels": {
-              "app": "mysql-master"
+              "name": "mysql-master"
             }
           },
           "spec": {
+            "volumes": [
+              {
+                "name": "mysql-master-data",
+                "persistentVolumeClaim": {
+                  "claimName": "mysql-master"
+                }
+              }
+            ],
             "containers": [
               {
                 "name": "server",
@@ -179,45 +215,23 @@
                 "volumeMounts": [
                   {
                     "name": "mysql-master-data",
-                    "mountPath": "/var/lib/mysql/data"
+                    "mountPath": "/var/lib/mysql"
                   }
                 ],
                 "imagePullPolicy": "IfNotPresent"
               }
             ]
           }
-        },
-        "volumeClaimTemplates": [
-          {
-            "metadata": {
-              "name": "mysql-master-data"
-            },
-            "spec": {
-              "accessModes": [
-                "ReadWriteMany"
-              ],
-              "resources": {
-                "requests": {
-                  "storage": "${VOLUME_CAPACITY}"
-                }
-              }
-            }
-          }
-        ]
+        }
       }
     },
     {
-      "kind": "StatefulSet",
-      "apiVersion": "apps/v1beta1",
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
       "metadata": {
-        "name": "mysql-slave",
-        "labels": {
-          "app1": "mysql-slave"
-        }
+        "name": "mysql-slave"
       },
       "spec": {
-        "serviceName": "mysql-slave",
-        "replicas": 3,
         "strategy": {
           "type": "Recreate"
         },
@@ -226,11 +240,9 @@
             "type": "ConfigChange"
           }
         ],
+        "replicas": 3,
         "selector": {
-          "name": "mysql-slave",
-          "matchLabels": {
-            "app": "mysql-slave"
-          }
+          "name": "mysql-slave"
         },
         "template": {
           "metadata": {
@@ -239,6 +251,14 @@
             }
           },
           "spec": {
+            "volumes": [
+              {
+                "name": "mysql-slave-data",
+                "persistentVolumeClaim": {
+                  "claimName": "mysql-slave"
+                }
+              }
+            ],
             "containers": [
               {
                 "name": "server",
@@ -272,31 +292,14 @@
                 "volumeMounts": [
                   {
                     "name": "mysql-slave-data",
-                    "mountPath": "/var/lib/mysql/data"
+                    "mountPath": "/var/lib/mysql"
                   }
                 ],
                 "imagePullPolicy": "IfNotPresent"
               }
             ]
           }
-        },
-        "volumeClaimTemplates": [
-          {
-            "metadata": {
-              "name": "mysql-slave-data"
-            },
-            "spec": {
-              "accessModes": [
-                "ReadWriteMany"
-              ],
-              "resources": {
-                "requests": {
-                  "storage": "${VOLUME_CAPACITY}"
-                }
-              }
-            }
-          }
-        ]
+        }
       }
     }
   ]
