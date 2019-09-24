@@ -74,17 +74,6 @@ RUN rm -rf /etc/my.cnf.d/* && \
 # https://github.com/sclorg/httpd-container/issues/30
 # VOLUME ["/var/lib/mysql/data"]
 
-
-
-# # Creo el directorio /silo
-# RUN mkdir -p /silo
-# RUN chmod -R a+rwx /silo && \
-# chmod -R ug+r  /silo && \
-# chmod -R ug+r  /silo && \
-# chown -R 27:0 /silo && \
-# chown -R 27:0 /silo 
-
-
 USER 27
 
 ENTRYPOINT ["container-entrypoint"]
