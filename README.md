@@ -46,7 +46,7 @@ For more information about contributing, see
 For more information about concepts used in these container images, see the
 [Landing page](https://github.com/sclorg/welcome).
 
-================================================
+
 Versions
 ---------------
 MySQL versions currently provided are:
