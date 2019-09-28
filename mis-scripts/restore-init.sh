@@ -4,6 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+RESPALDO_A_RESTAURAR=$1
 
 #copia de seguridad base de datos
 # SUB_DIR="$(date +"%Y%m%d%H%M")"
@@ -15,12 +16,14 @@ set -o pipefail
 
 # mysqldump -h${MYSQL_HOST_LOCAL} -uroot -p${MYSQL_ROOT_PASSWORD} --events ${MYSQL_DATABASE} --opt --routines --add-drop-database --table --complete-insert --create-options --master-data | gzip > backup_db_local/$SUB_DIR/${MYSQL_DATABASE}.sql.gz
 
-# mysqldump -hlocalhost -uroot -p${MYSQL_ROOT_PASSWORD} --create-options --add-drop-database --add-drop-table --all-databases --opt --routines --complete-insert | gzip > /var/lib/mysql/backup/$(date +"%Y%m%d%H%M").sql.gz &&  echo "Respaldo realizado exitosamente $(date +"%Y%m%d%H%M")" >> /var/lib/mysql/backup/bitacora.txt
+if [ -f "/var/lib/mysql/data/bitacora.txt" ]; them
+
+   export RESPALDO_A_RESTAURAR=$(cat /var/lib/mysql/data/bitacora.txt | tail -1 | awk '{print $4}')
+
+   gunzip < ${RESPALDO_A_RESTAURAR} | mysql -uroot -hlocalhost -p${MYSQL_PASSWORD}
+
+fi
 #chown emilio:emilio backup_db_local/ -R
-
-mysqldump -hlocalhost -uuser -p${MYSQL_PASSWORD} --create-options --add-drop-database --add-drop-table  --databases ${MYSQL_DATABASE} --opt --routines --complete-insert | gzip > /var/lib/mysql/data/$(date +"%Y%m%d%H%M").sql.gz &&  echo "Respaldo realizado exitosamente $(date +"%Y%m%d%H%M").sql.gz" >> /var/lib/mysql/data/bitacora.txt
-
-
 
 
 # tar -czvf /home/emilio/Volume_backup/$SUB_DIR/wp-content.tar.gz /home/emilio/ftp/$NOMBRE_SITIO_FTP/web/wp-content/
