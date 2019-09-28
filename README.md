@@ -4,21 +4,21 @@
 
 - Añadimos el directorio "extend_db" donde se encuentran los directorios:
 
--- mysql-cfg/ Al iniciar el contenedor, los archivos de este directorio se utilizarán como configuración para el demonio mysqld. El comando "envsubst" se ejecuta en este archivo para permitir la personalización de la imagen utilizando variables ambientales.
+  - mysql-cfg/ Al iniciar el contenedor, los archivos de este directorio se utilizarán como configuración para el demonio mysqld. El comando "envsubst" se ejecuta en este archivo para permitir la personalización de la imagen utilizando variables ambientales.
 
--- mysql-pre-init/ Los scripts de Shell (* .sh) disponibles en este directorio se ejecutan antes de que se inicie el demonio mysqld.
+  - mysql-pre-init/ Los scripts de Shell (* .sh) disponibles en este directorio se ejecutan antes de que se inicie el demonio mysqld.
 
--- mysql-init/ Los scripts de Shell (* .sh) disponibles en este directorio se obtienen cuando mysqld daemon se inicia localmente. En esta fase, usa ${mysql_flags} para conectarse al demonio que se ejecuta localmente, por ejemplo: mysql $mysql_flags < dump.sql
+  - mysql-init/ Los scripts de Shell (* .sh) disponibles en este directorio se obtienen cuando mysqld daemon se inicia localmente. En esta fase, usa ${mysql_flags} para conectarse al demonio que se ejecuta localmente, por ejemplo: mysql $mysql_flags < dump.sql
 
 Las variables que se pueden utilizar en los scripts s2i:
 
--- "$mysql_flags" argumentos para la herramienta mysql que se conectará al mysqld que se ejecuta localmente durante la inicialización
+  - "$mysql_flags" argumentos para la herramienta mysql que se conectará al mysqld que se ejecuta localmente durante la inicialización
 
--- "$MYSQL_RUNNING_AS_MASTER" variable definida cuando el contenedor se ejecuta con el comando run-mysqld-master
+  - "$MYSQL_RUNNING_AS_MASTER" variable definida cuando el contenedor se ejecuta con el comando run-mysqld-master
 
--- "$MYSQL_RUNNING_AS_SLAVE"variable definida cuando el contenedor se ejecuta con el comando run-mysqld-slave
+  - "$MYSQL_RUNNING_AS_SLAVE"variable definida cuando el contenedor se ejecuta con el comando run-mysqld-slave
 
--- "$MYSQL_DATADIR_FIRST_INIT" variable definida cuando el contenedor se inicializó desde el directorio de datos vacío
+  - "$MYSQL_DATADIR_FIRST_INIT" variable definida cuando el contenedor se inicializó desde el directorio de datos vacío
 
 
 
