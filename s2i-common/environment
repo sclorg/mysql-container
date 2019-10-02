@@ -1,9 +1,9 @@
 MYSQL_MASTER_USER=master
 MYSQL_MASTER_PASSWORD=passmaster
 MYSQL_MASTER_SERVICE_NAME=mysql-master
-MYSQL_USER="userdb"
-MYSQL_PASSWORD="passdb"
-MYSQL_DATABASE="devnelydb"
-MYSQL_ROOT_PASSWORD="passrootenv"  ## (hay que introducir mysql -h (host) para que funcione)
+MYSQL_USER=userdb
+MYSQL_PASSWORD=passdb
+MYSQL_DATABASE=devnelydb
+MYSQL_ROOT_PASSWORD=passrootenv  ## (hay que introducir mysql -h (host) para que funcione)
 MYSQL_PORT_NUMBER=3306
-MYSQL_HOST="localhost" ## ($MYSQL_HOST:$MYSQL_PORT_NUMBER)
+MYSQL_HOST=localhost ## ($MYSQL_HOST:$MYSQL_PORT_NUMBER)
