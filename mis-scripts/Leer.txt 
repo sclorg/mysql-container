@@ -1,0 +1,1 @@
+Los achivos de aqui los copio en 8.0/root/usr/share/container-scripts/mysql/. Creo un directorio vacio/ sin nada y en contextDir (en buildconfig.json) pongo ese directorio.
