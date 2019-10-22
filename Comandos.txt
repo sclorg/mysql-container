@@ -165,18 +165,88 @@ $
 Nos queda crear el desplegue mediante statefull y con volumen nfs:
 
 
+1-. En principio el comando:
+
+$ oc new-build mysql:8.0~https://github.com/sclorg/mysql-container.git --name my-mysql-rhel7 --context-dir=examples/extend-image --env MYSQL_OPERATIONS_USER=opuser --env MYSQL_OPERATIONS_PASSWORD=oppass --env MYSQL_DATABASE=opdb --env MYSQL_USER=user --env MYSQL_PASSWORD=pass   --env MYSQL_ROOT_PASSWORD=passs --strategy=source
 
 
+no funciona en openshift con 8.0 por lo que voy a compilar y subir la imagen stream.
 
 
+2-. Creamos la imagen builder:
+
+    a-. fork a https://github.com/sclorg/mysql-container quedandonos https://github.com/samyunodos/mysql-container
+
+    b-. $ git clone --recursive git@github.com:samyunodos/mysql-container.git
+        $ cd mysql-container
+        $ git submodule update --init
+        $ git remote add upstream git@github.com:sclorg/s2i-php-container.git
+        $ git pull upstream master
+        $ git checkout mysql-wp (si queremos modificar la imagen builder)
+        $ make build TARGET=centos7 VERSIONS=8.0 (compilamos la imagen builder (  centos/s2i-core-centos7 -- make clean)
+        $ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+e3980c84d9e9        3f6cf193f925        "container-entrypoin…"   4 seconds ago       Up 3 seconds        0.0.0.0:3306->3306/tcp   hungry_margulis
+        $ oc policy add-role-to-user registry-editor dev
+        $ oc whoami -t
+LEAA28KHvitBRJ6HAtfxW7f5g4j-w2S2Tr83iCA8tQo
+        $ docker login -u dev https://docker-registry-default.apps.srv.world
+Password: (LEAA28KHvitBRJ6HAtfxW7f5g4j-w2S2Tr83iCA8tQo)
+Login Succeeded
+        $ docker tag 3ac7f80dc683 docker-registry-default.apps.srv.world/openshift/mysql-80-centos7:8.0
+        $ docker push docker-registry-default.apps.srv.world/openshift/mysql-80-centos7:8.0
+        $ oc describe 
+$ oc describe is/mysql-80-centos7 -n openshift
+Name:			mysql-80-centos7
+Namespace:		openshift
+Created:		12 hours ago
+Labels:			<none>
+Annotations:		<none>
+Docker Pull Spec:	docker-registry.default.svc:5000/openshift/mysql-80-centos7
+Image Lookup:		local=false
+Unique Images:		1
+Tags:			1
+
+8.0
+  no spec tag
+
+  * docker-registry.default.svc:5000/openshift/mysql-80-centos7@sha256:0bfa59b436753dba1f52dae605db18188f8ca5247d21f00705ba0341f5b275a0
+      12 hours ago
+
+Como vemos ya tenemos la imagen stream subida a openshift. Debe de estar en el projecto opneshift para ser usada. Esta imagen no tiene ningún source en /opt/app-root/src.
+
+Nos funciona el comando con user pero no como root:
+
+$ mysql -u user -p
+Enter password: (pass)
 
 
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| db                 |
+| information_schema |
++--------------------+
+2 rows in set (0.00 sec)
+
+mysql> USE db;
+Database changed
 
 
+Vemos que no existe niguna tabla creada.
+
+mysql> CREATE TABLE Persons (     PersonID int,     LastName varchar(255),     FirstName varchar(255),     Address varchar(255),     City varchar(255) );
 
 
-
-
+mysql> show tables;
++--------------+
+| Tables_in_db |
++--------------+
+| Persons      |
++--------------+
+1 row in set (0.01 sec)
+>>>>>>> 64c18168b49b4340a99aa2c3fe75603eebeb35dd
 
 ==========================================================================================
 
@@ -215,3 +285,165 @@ $ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git \
 	--env MYSQL_USER=user \
 	--env MYSQL_PASSWORD=pass \
   --strategy=source
+
+$ oc new-build git@github.com:samyunodos/mysql-container/#mysql-wp --context-dir=examples/extend-image/ --name=mysql-builder
+
+
+
+### $ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git \
+### 	--name my-mysql-centos7 \
+### 	--context-dir=examples/extend-image \
+### 	--env MYSQL_OPERATIONS_USER=opuser \
+### 	--env MYSQL_OPERATIONS_PASSWORD=oppass \
+### 	--env MYSQL_DATABASE=opdb \
+### 	--env MYSQL_USER=user \
+### 	--env MYSQL_PASSWORD=pass \
+###   --strategy=source
+
+
+### oc new-app centos/msyql-80-centos7:8.0~https://github.com/sclorg/mysql-container.git \
+### 	--name my-mysql-rhel7 \
+### 	--context-dir=examples/extend-image \
+### 	--env MYSQL_OPERATIONS_USER=opuser \
+### 	--env MYSQL_OPERATIONS_PASSWORD=oppass \
+### 	--env MYSQL_DATABASE=opdb \
+### 	--env MYSQL_USER=user \
+### 	--env MYSQL_PASSWORD=pass \
+###   --env MYSQL_ROOT_PASSWORD=passs
+
+
+### $ oc new-build mysql:8.0~https://github.com/sclorg/mysql-container.git --name my-mysql-centos7 --context-dir=examples/extend-image --env MYSQL_OPERATIONS_USER=opuser --env MYSQL_OPERATIONS_PASSWORD=oppass --env MYSQL_DATABASE=opdb --env MYSQL_USER=user --env MYSQL_PASSWORD=pass   --env MYSQL_ROOT_PASSWORD=passs --strategy=source
+
+$ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git --name my-mysql-centos7 --context-dir=examples/replica --env MYSQL_OPERATIONS_USER=opuser --env MYSQL_OPERATIONS_PASSWORD=oppass  --env MYSQL_MASTER_USER=master --env MYSQL_MASTER_PASSWORD=passmaster --env MYSQL_PASSWORD=pass    --env MYSQL_ROOT_PASSWORD=passroot --strategy=source
+
+
+
+$ oc process -n project  -f examples/replica/mysql_replica.json -p MYSQL_MASTER_PASSWORD=passmaster -p MYSQL_PASSWORD=pass -p MYSQL_ROOT_PASSWORD=passroot -p VOLUME_CAPACITY=8Gi  -p IMAGEN_STREAM="mysql-80-centos7@sha256:0bfa59b436753dba1f52dae605db18188f8ca5247d21f00705ba0341f5b275a0" | oc create -f -
+
+
+
+
+
+
+$ oc process -n project -f examples/replica/mysql_replica.json | oc delete -f -
+
+
+$ oc describe is/mysql-80-centos7 -n openshift
+
+$ oc apply -f os-nfs-mysql-pv01.yaml 
+$ oc apply -f os-nfs-mysql-pv02.yaml
+
+$ oc process -f mysql_replica.json -p MYSQL_MASTER_PASSWORD=passmaster -p MYSQL_PASSWORD=pass -p MYSQL_ROOT_PASSWORD=passroot -p VOLUME_CAPACITY=8Gi  -p IMAGEN_STREAM="docker-registry.default.svc:5000/openshift/mysql-80-centos7:8.0" | oc create -f -
+
+
+$ oc process -f mysql_replica.json | oc delete -f -
+
+$ oc delete -f os-nfs-mysql-pv01.yaml 
+$ oc delete -f os-nfs-mysql-pv02.yaml
+
+
+$ oc describe pod/mysql-master-1-bpdzg
+Name:               mysql-master-1-bpdzg
+Namespace:          imagen-mysql
+Priority:           0
+PriorityClassName:  <none>
+Node:               node01.srv.world/192.168.122.101
+Start Time:         Sat, 21 Sep 2019 22:26:50 +0200
+Labels:             deployment=mysql-master-1
+                    deploymentconfig=mysql-master
+                    name=mysql-master
+Annotations:        openshift.io/deployment-config.latest-version=1
+                    openshift.io/deployment-config.name=mysql-master
+                    openshift.io/deployment.name=mysql-master-1
+                    openshift.io/scc=restricted
+Status:             Running
+IP:                 10.130.0.83
+Controlled By:      ReplicationController/mysql-master-1
+Containers:
+  server:
+    Container ID:  docker://7a1844e1d35789494e6351e57b5f3e5fb41c143d6e6f52014f69758d572cbd41
+    Image:         docker-registry.default.svc:5000/openshift/mysql-80-centos7:8.0
+    Image ID:      docker-pullable://docker-registry.default.svc:5000/openshift/mysql-80-centos7@sha256:0bfa59b436753dba1f52dae605db18188f8ca5247d21f00705ba0341f5b275a0
+    Port:          3306/TCP
+    Host Port:     0/TCP
+    Args:
+      run-mysqld-master
+    State:          Running
+      Started:      Sat, 21 Sep 2019 22:27:02 +0200
+    Ready:          True
+    Restart Count:  0
+    Environment:
+      MYSQL_MASTER_USER:      master
+      MYSQL_MASTER_PASSWORD:  passmaster
+      MYSQL_USER:             user
+      MYSQL_PASSWORD:         pass
+      MYSQL_DATABASE:         userdb
+      MYSQL_ROOT_PASSWORD:    passroot
+    Mounts:
+      /var/lib/mysql/data from mysql-master-data (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-9vpp8 (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  mysql-master-data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  mysql-master
+    ReadOnly:   false
+  default-token-9vpp8:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-9vpp8
+    Optional:    false
+QoS Class:       BestEffort
+Node-Selectors:  node-role.kubernetes.io/compute=true
+Tolerations:     <none>
+Events:
+  Type    Reason     Age   From                       Message
+  ----    ------     ----  ----                       -------
+  Normal  Scheduled  12m   default-scheduler          Successfully assigned imagen-mysql/mysql-master-1-bpdzg to node01.srv.world
+  Normal  Pulling    12m   kubelet, node01.srv.world  pulling image "docker-registry.default.svc:5000/openshift/mysql-80-centos7:8.0"
+  Normal  Pulled     12m   kubelet, node01.srv.world  Successfully pulled image "docker-registry.default.svc:5000/openshift/mysql-80-centos7:8.0"
+  Normal  Created    12m   kubelet, node01.srv.world  Created container
+  Normal  Started    12m   kubelet, node01.srv.world  Started container
+
+## replication controller
+$ oc scale rc/mysql-master-1 --replicas=2
+replicationcontroller/mysql-master-1 scaled
+
+
+## deploymentconfig
+$ oc get dc
+NAME           REVISION   DESIRED   CURRENT   TRIGGERED BY
+mysql-master   1          1         1         config
+mysql-slave    1          1         1         config
+$ oc scale --replicas=2 dc mysql-slave
+deploymentconfig.apps.openshift.io/mysql-slave scaled
+$ 
+
+
+
+## nombre del host para poder entrar como root
+
+bash-4.2$ mysql -u root -h mysql-master-1-bpdzg -p
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| userdb             |
++--------------------+
+5 rows in set (0.00 sec)
+
+mysql> USE userdb;
+Database changed
+mysql> show tables;
+Empty set (0.01 sec)
+
+mysql>
