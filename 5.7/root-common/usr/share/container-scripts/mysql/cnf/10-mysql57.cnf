@@ -1,0 +1,5 @@
+[mysqld]
+
+# http://www.chriscalender.com/ignoring-the-lostfound-directory-in-your-datadir/
+ignore-db-dir=lost+found
+

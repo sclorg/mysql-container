@@ -1,0 +1,39 @@
+#!/bin/bash
+
+export_vars=$(cgroup-limits); export $export_vars
+source ${CONTAINER_SCRIPTS_PATH}/common.sh
+set -eu
+if [[ -v DEBUG_IGNORE_SCRIPT_FAILURES ]]; then
+  set +e
+fi
+
+export_setting_variables
+
+log_volume_info $MYSQL_DATADIR
+
+# pre-init files
+process_extending_files ${APP_DATA}/mysql-pre-init/ ${CONTAINER_SCRIPTS_PATH}/pre-init/
+
+if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
+  initialize_database "$@"
+else
+  start_local_mysql "$@"
+fi
+
+# set mysql_flags and admin_flagsadmin_flags properly
+if [ -z "${MYSQL_ROOT_PASSWORD:-}" ] || is_allowing_connection_with_empty_password; then
+  mysql_flags="-u root --socket=$MYSQL_LOCAL_SOCKET"
+else
+  mysql_flags="-u root --socket=$MYSQL_LOCAL_SOCKET -p${MYSQL_ROOT_PASSWORD}"
+fi
+admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
+
+# init files
+process_extending_files ${APP_DATA}/mysql-init/ ${CONTAINER_SCRIPTS_PATH}/init/
+
+# Restart the MySQL server with public IP bindings
+shutdown_local_mysql
+unset_env_vars
+log_volume_info $MYSQL_DATADIR
+log_info 'Running final exec -- Only MySQL server logs after this point'
+exec ${MYSQL_PREFIX}/libexec/mysqld --defaults-file=$MYSQL_DEFAULTS_FILE "$@" 2>&1
