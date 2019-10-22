@@ -31,7 +31,7 @@
     {
       "name": "SOURCE_REPOSITORY_TAG",
       "description": "The tagged version of the source repository to use.",
-      "value": "mysql-wp",
+      "value": "mysql80-wp",
       "required": true
     },
     {
@@ -277,7 +277,7 @@
         "source": {
           "contextDir": "scripts",
           "git": {
-            "ref": "mysql-wp",
+            "ref": "mysql80-wp",
             "uri": "https://github.com/samyunodos/mysql-container.git"
           },
           "type": "Git"
