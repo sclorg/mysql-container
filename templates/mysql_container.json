@@ -1,0 +1,512 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "My-mysql-repository",
+    "annotations": {
+      "openshift.io/display-name": "Mysql Repository)",
+      "description": "Creamos la imagen mysql con image stream y builconfig.",
+      "tags": "mysql",
+      "iconClass": "icon-mysql"
+    }
+  },
+  "parameters": [
+    {
+      "name": "MYSQL_APPLICATION_NAME",
+      "description": "The name of the WordPress instance.",
+      "value": "my-mysql",
+      "from": "[a-zA-Z0-9]",
+      "required": true
+    },
+    {
+      "name": "SOURCE_REPOSITORY_URL",
+      "description": "The URL of the quickstart Git repository.",
+      "value": "https://github.com/samyunodos/mysql-container",
+      "required": true
+    },
+    {
+      "name": "SOURCE_REPOSITORY_TAG",
+      "description": "The tagged version of the source repository to use.",
+      "value": "mysql-80-centos7",
+      "required": true
+    },
+    {
+      "name": "MYSQL_VOLUME_SIZE",
+      "description": "Size of the persistent volume for mysql.",
+      "value": "8Gi",
+      "required": true
+    },
+    {
+      "name": "MYSQL_VOLUME_TYPE",
+      "description": "Type of the persistent volume for Wordpress.",
+      "value": "ReadWriteMany",
+      "required": true
+    },
+    {
+      "name": "MYSQL_DEPLOYMENT_STRATEGY",
+      "description": "Type of the deployment strategy for Wordpress.",
+      "value": "Rolling",
+      "required": true
+    },
+    {
+      "description": "The name of the database user.",
+      "name": "MYSQL_USER",
+      "value": "user"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "MYSQL_PASSWORD",
+      "value": "passuser"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "MYSQL_DATABASE",
+      "value": "userdb"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "MYSQL_ROOT_PASSWORD",
+      "from": "[a-zA-Z0-9]{12}",
+      "value": "passroot"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "MYSQL_MASTER_USER",
+      "value": "master"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "MYSQL_MASTER_PASSWORD",
+      "value": "passmaster"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "MYSQL_MASTER_SERVICE_NAME",
+      "value": "mysql-master"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "MYSQL_PORT_NUMBER",
+      "value": "3306"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "MYSQL_HOST",
+      "value": "localhost"
+    },
+    {
+      "description": "The password for the database user.",
+      "name": "DOKER_REGISTER",
+      "value": "docker-registry.default.svc:5000"
+    }
+  ],
+  "objects": [
+    {
+      "apiVersion": "v1",
+      "kind": "Secret",
+      "metadata": {
+        "name": "my-webhook",
+        "anotations": {
+          "description": "Web Hook Secret Key."
+        }
+      },
+      "type": "Opaque",
+      "data": {
+        "WebHookSecretKey": "dGVzdA=="
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${MYSQL_APPLICATION_NAME}-img",
+        "labels": {
+          "app": "${MYSQL_APPLICATION_NAME}"
+        }
+      }
+    },
+    {
+      "kind": "BuildConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${MYSQL_APPLICATION_NAME}-img",
+        "labels": {
+          "app": "${MYSQL_APPLICATION_NAME}"
+        }
+      },
+      "spec": {
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "ImageChange"
+          },
+          {
+            "type": "GitHub",
+            "github": {
+              "secretReference": {
+                "name": "my-webhook"
+              }
+            }
+          }
+        ],
+        "source": {
+          "type": "Git",
+          "git": {
+            "uri": "${SOURCE_REPOSITORY_URL}",
+            "ref": "${SOURCE_REPOSITORY_TAG}"
+          },
+          "contextDir": "mis-scripts"
+        },
+        "strategy": {
+          "type": "Source",
+          "sourceStrategy": {
+            "from": {
+              "kind": "ImageStreamTag",
+              "namespace": "openshift",
+              "name": "mysql:latest"
+            },
+            "env": [
+              {
+                "name": "MYSQL_USER",
+                "value": "${MYSQL_USER}"
+              },
+              {
+                "name": "MYSQL_PASSWORD",
+                "value": "${MYSQL_PASSWORD}"
+              },
+              {
+                "name": "MYSQL_DATABASE",
+                "value": "${MYSQL_DATABASE}"
+              },
+              {
+                "name": "MYSQL_ROOT_PASSWORD",
+                "value": "${MYSQL_ROOT_PASSWORD}"
+              },
+              {
+                "name": "MYSQL_MASTER_USER",
+                "value": "${MYSQL_MASTER_USER}"
+              },
+              {
+                "name": "MYSQL_MASTER_PASSWORD",
+                "value": "${MYSQL_MASTER_PASSWORD}"
+              },
+              {
+                "name": "MYSQL_MASTER_SERVICE_NAME",
+                "value": "${MYSQL_MASTER_SERVICE_NAME}"
+              },
+              {
+                "name": "MYSQL_PORT_NUMBER",
+                "value": "${MYSQL_PORT_NUMBER}"
+              },
+              {
+                "name": "MYSQL_HOST",
+                "value": "${MYSQL_HOST}"
+              }
+            ]
+          }
+        },
+        "output": {
+          "to": {
+            "kind": "ImageStreamTag",
+            "name": "${MYSQL_APPLICATION_NAME}-img:latest"
+          },
+          "imageLabels": [
+            {
+              "name": "io.k8s.display-name",
+              "value": "${MYSQL_APPLICATION_NAME}"
+            },
+            {
+              "name": "io.k8s.description",
+              "value": "mysql application and S2I builder."
+            },
+            {
+              "name": "io.openshift.s2i.scripts-url",
+              "value": "image:///opt/app-root/s2i"
+            },
+            {
+              "name": "io.s2i.scripts-url",
+              "value": "image:///opt/app-root/s2i"
+            },
+            {
+              "name": "io.openshift.tags",
+              "value": "builder,mysql"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${MYSQL_MASTER_SERVICE_NAME}",
+        "labels": {
+          "name": "${MYSQL_MASTER_SERVICE_NAME}-master"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "port": "${MYSQL_PORT_NUMBER}"
+          }
+        ],
+        "selector": {
+          "name": "${MYSQL_MASTER_SERVICE_NAME}-master"
+        },
+        "clusterIP": "None"
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${MYSQL_MASTER_SERVICE_NAME}-slave",
+        "labels": {
+          "name": "${MYSQL_MASTER_SERVICE_NAME}-slave"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "port": "${MYSQL_PORT_NUMBER}"
+          }
+        ],
+        "selector": {
+          "name": "${MYSQL_MASTER_SERVICE_NAME}-slave"
+        },
+        "clusterIP": "None"
+      }
+    },
+    {
+      "kind": "StatefulSet",
+      "apiVersion": "apps/v1beta1",
+      "metadata": {
+        "name": "${MYSQL_APPLICATION_NAME}-master",
+        "labels": {
+          "app": "${MYSQL_APPLICATION_NAME}-master"
+        }
+      },
+      "spec": {
+        "serviceName": "${MYSQL_APPLICATION_NAME}-master",
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "selector": {
+          "matchLabels": {
+            "app": "${MYSQL_APPLICATION_NAME}-master"
+          }
+        },
+        "template": {
+          "metadata": {
+            "name": "${MYSQL_APPLICATION_NAME}-master",
+            "labels": {
+              "app": "${MYSQL_APPLICATION_NAME}-master"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "server",
+                "image": "${DOKER_REGISTER}/imagen-mysql/${MYSQL_APPLICATION_NAME}-img",
+                "tag": "latest",
+                "args": [
+                  "run-mysqld-master"
+                ],
+                "ports": [
+                  {
+                    "containerPort": "${MYSQL_PORT_NUMBER}"
+                  }
+                ],
+                "livenessProbe": {
+                  "timeoutSeconds": 1,
+                  "initialDelaySeconds": 30,
+                  "tcpSocket": {
+                    "port": 3306
+                  }
+                },
+                "readinessProbe": {
+                  "timeoutSeconds": 1,
+                  "initialDelaySeconds": 5,
+                  "exec": {
+                    "command": [
+                      "/bin/sh",
+                      "-i",
+                      "-c",
+                      "MYSQL_PWD=\"$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u $MYSQL_USER -D $MYSQL_DATABASE -e 'SELECT 1'"
+                    ]
+                  }
+                },
+                "env": [
+                  {
+                    "name": "MYSQL_MASTER_USER",
+                    "value": "${MYSQL_MASTER_USER}"
+                  },
+                  {
+                    "name": "MYSQL_MASTER_PASSWORD",
+                    "value": "${MYSQL_MASTER_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_USER",
+                    "value": "${MYSQL_USER}"
+                  },
+                  {
+                    "name": "MYSQL_PASSWORD",
+                    "value": "${MYSQL_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_DATABASE",
+                    "value": "${MYSQL_DATABASE}"
+                  },
+                  {
+                    "name": "MYSQL_ROOT_PASSWORD",
+                    "value": "${MYSQL_ROOT_PASSWORD}"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "${MYSQL_APPLICATION_NAME}-master-data",
+                    "mountPath": "/var/lib/mysql/data"
+                  }
+                ],
+                "imagePullPolicy": "IfNotPresent"
+              }
+            ]
+          }
+        },
+        "volumeClaimTemplates": [
+          {
+            "metadata": {
+              "name": "${MYSQL_APPLICATION_NAME}-master-data",
+              "labels": {
+                "app": "${MYSQL_APPLICATION_NAME}-master"
+              }
+            },
+            "spec": {
+              "accessModes": [
+                "ReadWriteMany"
+              ],
+              "resources": {
+                "requests": {
+                  "storage": "${MYSQL_VOLUME_SIZE}"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "StatefulSet",
+      "apiVersion": "apps/v1beta1",
+      "metadata": {
+        "name": "${MYSQL_APPLICATION_NAME}-slave",
+        "labels": {
+          "app": "${MYSQL_APPLICATION_NAME}-slave"
+        }
+      },
+      "spec": {
+        "serviceName": "${MYSQL_APPLICATION_NAME}-slave",
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "selector": {
+          "matchLabels": {
+            "app": "${MYSQL_APPLICATION_NAME}-slave"
+          }
+        },
+        "template": {
+          "metadata": {
+            "name": "${MYSQL_APPLICATION_NAME}-slave",
+            "labels": {
+              "app": "${MYSQL_APPLICATION_NAME}-slave"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "${MYSQL_APPLICATION_NAME}-slave-data",
+                "persistentVolumeClaim": {
+                  "claimName": "${MYSQL_APPLICATION_NAME}-slave"
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "server",
+                "image": "${DOKER_REGISTER}/imagen-mysql/${MYSQL_APPLICATION_NAME}-img",
+                "tag": "latest",
+                "args": [
+                  "run-mysqld-slave"
+                ],
+                "ports": [
+                  {
+                    "containerPort": "${MYSQL_PORT_NUMBER}"
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "MYSQL_APPLICATION_NAME",
+                    "value": "${MYSQL_APPLICATION_NAME}"
+                  },
+                  {
+                    "name": "MYSQL_MASTER_USER",
+                    "value": "${MYSQL_MASTER_USER}"
+                  },
+                  {
+                    "name": "MYSQL_MASTER_PASSWORD",
+                    "value": "${MYSQL_MASTER_PASSWORD}"
+                  },
+                  {
+                    "name": "MYSQL_DATABASE",
+                    "value": "${MYSQL_DATABASE}"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "${MYSQL_APPLICATION_NAME}-slave-data",
+                    "mountPath": "/var/lib/mysql"
+                  }
+                ],
+                "imagePullPolicy": "IfNotPresent"
+              }
+            ]
+          }
+        },
+        "volumeClaimTemplates": [
+          {
+            "metadata": {
+              "name": "${MYSQL_APPLICATION_NAME}-slave-data",
+              "labels": {
+                "app": "${MYSQL_APPLICATION_NAME}-slave"
+              }
+            },
+            "spec": {
+              "accessModes": [
+                "ReadWriteMany"
+              ],
+              "resources": {
+                "requests": {
+                  "storage": "${MYSQL_VOLUME_SIZE}"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
