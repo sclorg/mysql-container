@@ -5,7 +5,7 @@
     "name": "Myssql-wp-container",
     "annotations": {
       "openshift.io/display-name": "Mysql Repository Container",
-      "description": "Creamos la imagen mysql con image stream y builconfig.",
+      "description": "Creamos la imagen mysql con image stream y builconfig. Como no tenemos mysql version \"80\",  en la imagen por defecto debemos de compilar desde el repositorio  https://github.com/sclorg/mysql-container. Depués simplemente añadimos unos scripts que deberán ser mejorados. Las variables obligatorias son MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE y MYSQL_ROOT_PASSWORD. Después todas estas tienen un valor por defecto o no son necesarias: MYSQL_MASTER_USER, MYSQL_MASTER_PASSWORD, MYSQL_MASTER_SERVICE_NAME, MYSQL_PORT_NUMBER, MYSQL_HOST  ($MYSQL_HOST:$MYSQL_PORT_NUMBER). También pueden personalizarse las siguientes: MYSQL_LOWER_CASE_TABLE_NAMES=\"0\", MYSQL_MAX_CONNECTIONS=\"151\", MYSQL_MAX_ALLOWED_PACKET=\"200M\", MYSQL_FT_MIN_WORD_LEN=\"4\", MYSQL_FT_MAX_WORD_LEN=\"20\", MYSQL_AIO=\"1\", MYSQL_TABLE_OPEN_CACHE=\"400\", MYSQL_KEY_BUFFER_SIZE=\"32M\" ( \"10%\" of available memory),  MYSQL_SORT_BUFFER_SIZE=\"256K\",  MYSQL_READ_BUFFER_SIZE=\"8M\" ( or \"5%\" of available memory), MYSQL_INNODB_BUFFER_POOL_SIZE=\"32M\" (o \"50%\" of available memory), MYSQL_INNODB_LOG_FILE_SIZE=\"8M\" ( o \"15%\" of available memory), MYSQL_INNODB_LOG_BUFFER_SIZE=\"8M\" (o \"15%\" of available memory), MYSQL_DEFAULTS_FILE=\"/etc/my.cnf\", MYSQL_BINLOG_FORMAT=\"statement\", MYSQL_LOG_QUERIES_ENABLED=\"0\",  MYSQL_KEY_BUFFER_SIZE=\"10%\", MYSQL_READ_BUFFER_SIZE=\"5%\", MYSQL_INNODB_BUFFER_POOL_SIZE=\"50%\", MYSQL_INNODB_LOG_FILE_SIZE=\"15%\", MYSQL_INNODB_LOG_BUFFER_SIZE=\"15%\".",
       "tags": "mysql",
       "iconClass": "icon-mysql"
     }

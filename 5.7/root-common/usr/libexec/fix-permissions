@@ -1,0 +1,6 @@
+#!/bin/sh
+# Fix permissions on the given directory to allow group read/write of
+# regular files and execute of directories.
+find $@ -exec chown mysql:0 {} \;
+find $@ -exec chmod g+rw {} \;
+find $@ -type d -exec chmod g+x {} +
