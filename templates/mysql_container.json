@@ -14,7 +14,7 @@
     {
       "name": "MYSQL_APPLICATION_NAME",
       "description": "The name of the WordPress instance.",
-      "value": "mysql80",
+      "value": "localhost",
       "required": true
     },
     {
@@ -76,12 +76,12 @@
     },
     {
       "description": "The password for the database user.",
-      "name": "MYSQL_PORT_NUMBER",
-      "value": "3306"
+      "name": "MYSQL_HOST",
+      "value": "${MYSQL_APPLICATION_NAME}"
     },
     {
       "description": "The password for the database user.",
-      "name": "DOKER_REGISTER",
+      "name": "DOCKER_REGISTER",
       "value": "docker-registry.default.svc:5000"
     }
   ],
@@ -283,7 +283,7 @@
             "from": {
               "kind": "ImageStreamTag",
               "namespace": "${PROJECT_NAME}",
-              "name": "${MYSQL_APPLICATION_NAME}-s2i:v0"
+              "name": "${MYSQL_APPLICATION_NAME}-s2i:latest"
             },
             "env": [
               {
