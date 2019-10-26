@@ -76,11 +76,6 @@
     },
     {
       "description": "The password for the database user.",
-      "name": "MYSQL_HOST",
-      "value": "localhost"
-    },
-    {
-      "description": "The password for the database user.",
       "name": "MYSQL_PORT_NUMBER",
       "value": "3306"
     },
@@ -136,7 +131,7 @@
         "output": {
           "to": {
             "kind": "ImageStreamTag",
-            "name": "${MYSQL_APPLICATION_NAME}-s2i:v0"
+            "name": "${MYSQL_APPLICATION_NAME}-s2i:latest"
           }
         },
         "postCommit": {
@@ -266,7 +261,7 @@
         "output": {
           "to": {
             "kind": "ImageStreamTag",
-            "name": "${MYSQL_APPLICATION_NAME}-img:v0"
+            "name": "${MYSQL_APPLICATION_NAME}-img:latest"
           }
         },
         "postCommit": {
@@ -325,7 +320,7 @@
               },
               {
                 "name": "MYSQL_HOST",
-                "value": "${MYSQL_HOST}"
+                "value": "${MYSQL_APPLICATION_NAME}"
               }
             ]
           }
