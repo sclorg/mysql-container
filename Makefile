@@ -1,6 +1,6 @@
 # Variables are documented in common/build.sh.
 BASE_IMAGE_NAME = mysql
-VERSIONS = 5.7 8.0
+VERSIONS = 8.0
 OPENSHIFT_NAMESPACES = 5.5
 DOCKER_BUILD_CONTEXT = ..
 
