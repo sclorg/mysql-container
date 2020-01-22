@@ -43,6 +43,7 @@ function export_setting_variables() {
     export MYSQL_INNODB_LOG_BUFFER_SIZE=${MYSQL_INNODB_LOG_BUFFER_SIZE:-$((MEMORY_LIMIT_IN_BYTES*15/1024/1024/100))M}
   fi
   export MYSQL_DATADIR_ACTION=${MYSQL_DATADIR_ACTION:-upgrade-warn}
+  export MYSQL_DEFAULT_AUTHENTICATION_PLUGIN=${MYSQL_DEFAULT_AUTHENTICATION_PLUGIN:-caching_sha2_password}
 }
 
 # this stores whether the database was initialized from empty datadir

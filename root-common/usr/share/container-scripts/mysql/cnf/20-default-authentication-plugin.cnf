@@ -1,0 +1,19 @@
+# MySQL 8.0.4 introduced 'caching_sha2_password' as its default authentication plugin.
+# It is faster and provides better security then the previous default authentication plugin.
+#
+# However, not all software implements this algorithm, and client applications might report
+# issue like "The server requested authentication method"
+#
+# The plugin can be changed by setting default_authentication_plugin variable.
+#
+# The default_authentication_plugin options accepts these values:
+# caching_sha2_password, mysql_native_password
+#
+# To change the behaviour back to the same behavior as MySQL 5.7 had, set the
+# default_authentication_plugin variable to mysql_native_password.
+#
+# Upstream doc at https://dev.mysql.com/doc/refman/8.0/en/caching-sha2-pluggable-authentication.html
+
+[mysqld]
+default_authentication_plugin=${MYSQL_DEFAULT_AUTHENTICATION_PLUGIN}
+

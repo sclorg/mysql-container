@@ -114,6 +114,8 @@ The following environment variables influence the MySQL configuration file. They
 **`MYSQL_LOG_QUERIES_ENABLED (default: 0)`**  
        To enable query logging set this to `1`
 
+**`MYSQL_DEFAULT_AUTHENTICATION_PLUGIN (default: caching_sha2_password)`**  
+       Set default authentication plugin. Accepts values `mysql_native_password` or `caching_sha2_password`.
 
 You can also set the following mount points by passing the `-v /host:/container` flag to Docker.
 
@@ -341,6 +343,19 @@ Some applications may wish to use `row` binlog_formats (for example, those built
   with `master` replication turned on (ie, set the Docker/container `cmd` to be
 `run-mysqld-master`) the binlog will emit the actual data for the rows that change
 as opposed to the statements (ie, DML like insert...) that caused the change.
+
+
+Changing the authentication plugin
+----------------------------------
+MySQL 8.0 introduced 'caching_sha2_password' as its default authentication plugin.
+It is faster and provides better security then the previous default authentication plugin.
+However, not all software implements this algorithm, and client applications might report
+issue like "The server requested authentication method".
+
+The plugin can be changed by setting `MYSQL_DEFAULT_AUTHENTICATION_PLUGIN` environment variable,
+which accepts values `caching_sha2_password` (the default one) or `mysql_native_password`.
+To change the behaviour back to the same behavior as MySQL 5.7 (for client applications that do not
+support `caching_sha2_password`), set the `MYSQL_DEFAULT_AUTHENTICATION_PLUGIN=mysql_native_password`.
 
 
 Troubleshooting
