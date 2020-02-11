@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/f29/s2i-core:latest
+FROM registry.fedoraproject.org/f31/s2i-core:latest
 
 # MySQL image for OpenShift.
 #
