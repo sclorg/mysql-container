@@ -154,7 +154,7 @@ function run_change_password_new_user_test() {
   test_connection testpassnewuser2 user foo
 
   # See whether there is an error message in the log
-  if ! docker logs $(ct_get_cid testpassnewuser2) | grep 'User .*user2.* does not exist in database' ; then
+  if ! docker logs $(ct_get_cid testpassnewuser2) | grep 'User user2 does not exist in database' ; then
     echo "ERROR: Container did not end with expected error message: 'User user2 does not exist in database'."
     return 1
   fi
