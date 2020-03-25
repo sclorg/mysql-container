@@ -4,9 +4,14 @@ password_change() {
   # Set the password for MySQL user and root everytime this container is started.
   # This allows to change the password by editing the deployment configuration.
   if [[ -v MYSQL_USER && -v MYSQL_PASSWORD ]]; then
+    local user_maches=$(echo "SELECT COUNT(*) AS found FROM mysql.user WHERE user='${MYSQL_USER}' AND Host='%' \G" | mysql $mysql_flags)
+    if ! echo "${user_maches}" | grep -q 'found: 1' ; then
+      log_info "WARNING: User ${MYSQL_USER} does not exist in database. Password not changed."
+    else
 mysql $mysql_flags <<EOSQL
       ALTER USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
 EOSQL
+    fi
   fi
 
   # The MYSQL_ROOT_PASSWORD is optional, therefore we need to either enable remote

@@ -18,6 +18,7 @@ run_container_creation_tests
 run_configuration_tests
 run_general_tests
 run_change_password_test
+run_change_password_new_user_test
 run_replication_test
 run_doc_test
 run_s2i_test
@@ -133,6 +134,34 @@ function run_change_password_test() {
 
   # The old password should not work anymore
   if mysql_cmd "$(ct_get_cip testpass2)" user foo -e 'SELECT 1;'; then
+    return 1
+  fi
+}
+
+function run_change_password_new_user_test() {
+  local tmpdir=$(mktemp -d)
+  chmod -R a+rwx "${tmpdir}"
+
+  # Create MySQL container with persistent volume and set the initial password
+  create_container "testpassnewuser1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
+    -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
+  test_connection testpassnewuser1 user foo
+  docker stop $(ct_get_cid testpassnewuser1) >/dev/null
+
+  # Create second container with changed password
+  create_container "testpassnewuser2" -e MYSQL_USER=user2 -e MYSQL_PASSWORD=bar \
+    -e MYSQL_DATABASE=db -v ${tmpdir}:/var/lib/mysql/data:Z
+  test_connection testpassnewuser2 user foo
+
+  # See whether there is an error message in the log
+  if ! docker logs $(ct_get_cid testpassnewuser2) | grep 'User user2 does not exist in database' ; then
+    echo "ERROR: Container did not end with expected error message: 'User user2 does not exist in database'."
+    return 1
+  fi
+
+  # The new password should not work
+  if mysql_cmd "$(ct_get_cip testpassnewuser2)" user bar -e 'SELECT 1;'; then
+    echo "ERROR: The new password should not work, but it does."
     return 1
   fi
 }
