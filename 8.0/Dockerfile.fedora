@@ -18,10 +18,8 @@ ENV SUMMARY="MySQL $MYSQL_VERSION SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
 image provides a containerized packaging of the MySQL mysqld daemon and client application. \
 The mysqld server daemon accepts connections from clients and provides access to content from \
-MySQL databases on behalf of the clients."
-
-ENV NAME=mysql \
-    VERSION=0
+MySQL databases on behalf of the clients." \
+    NAME=mysql
 
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
@@ -31,7 +29,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="database,mysql,mysql80,rh-mysql80" \
       com.redhat.component="$NAME" \
       name="$FGC/$NAME" \
-      version="$VERSION" \
+      version="$MYSQL_VERSION" \
       usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 $FGC/$NAME" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
