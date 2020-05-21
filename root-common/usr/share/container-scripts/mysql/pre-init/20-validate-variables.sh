@@ -3,7 +3,7 @@ function usage() {
   echo "You must either specify the following environment variables:"
   echo "  MYSQL_USER (regex: '$mysql_identifier_regex')"
   echo "  MYSQL_PASSWORD (regex: '$mysql_password_regex')"
-  echo "  MYSQL_DATABASE (regex: '$mysql_identifier_regex')"
+  echo "  MYSQL_DATABASE (regex: '$mysql_dbname_identifier_regex')"
   echo "Or the following environment variable:"
   echo "  MYSQL_ROOT_PASSWORD (regex: '$mysql_password_regex')"
   echo "Or both."
@@ -65,7 +65,7 @@ function validate_variables() {
   fi
 
   if [ -v MYSQL_DATABASE ]; then
-    [[ "$MYSQL_DATABASE" =~ $mysql_identifier_regex ]] || usage "Invalid database name"
+    [[ "$MYSQL_DATABASE" =~ $mysql_dbname_identifier_regex ]] || usage "Invalid database name"
     [ ${#MYSQL_DATABASE} -le 64 ] || usage "Database name too long (maximum 64 characters)"
   fi
 
