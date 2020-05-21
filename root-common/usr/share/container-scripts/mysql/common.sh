@@ -52,6 +52,7 @@ export MYSQL_DATADIR_FIRST_INIT=false
 # Be paranoid and stricter than we should be.
 # https://dev.mysql.com/doc/refman/en/identifiers.html
 mysql_identifier_regex='^[a-zA-Z0-9_]+$'
+mysql_dbname_identifier_regex='^[a-zA-Z0-9_,]+$'
 mysql_password_regex='^[a-zA-Z0-9_~!@#$%^&*()-=<>,.?;:|]+$'
 
 # Variables that are used to connect to local mysql during initialization
