@@ -113,9 +113,7 @@ function test_mysql_s2i() {
 
 function test_mysql_integration() {
   local image_name=$1
-  local VERSION=$2
-  local service_name=$3
-  local image_tagged="${service_name}:${VERSION}"
+  local service_name=mysql
   ct_os_template_exists mysql-ephemeral && t=mysql-ephemeral || t=mysql-persistent
   ct_os_test_template_app_func "${image_name}" \
                                "${t}" \

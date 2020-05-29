@@ -25,7 +25,7 @@ export CT_SKIP_UPLOAD_IMAGE=true
 export CT_NAMESPACE=openshift
 
 # Check the template
-test_mysql_integration "${IMAGE_NAME}" ${VERSION} mysql
+test_mysql_integration "${IMAGE_NAME}"
 
 # Check the imagestream
 test_mysql_imagestream
