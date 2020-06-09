@@ -18,6 +18,8 @@ trap ct_os_cleanup EXIT SIGINT
 
 ct_os_check_compulsory_vars
 
+ct_os_enable_print_logs
+
 ct_os_cluster_up
 
 test_mysql_pure_image "${IMAGE_NAME}"
@@ -28,19 +30,30 @@ test_mysql_template "${IMAGE_NAME}"
 test_mysql_s2i "${IMAGE_NAME}" "https://github.com/sclorg/mysql-container.git" test/test-app
 
 # test with the just built image and an integrated template
-test_mysql_integration "${IMAGE_NAME}" "${VERSION}" mysql
+echo "Running test_mysql_integration with ${IMAGE_NAME}"
+test_mysql_integration "${IMAGE_NAME}"
 
 # test with a released image and an integrated template
-if [ "${OS}" == "rhel7" ] ; then
-  PUBLIC_IMAGE_NAME=${PUBLIC_IMAGE_NAME:-${REGISTRY:-registry.access.redhat.com/}rhscl/${BASE_IMAGE_NAME}-${VERSION//./}-rhel7}
+# ignore possible failure of this test for centos images
+PUBLIC_IMAGE_NAME=${PUBLIC_IMAGE_NAME:-$(ct_get_public_image_name "${OS}" "${BASE_IMAGE_NAME}" "${VERSION}")}
+
+# Try pulling the image first to see if it is accessible
+if docker pull "${PUBLIC_IMAGE_NAME}"; then
+  echo "Running test_mysql_integration with ${PUBLIC_IMAGE_NAME}"
+  test_mysql_integration "${PUBLIC_IMAGE_NAME}"
 else
-  PUBLIC_IMAGE_NAME=${PUBLIC_IMAGE_NAME:-${REGISTRY:-}centos/${BASE_IMAGE_NAME}-${VERSION//./}-centos7}
+  echo "Warning: ${PUBLIC_IMAGE_NAME} could not be downloaded via 'docker'"
+  # ignore possible failure of this test for centos images
+  [ "${OS}" == "rhel7" ] && false "ERROR: Failed to pull image"
 fi
 
-export CT_SKIP_UPLOAD_IMAGE=true
-test_mysql_integration mysql "${VERSION}" "${PUBLIC_IMAGE_NAME}"
+# Check the imagestream
+echo "Running test_mysql_imagestream"
+test_mysql_imagestream
 
 OS_TESTSUITE_RESULT=0
 
 ct_os_cluster_down
+
+# vim: set tabstop=2:shiftwidth=2:expandtab:
 

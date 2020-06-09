@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/f31/s2i-core:latest
+FROM registry.fedoraproject.org/f32/s2i-core:latest
 
 # MySQL image for OpenShift.
 #
@@ -14,7 +14,7 @@ ENV MYSQL_VERSION=8.0 \
     APP_DATA=/opt/app-root/src \
     HOME=/var/lib/mysql
 
-ENV SUMMARY="MySQL 8.0 SQL database server" \
+ENV SUMMARY="MySQL $MYSQL_VERSION SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
 image provides a containerized packaging of the MySQL mysqld daemon and client application. \
 The mysqld server daemon accepts connections from clients and provides access to content from \
@@ -26,7 +26,7 @@ ENV NAME=mysql \
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="MySQL 8.0" \
+      io.k8s.display-name="MySQL $MYSQL_VERSION" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql80,rh-mysql80" \
       com.redhat.component="$NAME" \

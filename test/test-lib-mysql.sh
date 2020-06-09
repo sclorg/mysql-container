@@ -113,18 +113,28 @@ function test_mysql_s2i() {
 
 function test_mysql_integration() {
   local image_name=$1
-  local VERSION=$2
-  local import_image=$3
-  local service_name=${import_image##*/}
+  local service_name=mysql
   ct_os_template_exists mysql-ephemeral && t=mysql-ephemeral || t=mysql-persistent
   ct_os_test_template_app_func "${image_name}" \
                                "${t}" \
                                "${service_name}" \
-                               "ct_os_check_cmd_internal '${import_image}' '${service_name}' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
+                               "ct_os_check_cmd_internal '<SAME_IMAGE>' '${service_name}-testing' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
                                "-p MYSQL_VERSION=${VERSION} \
                                 -p DATABASE_SERVICE_NAME="${service_name}-testing" \
                                 -p MYSQL_USER=testu \
                                 -p MYSQL_PASSWORD=testp \
-                                -p MYSQL_DATABASE=testdb" "" "${import_image}"
+                                -p MYSQL_DATABASE=testdb"
 }
 
+
+# Check the imagestream
+function test_mysql_imagestream() {
+  case ${OS} in
+    rhel7|centos7) ;;
+    *) echo "Imagestream testing not supported for $OS environment." ; return 0 ;;
+  esac
+
+  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/mysql-${OS}.json" "${THISDIR}/../examples/mysql-ephemeral-template.json" mysql "-p MYSQL_VERSION=${VERSION}"
+}
+
+# vim: set tabstop=2:shiftwidth=2:expandtab:
