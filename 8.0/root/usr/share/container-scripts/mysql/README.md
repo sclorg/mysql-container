@@ -63,6 +63,12 @@ initialization by passing `-e VAR=VALUE` to the Docker run command.
 **`MYSQL_ROOT_PASSWORD`**  
        Password for the root user (optional)
 
+**`MYSQL_CHARSET`**  
+       Default character set (optional)
+
+**`MYSQL_COLLATION`**  
+       Default collation (optional)
+
 
 The following environment variables influence the MySQL configuration file. They are all optional.
 
