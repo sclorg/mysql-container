@@ -9,6 +9,8 @@ FROM centos/s2i-core-centos7
 #  * $MYSQL_PASSWORD - User's password
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
+#  * $MYSQL_CHARSET (Optional) - Default character set
+#  * $MYSQL_COLLATION (Optional) - Default collation
 
 ENV MYSQL_VERSION=8.0 \
     APP_DATA=/opt/app-root/src \
