@@ -134,7 +134,7 @@ function test_mysql_imagestream() {
     *) echo "Imagestream testing not supported for $OS environment." ; return 0 ;;
   esac
 
-  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/mysql-${OS}.json" "${THISDIR}/../examples/mysql-ephemeral-template.json" mysql "-p MYSQL_VERSION=${VERSION}"
+  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/mysql-${OS%[0-9]*}.json" "${THISDIR}/../examples/mysql-ephemeral-template.json" mysql "-p MYSQL_VERSION=${VERSION}"
 }
 
 # vim: set tabstop=2:shiftwidth=2:expandtab:
