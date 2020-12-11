@@ -1,4 +1,4 @@
-FROM centos/s2i-core-centos7
+FROM quay.io/centos7/s2i-core-centos7
 
 # MySQL image for OpenShift.
 #
@@ -29,9 +29,9 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql80,rh-mysql80" \
       com.redhat.component="rh-mysql80-container" \
-      name="centos/mysql-80-centos7" \
+      name="centos7/mysql-80-centos7" \
       version="8.0" \
-      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 centos/mysql-80-centos7" \
+      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/centos7/mysql-80-centos7" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306

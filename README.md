@@ -1,5 +1,6 @@
 MySQL SQL Database Server Container Image
-======================================
+=========================================
+MySQL 8.0 status: [![Docker Repository on Quay](https://quay.io/repository/centos7/mysql-80-centos7/status "Docker Repository on Quay")](https://quay.io/repository/centos7/mysql-80-centos7)
 
 This repository contains Dockerfiles for MySQL images for OpenShift and general usage.
 Users can choose between RHEL, Fedora and CentOS based images.
@@ -14,7 +15,7 @@ For more information about concepts used in these container images, see the
 
 
 Versions
----------------
+--------
 MySQL versions currently provided are:
 * [MySQL 8.0](8.0)
 
@@ -27,7 +28,7 @@ CentOS versions currently supported are:
 
 
 Installation
-----------------------
+------------
 Choose either the CentOS7 or RHEL7 based image:
 
 *  **RHEL7 based image**
@@ -54,7 +55,7 @@ Choose either the CentOS7 or RHEL7 based image:
     This image is available on DockerHub. To download it run:
 
     ```
-    $ podman pull centos/mysql-80-centos7
+    $ podman pull quay.io/centos7/mysql-80-centos7
     ```
 
     To build a CentOS based MySQL image from scratch, run:
@@ -77,14 +78,14 @@ This variable must be set to a list with possible versions (subdirectories).**
 
 
 Usage
----------------------------------
+-----
 
 For information about usage of Dockerfile for MySQL 8.0,
 see [usage documentation](8.0).
 
 
 Test
----------------------------------
+----
 
 This repository also provides a test framework, which checks basic functionality
 of the MySQL image.

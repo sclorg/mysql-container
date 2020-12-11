@@ -1,10 +1,10 @@
 MySQL 8.0 SQL Database Server container image
-==========================================
+=============================================
 
 This container image includes MySQL 8.0 SQL database server for OpenShift and general usage.
 Users can choose between RHEL, CentOS and Fedora based images.
 The RHEL images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/),
-the CentOS images are available on [Docker Hub](https://hub.docker.com/r/centos/),
+the CentOS images are available on [Quay.io](https://quay.io/organization/centos7),
 and the Fedora images are available in [Fedora Registry](https://registry.fedoraproject.org/).
 The resulting image can be run using [podman](https://github.com/containers/libpod).
 
@@ -159,7 +159,7 @@ calculated based on the available memory.
 
 
 MySQL root user
----------------------------------
+---------------
 The root user has no password set by default, only allowing local connections.
 You can set it by setting the `MYSQL_ROOT_PASSWORD` environment variable. This
 will allow you to login to the root account remotely. Local connections will
