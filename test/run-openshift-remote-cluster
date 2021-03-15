@@ -20,9 +20,10 @@ ct_os_check_compulsory_vars
 
 oc status || false "It looks like oc is not properly logged in."
 
-export CT_SKIP_NEW_PROJECT=true
-export CT_SKIP_UPLOAD_IMAGE=true
-export CT_NAMESPACE=openshift
+# For testing on OpenShift 4 we use external registry
+export CT_EXTERNAL_REGISTRY=true
+
+ct_os_set_ocp4
 
 # Check the template
 test_mysql_integration "${IMAGE_NAME}"
