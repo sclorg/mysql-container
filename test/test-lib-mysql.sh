@@ -47,13 +47,13 @@ function check_mysql_os_service_connection() {
 function test_mysql_pure_image() {
   local image_name=${1:-centos/mysql-80-centos7}
   local image_name_no_namespace=${image_name##*/}
-  local service_name=${image_name_no_namespace}
+  local service_name="${image_name_no_namespace%%:*}-testing"
 
   ct_os_new_project
   # Create a specific imagestream tag for the image so that oc cannot use anything else
-  ct_os_upload_image "${image_name}" "$image_name_no_namespace:testing"
+  ct_os_upload_image "${image_name}" "$image_name_no_namespace"
 
-  ct_os_deploy_pure_image "$image_name_no_namespace:testing" \
+  ct_os_deploy_pure_image "$image_name_no_namespace" \
                           --name "${service_name}" \
                           --env MYSQL_ROOT_PASSWORD=test
 
@@ -66,7 +66,7 @@ function test_mysql_pure_image() {
 function test_mysql_template() {
   local image_name=${1:-quay.io/centos7/mysql-80-centos7}
   local image_name_no_namespace=${image_name##*/}
-  local service_name=${image_name_no_namespace}
+  local service_name="${image_name_no_namespace%%:*}-testing"
 
   ct_os_new_project
   ct_os_upload_image "${image_name}" "mysql:$VERSION"
@@ -90,13 +90,13 @@ function test_mysql_s2i() {
   local app=${2:-https://github.com/sclorg/mysql-container.git}
   local context_dir=${3:-test/test-app}
   local image_name_no_namespace=${image_name##*/}
-  local service_name="${image_name_no_namespace}-testing"
+  local service_name="${image_name_no_namespace%%:*}-testing"
 
   ct_os_new_project
   # Create a specific imagestream tag for the image so that oc cannot use anything else
-  ct_os_upload_image "${image_name}" "$image_name_no_namespace:testing"
+  ct_os_upload_image "${image_name}" "$image_name_no_namespace"
 
-  ct_os_deploy_s2i_image "$image_name_no_namespace:testing" "${app}" \
+  ct_os_deploy_s2i_image "$image_name_no_namespace" "${app}" \
                           --context-dir="${context_dir}" \
                           --name "${service_name}" \
                           --env MYSQL_ROOT_PASSWORD=test \
@@ -134,8 +134,11 @@ function test_mysql_imagestream() {
     rhel7|centos7) ;;
     *) echo "Imagestream testing not supported for $OS environment." ; return 0 ;;
   esac
-
-  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/mysql-${OS%[0-9]*}.json" "${THISDIR}/../examples/mysql-ephemeral-template.json" mysql "-p MYSQL_VERSION=${VERSION}"
+  local tag="-el7"
+  if [ "${OS}" == "rhel8" ]; then
+    tag="-el8"
+  fi
+  ct_os_test_image_stream_template "${THISDIR}/../imagestreams/mysql-${OS%[0-9]*}.json" "${THISDIR}/../examples/mysql-ephemeral-template.json" mysql "-p MYSQL_VERSION=${VERSION}${tag}"
 }
 
 # vim: set tabstop=2:shiftwidth=2:expandtab:
