@@ -61,7 +61,6 @@ jobs:
         with:
           dockerfiles: ${{ matrix.version }}/${{ matrix.dockerfile }}
           image: ${{ steps.base-image-name.outputs.image_name}}-${{ steps.short_version.outputs.SHORT_VER }}-${{ matrix.tag }}
-          context: ${{ matrix.version }}
           tags: latest ${{ matrix.tag }} ${{ github.sha }}
 
       - name: Push image to Quay.io/${{ matrix.registry_namespace }} namespace
