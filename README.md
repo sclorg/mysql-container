@@ -1,5 +1,8 @@
 MySQL SQL Database Server Container Image
 =========================================
+
+[![Build and push images to Quay.io registry](https://github.com/sclorg/mysql-container/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/sclorg/mysql-container/actions/workflows/build-and-push.yml)
+
 MySQL 8.0 status: [![Docker Repository on Quay](https://quay.io/repository/centos7/mysql-80-centos7/status "Docker Repository on Quay")](https://quay.io/repository/centos7/mysql-80-centos7)
 
 This repository contains Dockerfiles for MySQL images for OpenShift and general usage.
@@ -25,6 +28,8 @@ RHEL versions currently supported are:
 
 CentOS versions currently supported are:
 * CentOS7
+* CentOS Stream 8
+* CentOS Stream 9
 
 
 Installation
