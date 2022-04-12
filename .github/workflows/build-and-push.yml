@@ -20,15 +20,24 @@ jobs:
             tag: "centos7"
             quayio_username: "QUAY_IMAGE_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_BUILDER_TOKEN"
+            suffix: "centos7"
           - dockerfile_path: "8.0"
             dockerfile: "Dockerfile.c9s"
             registry_namespace: "sclorg"
             tag: "c9s"
             quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
+            suffix: "c9s"
+          - dockerfile_path: "8.0"
+            dockerfile: "Dockerfile.c8s"
+            registry_namespace: "sclorg"
+            tag: "c8s"
+            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
+            suffix: "c8s"
     steps:
       - name: Build and push to quay.io registry
-        uses: sclorg/build-and-push-action@v1
+        uses: sclorg/build-and-push-action@v2
         with:
           registry: "quay.io"
           registry_namespace: ${{ matrix.registry_namespace }}
@@ -37,3 +46,4 @@ jobs:
           dockerfile: ${{ matrix.dockerfile }}
           dockerfile_path: ${{ matrix.dockerfile_path }}
           tag: ${{ matrix.tag }}
+          suffix: ${{ matrix.suffix }}
