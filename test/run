@@ -432,7 +432,7 @@ function run_tests() {
 
 run_doc_test() {
   echo "  Testing documentation in the container image"
-  ct_doc_content_old "MYSQL\_ROOT\_PASSWORD" volume 3306
+  ct_doc_content_old 'MYSQL\\?_ROOT\\?_PASSWORD' volume 3306
   echo "  Success!"
   echo
 }
