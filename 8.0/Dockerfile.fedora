@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/f32/s2i-core:latest
+FROM quay.io/fedora/s2i-core:35
 
 # MySQL image for OpenShift.
 #
@@ -28,9 +28,9 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql80,rh-mysql80" \
       com.redhat.component="$NAME" \
-      name="$FGC/$NAME" \
+      name="fedora/$NAME-80" \
       version="$MYSQL_VERSION" \
-      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 $FGC/$NAME" \
+      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/fedora/$NAME-80" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
