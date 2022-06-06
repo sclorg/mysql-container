@@ -113,10 +113,9 @@ function test_mysql_s2i() {
 }
 
 function test_mysql_integration() {
-  local image_name=$1
   local service_name=mysql
   ct_os_template_exists mysql-ephemeral && t=mysql-ephemeral || t=mysql-persistent
-  ct_os_test_template_app_func "${image_name}" \
+  ct_os_test_template_app_func "${IMAGE_NAME}" \
                                "${t}" \
                                "${service_name}" \
                                "ct_os_check_cmd_internal '<SAME_IMAGE>' '${service_name}-testing' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
