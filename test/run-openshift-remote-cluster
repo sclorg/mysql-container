@@ -27,8 +27,8 @@ ct_os_check_login || exit 1
 
 set -u
 
-# For testing on OpenShift 4 we use external registry
-export CT_EXTERNAL_REGISTRY=true
+# For testing on OpenShift 4 we use internal registry
+export CT_OCP4_TEST=true
 
 TEST_SUMMARY=''
 TEST_SET=${TESTS:-$TEST_LIST} ct_run_tests_from_testset "openshift-remote-cluster"
