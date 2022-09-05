@@ -6,7 +6,6 @@
 # The image has to be available before this script is executed.
 #
 
-set -o errexit
 set -o nounset
 shopt -s nullglob
 
@@ -32,21 +31,10 @@ if [ -e "${IMAGE_NAME:-}" ] ; then
 fi
 
 CID_FILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
-TESTSUITE_RESULT=1
 test_dir="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))"
+ct_enable_cleanup
 
 s2i_args="--pull-policy=never "
-
-function cleanup() {
-  ct_cleanup
-
-  if [ $TESTSUITE_RESULT -eq 0 ] ; then
-    echo "Tests for ${IMAGE_NAME} succeeded."
-  else
-    echo "Tests for ${IMAGE_NAME} failed."
-  fi
-}
-trap cleanup EXIT SIGINT
 
 function mysql_cmd() {
   local container_ip="$1"; shift
@@ -660,15 +648,5 @@ function run_upgrade_test() {
   echo
 }
 
-function run_all_tests() {
-  for test_case in $TEST_LIST; do
-    echo "Running test $test_case for ${IMAGE_NAME}"
-    $test_case
-  done;
-}
-
 # Run the chosen tests
-TEST_LIST=${@:-$TEST_LIST} run_all_tests
-
-TESTSUITE_RESULT=0
-
+TEST_SET=${@:-$TEST_LIST} ct_run_tests_from_testset
