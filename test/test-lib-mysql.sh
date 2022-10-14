@@ -130,12 +130,14 @@ function test_mysql_integration() {
 # Check the imagestream
 function test_mysql_imagestream() {
   case ${OS} in
-    rhel7|centos7|rhel8) ;;
+    rhel7|centos7|rhel8|rhel9) ;;
     *) echo "Imagestream testing not supported for $OS environment." ; return 0 ;;
   esac
   local tag="-el7"
   if [ "${OS}" == "rhel8" ]; then
     tag="-el8"
+  elif [ "${OS}" == "rhel9" ]; then
+    tag="-el9"
   fi
   ct_os_test_image_stream_template "${THISDIR}/imagestreams/mysql-${OS%[0-9]*}.json" "${THISDIR}/examples/mysql-ephemeral-template.json" mysql "-p MYSQL_VERSION=${VERSION}${tag}"
 }
