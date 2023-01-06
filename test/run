@@ -30,9 +30,7 @@ if [ -e "${IMAGE_NAME:-}" ] ; then
   exit 1
 fi
 
-CID_FILE_DIR=$(mktemp --suffix=mysql_test_cidfiles -d)
 test_dir="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))"
-ct_enable_cleanup
 
 s2i_args="--pull-policy=never "
 
@@ -648,5 +646,6 @@ function run_upgrade_test() {
   echo
 }
 
+ct_init
 # Run the chosen tests
 TEST_SET=${@:-$TEST_LIST} ct_run_tests_from_testset
