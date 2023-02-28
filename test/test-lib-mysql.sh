@@ -114,25 +114,24 @@ function test_mysql_s2i() {
 
 function test_mysql_integration() {
   local service_name=mysql
-  ct_os_template_exists mysql-ephemeral && t=mysql-ephemeral || t=mysql-persistent
-  ct_os_test_template_app_func "${IMAGE_NAME}" \
-                               "${t}" \
-                               "${service_name}" \
-                               "ct_os_check_cmd_internal '<SAME_IMAGE>' '${service_name}-testing' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
-                               "-p MYSQL_VERSION=${VERSION} \
-                                -p DATABASE_SERVICE_NAME="${service_name}-testing" \
-                                -p MYSQL_USER=testu \
-                                -p MYSQL_PASSWORD=testp \
-                                -p MYSQL_DATABASE=testdb"
-}
+  TEMPLATES="mysql-ephemeral-template.json
+  mysql-persistent-template.json"
 
+  for template in $TEMPLATES; do
+    ct_os_test_template_app_func "${IMAGE_NAME}" \
+                                 "${THISDIR}/${template}" \
+                                 "${service_name}" \
+                                 "ct_os_check_cmd_internal '<SAME_IMAGE>' '${service_name}-testing' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
+                                 "-p MYSQL_VERSION=${VERSION} \
+                                  -p DATABASE_SERVICE_NAME="${service_name}-testing" \
+                                  -p MYSQL_USER=testu \
+                                  -p MYSQL_PASSWORD=testp \
+                                  -p MYSQL_DATABASE=testdb"
+  done
+}
 
 # Check the imagestream
 function test_mysql_imagestream() {
-  case ${OS} in
-    rhel7|centos7|rhel8|rhel9) ;;
-    *) echo "Imagestream testing not supported for $OS environment." ; return 0 ;;
-  esac
   local tag="-el7"
   if [ "${OS}" == "rhel8" ]; then
     tag="-el8"
@@ -140,6 +139,19 @@ function test_mysql_imagestream() {
     tag="-el9"
   fi
   ct_os_test_image_stream_template "${THISDIR}/imagestreams/mysql-${OS%[0-9]*}.json" "${THISDIR}/examples/mysql-ephemeral-template.json" mysql "-p MYSQL_VERSION=${VERSION}${tag}"
+}
+
+
+# Check the latest imagestreams
+function run_latest_imagestreams() {
+  local result=1
+  # Switch to root directory of a container
+  echo "Testing the latest version in imagestreams"
+  pushd "${THISDIR}/../.." >/dev/null || return 1
+  ct_check_latest_imagestreams
+  result=$?
+  popd >/dev/null || return 1
+  return $result
 }
 
 # vim: set tabstop=2:shiftwidth=2:expandtab:

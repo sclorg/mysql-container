@@ -16,6 +16,7 @@ source "${THISDIR}/test-lib-remote-openshift.sh"
 TEST_LIST="\
 test_mysql_integration
 test_mysql_imagestream
+run_latest_imagestreams
 "
 
 trap ct_os_cleanup EXIT SIGINT
