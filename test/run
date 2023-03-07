@@ -76,6 +76,7 @@ function test_connection() {
   fi
   echo "Logs:"
   docker logs $(ct_get_cid $name)
+  ct_check_testcase_result 1
   return 1
 }
 
@@ -228,7 +229,8 @@ function assert_login_access() {
     fi
   fi
   echo "    $USER($PASS) login assertion failed"
-  exit 1
+  ct_check_testcase_result 1
+  return 1
 }
 
 function assert_local_access() {
@@ -238,6 +240,7 @@ function assert_local_access() {
     return
   fi
   echo "    local access assertion failed"
+  ct_check_testcase_result 1
   return 1
 }
 
@@ -252,6 +255,7 @@ function assert_container_creation_fails() {
 
   # Timeout will exit with a high number.
   if [ $ret -gt 30 ]; then
+    ct_check_testcase_result 1
     return 1
   fi
   echo "  Success!"
@@ -293,6 +297,7 @@ function test_config_option() {
     echo >&2
     echo >&2 "$configuration"
     echo >&2
+    ct_check_testcase_result 1
     return 1
   fi
 
@@ -351,7 +356,7 @@ function run_configuration_tests() {
 
   docker stop "$(ct_get_cid $container_name)" >/dev/null
 
-  echo "  Success!"
+  echo "  Done!"
   echo "  Testing image auto-calculated configuration settings"
 
   container_name=dynamic_config_test
@@ -399,6 +404,7 @@ function run_tests() {
   test_connection "$name" "$USER" "$PASS"
   echo "  Testing scl usage"
   ct_scl_usage_old $name 'mysql --version' "$VERSION"
+  ct_check_testcase_result $?
   echo "  Testing login accesses"
   local container_ip
   container_ip=$(ct_get_cip $name)
@@ -412,14 +418,15 @@ function run_tests() {
     assert_login_access "$container_ip" root '' false
   fi
   assert_local_access "$name"
-  echo "  Success!"
   test_mysql "$container_ip" "$USER" "$PASS"
+  echo "  Done!"
 }
 
 run_doc_test() {
   echo "  Testing documentation in the container image"
   ct_doc_content_old 'MYSQL\\?_ROOT\\?_PASSWORD' volume 3306
-  echo "  Success!"
+  ct_check_testcase_result $?
+  echo "  Done!"
   echo
 }
 
@@ -448,6 +455,7 @@ _s2i_test_image() {
 run_s2i_test() {
   echo "  Testing s2i usage"
   ct_s2i_usage ${IMAGE_NAME} ${s2i_args} &>/dev/null
+  ct_check_testcase_result $?
 
   echo "  Testing s2i build"
   ct_s2i_build_as_df file://${test_dir}/test-app ${IMAGE_NAME} ${IMAGE_NAME}-testapp
@@ -466,7 +474,7 @@ run_s2i_test() {
   chown -R 27:27 ${test_app_dir}
   _s2i_test_image "_s2i_test_mount" "-v ${test_app_dir}/test-app:/opt/app-root/src/:z"
   rm -rf ${test_app_dir}
-  echo "  Success!"
+  echo "  Done!"
 }
 
 gen_self_signed_cert() {
