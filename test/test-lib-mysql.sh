@@ -51,7 +51,7 @@ function test_mysql_pure_image() {
 
   ct_os_new_project
   # Create a specific imagestream tag for the image so that oc cannot use anything else
-  ct_os_upload_image "${image_name}" "$image_name_no_namespace"
+  ct_os_upload_image "v3" "${image_name}" "$image_name_no_namespace"
 
   ct_os_deploy_pure_image "$image_name_no_namespace" \
                           --name "${service_name}" \
@@ -69,7 +69,7 @@ function test_mysql_template() {
   local service_name="${image_name_no_namespace%%:*}-testing"
 
   ct_os_new_project
-  ct_os_upload_image "${image_name}" "mysql:$VERSION"
+  ct_os_upload_image "v3" "${image_name}" "mysql:$VERSION"
 
   ct_os_deploy_template_image ${THISDIR}/mysql-ephemeral-template.json \
                               NAMESPACE="$(oc project -q)" \
@@ -94,7 +94,7 @@ function test_mysql_s2i() {
 
   ct_os_new_project
   # Create a specific imagestream tag for the image so that oc cannot use anything else
-  ct_os_upload_image "${image_name}" "$image_name_no_namespace"
+  ct_os_upload_image "v3" "${image_name}" "$image_name_no_namespace"
 
   ct_os_deploy_s2i_image "$image_name_no_namespace" "${app}" \
                           --context-dir="${context_dir}" \
