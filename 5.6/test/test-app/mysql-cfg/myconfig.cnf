@@ -1,3 +1,0 @@
-[mysqld]
-query-cache-limit=262144
-

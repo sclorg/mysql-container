@@ -1,5 +1,0 @@
-[mysqld]
-datadir = ${MYSQL_DATADIR}
-basedir = ${MYSQL_PREFIX}
-plugin-dir = ${MYSQL_PREFIX}/lib64/mysql/plugin
-
