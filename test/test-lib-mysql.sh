@@ -121,7 +121,7 @@ function test_mysql_integration() {
     ct_os_test_template_app_func "${IMAGE_NAME}" \
                                  "${THISDIR}/${template}" \
                                  "${service_name}" \
-                                 "ct_os_check_cmd_internal '<SAME_IMAGE>' '${service_name}-testing' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
+                                 "ct_os_check_cmd_internal 'registry.redhat.io/${OS}/mysql-80' '${service_name}-testing' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
                                  "-p MYSQL_VERSION=${VERSION} \
                                   -p DATABASE_SERVICE_NAME="${service_name}-testing" \
                                   -p MYSQL_USER=testu \
@@ -138,7 +138,11 @@ function test_mysql_imagestream() {
   elif [ "${OS}" == "rhel9" ]; then
     tag="-el9"
   fi
-  ct_os_test_image_stream_template "${THISDIR}/imagestreams/mysql-${OS%[0-9]*}.json" "${THISDIR}/examples/mysql-ephemeral-template.json" mysql "-p MYSQL_VERSION=${VERSION}${tag}"
+  TEMPLATES="mysql-ephemeral-template.json
+  mysql-persistent-template.json"
+  for template in $TEMPLATES; do
+    ct_os_test_image_stream_template "${THISDIR}/imagestreams/mysql-${OS%[0-9]*}.json" "${THISDIR}/examples/${template}" mysql "-p MYSQL_VERSION=${VERSION}${tag}"
+  done
 }
 
 
