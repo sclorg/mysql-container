@@ -116,12 +116,16 @@ function test_mysql_integration() {
   local service_name=mysql
   TEMPLATES="mysql-ephemeral-template.json
   mysql-persistent-template.json"
-
+  if [ "${OS}" == "rhel7" ]; then
+    namespace_image="rhscl/mysql-80-rhel7"
+  else
+    namespace_image="${OS}/mysql-80"
+  fi
   for template in $TEMPLATES; do
     ct_os_test_template_app_func "${IMAGE_NAME}" \
                                  "${THISDIR}/${template}" \
                                  "${service_name}" \
-                                 "ct_os_check_cmd_internal 'registry.redhat.io/${OS}/mysql-80' '${service_name}-testing' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
+                                 "ct_os_check_cmd_internal 'registry.redhat.io/${namespace_image}' '${service_name}-testing' \"echo 'SELECT 42 as testval\g' | mysql --connect-timeout=15 -h <IP> testdb -utestu -ptestp\" '^42' 120" \
                                  "-p MYSQL_VERSION=${VERSION} \
                                   -p DATABASE_SERVICE_NAME="${service_name}-testing" \
                                   -p MYSQL_USER=testu \
