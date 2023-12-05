@@ -45,7 +45,8 @@
       "metadata": {
         "name": "${DATABASE_SERVICE_NAME}",
         "annotations": {
-          "template.openshift.io/expose-uri": "mysql://{.spec.clusterIP}:{.spec.ports[?(.name==\"mysql\")].port}"
+          "template.openshift.io/expose-uri": "mysql://{.spec.clusterIP}:{.spec.ports[?(.name==\"mysql\")].port}",
+          "image.openshift.io/triggers": "[{\"from\":{\"kind\":\"ImageStreamTag\",\"name\":\"mysql:${MARIADB_VERSION}\"},\"fieldPath\": \"spec.template.spec.containers[0].image\"}]"
         }
       },
       "spec": {
@@ -78,41 +79,26 @@
       }
     },
     {
-      "kind": "DeploymentConfig",
-      "apiVersion": "apps.openshift.io/v1",
+      "kind": "Deployment",
+      "apiVersion": "apps/v1",
       "metadata": {
         "name": "${DATABASE_SERVICE_NAME}",
         "annotations": {
-          "template.alpha.openshift.io/wait-for-ready": "true"
+          "template.alpha.openshift.io/wait-for-ready": "true",
+          "image.openshift.io/triggers": "[{\"from\":{\"kind\":\"ImageStreamTag\",\"name\":\"mysql:${MYSQL_VERSION}\"},\"fieldPath\": \"spec.template.spec.containers[0].image\"}]"
         }
       },
       "spec": {
         "strategy": {
           "type": "Recreate"
         },
-        "triggers": [
-          {
-            "type": "ImageChange",
-            "imageChangeParams": {
-              "automatic": true,
-              "containerNames": [
-                "mysql"
-              ],
-              "from": {
-                "kind": "ImageStreamTag",
-                "name": "mysql:${MYSQL_VERSION}",
-                "namespace": "${NAMESPACE}"
-              }
-            }
-          },
-          {
-            "type": "ConfigChange"
-          }
-        ],
         "replicas": 1,
         "selector": {
-          "name": "${DATABASE_SERVICE_NAME}"
+          "matchLabels": {
+            "name": "${DATABASE_SERVICE_NAME}"
+          }
         },
+
         "template": {
           "metadata": {
             "labels": {
