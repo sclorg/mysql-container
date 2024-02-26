@@ -20,7 +20,7 @@
         },
         "from": {
           "kind": "ImageStreamTag",
-          "name": "8.0-c9s"
+          "name": "8.0-el9"
         },
         "referencePolicy": {
           "type": "Local"
@@ -45,7 +45,7 @@
         }
       },
       {
-        "name": "8.0-c9s",
+        "name": "8.0-el9",
         "annotations": {
           "openshift.io/display-name": "MySQL 8.0 (CentOS 9 Stream)",
           "openshift.io/provider-display-name": "Red Hat, Inc.",
@@ -63,7 +63,7 @@
         }
       },
       {
-        "name": "8.0-c8s",
+        "name": "8.0-el8",
         "annotations": {
           "openshift.io/display-name": "MySQL 8.0 (CentOS 8 Stream)",
           "openshift.io/provider-display-name": "Red Hat, Inc.",
@@ -99,7 +99,7 @@
         }
       },
       {
-        "name": "8.0",
+        "name": "8.0-el9",
         "annotations": {
           "openshift.io/display-name": "MySQL 8.0",
           "openshift.io/provider-display-name": "Red Hat, Inc.",
