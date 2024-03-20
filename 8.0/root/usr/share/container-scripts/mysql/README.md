@@ -198,7 +198,7 @@ location is `/etc/my.cnf` but you can change it to `/etc/mysql/my.cnf` by settin
 Extending image
 ---------------
 This image can be extended in Openshift using the `Source` build strategy or via the standalone
-[source-to-image](https://github.com/openshift/source-to-image) application (where available).
+[source-to-image](https://docs.openshift.com/container-platform/4.14/openshift_images/create-images.html#images-create-s2i_create-images) application (where available).
 For this, we will assume that you are using the `rhscl/mysql-80-rhel7` image,
 available via `mysql:8.0` imagestream tag in Openshift.
 
