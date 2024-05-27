@@ -378,7 +378,6 @@ Dockerfile and other sources for this container image are available on
 https://github.com/sclorg/mysql-container.
 In that repository, the Dockerfile for CentOS is called Dockerfile, the Dockerfile
 for RHEL7 is called Dockerfile.rhel7, the Dockerfile for RHEL8 is called Dockerfile.rhel8,
- the Dockerfile for RHEL9 is called Dockerfile.rhel9,
-the Dockerfile for CentOS Stream 8 is called Dockerfile.c8s,
+the Dockerfile for RHEL9 is called Dockerfile.rhel9,
 the Dockerfile for CentOS Stream 9 is called Dockerfile.c9s,
 and the Dockerfile for Fedora is called Dockerfile.fedora.

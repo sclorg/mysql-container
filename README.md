@@ -5,7 +5,6 @@ MySQL SQL Database Server Container Image
 
 Images available on Quay are:
 * CentOS 7 [mysql-80](https://quay.io/repository/centos7/mysql-80-centos7)
-* CentOS Stream 8 [mysql-80](https://quay.io/repository/sclorg/mysql-80-c8s)
 * CentOS Stream 9 [mysql-80](https://quay.io/repository/sclorg/mysql-80-c9s)
 * Fedora [mysql-80](https://quay.io/repository/fedora/mysql-80)
 
@@ -33,7 +32,6 @@ RHEL versions currently supported are:
 
 CentOS versions currently supported are:
 * CentOS7
-* CentOS Stream 8
 * CentOS Stream 9
 
 
