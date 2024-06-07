@@ -15,7 +15,7 @@ jobs:
       matrix:
         include:
           - dockerfile: "8.0/Dockerfile.c9s"
-            docker_context: 8.0
+            docker_context: "8.0"
             registry_namespace: "sclorg"
             tag: "c9s"
             quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
@@ -23,7 +23,7 @@ jobs:
             image_name: "mysql-80-c9s"
 
           - dockerfile: "8.0/Dockerfile.fedora"
-            docker_context: 8.0
+            docker_context: "8.0"
             registry_namespace: "fedora"
             tag: "80"
             quayio_username: "QUAY_IMAGE_FEDORA_BUILDER_USERNAME"
