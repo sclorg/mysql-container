@@ -25,6 +25,10 @@
 
       - name: RHEL 9
         app_versions: ["8.0"]
+    custom_tags:
+      - name: "8.0"
+        distro: RHEL 7
+        app_version: "8.0"
 
   - filename: mysql-rhel-aarch64.json
     latest: "8.0-el9"
