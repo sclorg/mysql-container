@@ -4,7 +4,6 @@ MySQL SQL Database Server Container Image
 [![Build and push images to Quay.io registry](https://github.com/sclorg/mysql-container/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/sclorg/mysql-container/actions/workflows/build-and-push.yml)
 
 Images available on Quay are:
-* CentOS 7 [mysql-80](https://quay.io/repository/centos7/mysql-80-centos7)
 * CentOS Stream 9 [mysql-80](https://quay.io/repository/sclorg/mysql-80-c9s)
 * Fedora [mysql-80](https://quay.io/repository/fedora/mysql-80)
 
@@ -26,44 +25,42 @@ MySQL versions currently provided are:
 * [MySQL 8.0](8.0)
 
 RHEL versions currently supported are:
-* RHEL7
 * RHEL8
 * RHEL9
 
 CentOS versions currently supported are:
-* CentOS7
 * CentOS Stream 9
 
 
 Installation
 ------------
-Choose either the CentOS7 or RHEL7 based image:
+Choose either the CentOS Stream or RHEL7 based image:
 
-*  **RHEL7 based image**
+*  **RHEL8 based image**
 
-    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhscl/mysql-80-rhel7).
+    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhel8/mysql-80).
     To download it run:
 
     ```
-    $ podman pull registry.access.redhat.com/rhscl/mysql-80-rhel7
+    $ podman pull registry.access.redhat.com/rhel8/mysql-80
     ```
 
-    To build a RHEL7 based MySQL image, you need to run Docker build on a properly
+    To build a RHEL8 based MySQL image, you need to run Docker build on a properly
     subscribed RHEL machine.
 
     ```
     $ git clone --recursive https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
     $ git submodule update --init
-    $ make build TARGET=rhel7 VERSIONS=8.0
+    $ make build TARGET=rhel8 VERSIONS=8.0
     ```
 
-*  **CentOS7 based image**
+*  **CentOS Stream based image**
 
     This image is available on DockerHub. To download it run:
 
     ```
-    $ podman pull quay.io/centos7/mysql-80-centos7
+    $ podman pull quay.io/sclorg/mysql-80-c9s
     ```
 
     To build a CentOS based MySQL image from scratch, run:
@@ -72,7 +69,7 @@ Choose either the CentOS7 or RHEL7 based image:
     $ git clone --recursive https://github.com/sclorg/mysql-container.git
     $ cd mysql-container
     $ git submodule update --init
-    $ make build TARGET=centos7 VERSIONS=8.0
+    $ make build TARGET=c9s VERSIONS=8.0
     ```
 
 For using other versions of MySQL, just replace the `8.0` value by particular version
@@ -102,21 +99,21 @@ Users can choose between testing MySQL based on a RHEL or CentOS image.
 
 *  **RHEL based image**
 
-    To test a RHEL7 based MySQL image, you need to run the test on a properly
+    To test a RHEL8 based MySQL image, you need to run the test on a properly
     subscribed RHEL machine.
 
     ```
     $ cd mysql-container
     $ git submodule update --init
-    $ make test TARGET=rhel7 VERSIONS=8.0
+    $ make test TARGET=rhel8 VERSIONS=8.0
     ```
 
-*  **CentOS based image**
+*  **CentOS Stream based image**
 
     ```
     $ cd mysql-container
     $ git submodule update --init
-    $ make test TARGET=centos7 VERSIONS=8.0
+    $ make test TARGET=c9s VERSIONS=8.0
     ```
 
 For using other versions of MySQL, just replace the `8.0` value by particular version
