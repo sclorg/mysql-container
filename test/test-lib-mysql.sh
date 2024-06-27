@@ -45,7 +45,7 @@ function check_mysql_os_service_connection() {
 }
 
 function test_mysql_pure_image() {
-  local image_name=${1:-centos/mysql-80-centos7}
+  local image_name=${1:-quay.io/sclorg/mysql-80-c9s}
   local image_name_no_namespace=${image_name##*/}
   local service_name="${image_name_no_namespace%%:*}-testing"
 
@@ -64,7 +64,7 @@ function test_mysql_pure_image() {
 }
 
 function test_mysql_template() {
-  local image_name=${1:-quay.io/centos7/mysql-80-centos7}
+  local image_name=${1:-quay.io/sclorg/mysql-80-c9s}
   local image_name_no_namespace=${image_name##*/}
   local service_name="${image_name_no_namespace%%:*}-testing"
 
@@ -86,7 +86,7 @@ function test_mysql_template() {
 }
 
 function test_mysql_s2i() {
-  local image_name=${1:-quay.io/centos7/mysql-80-centos7}
+  local image_name=${1:-quay.io/sclorg/mysql-80-c9s}
   local app=${2:-https://github.com/sclorg/mysql-container.git}
   local context_dir=${3:-test/test-app}
   local image_name_no_namespace=${image_name##*/}
@@ -116,11 +116,7 @@ function test_mysql_integration() {
   local service_name=mysql
   TEMPLATES="mysql-ephemeral-template.json
   mysql-persistent-template.json"
-  if [ "${OS}" == "rhel7" ]; then
-    namespace_image="rhscl/mysql-80-rhel7"
-  else
-    namespace_image="${OS}/mysql-80"
-  fi
+  namespace_image="${OS}/mysql-80"
   for template in $TEMPLATES; do
     ct_os_test_template_app_func "${IMAGE_NAME}" \
                                  "${THISDIR}/${template}" \
@@ -136,10 +132,8 @@ function test_mysql_integration() {
 
 # Check the imagestream
 function test_mysql_imagestream() {
-  local tag="-el7"
-  if [ "${OS}" == "rhel8" ]; then
-    tag="-el8"
-  elif [ "${OS}" == "rhel9" ]; then
+  tag="-el8"
+  if [ "${OS}" == "rhel9" ]; then
     tag="-el9"
   fi
   TEMPLATES="mysql-ephemeral-template.json
