@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ "8.0" ]
-        os_test: [ "fedora", "rhel8", "rhel9", "c9s" ]
+        version: [ "8.0", "8.4" ]
+        os_test: [ "fedora", "rhel8", "rhel9", "c9s", "c10s" ]
         test_case: [ "container" ]
 
     if: |
