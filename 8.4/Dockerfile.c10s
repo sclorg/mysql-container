@@ -16,7 +16,7 @@ ENV MYSQL_VERSION=8.4 \
     HOME=/var/lib/mysql \
     NAME=mysql
 
-ENV SUMMARY="MySQL 8.0 SQL database server" \
+ENV SUMMARY="MySQL 8.4 SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
 image provides a containerized packaging of the MySQL mysqld daemon and client application. \
 The mysqld server daemon accepts connections from clients and provides access to content from \
