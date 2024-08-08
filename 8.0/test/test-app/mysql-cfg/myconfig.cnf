@@ -1,3 +1,0 @@
-[mysqld]
-stored_program_cache = 524288
-

@@ -1,4 +1,4 @@
-FROM quay.io/fedora/s2i-core:38
+FROM quay.io/fedora/s2i-core:40
 
 # MySQL image for OpenShift.
 #
@@ -10,7 +10,8 @@ FROM quay.io/fedora/s2i-core:38
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
-ENV MYSQL_VERSION=8.0 \
+ENV MYSQL_VERSION=8.4 \
+    MYSQL_SHORT_VERSION=84 \
     APP_DATA=/opt/app-root/src \
     HOME=/var/lib/mysql
 
@@ -26,11 +27,11 @@ LABEL summary="$SUMMARY" \
       io.k8s.description="$DESCRIPTION" \
       io.k8s.display-name="MySQL $MYSQL_VERSION" \
       io.openshift.expose-services="3306:mysql" \
-      io.openshift.tags="database,mysql,mysql80,rh-mysql80" \
+      io.openshift.tags="database,mysql,mysql$MYSQL_SHORT_VERSION" \
       com.redhat.component="$NAME" \
-      name="fedora/$NAME-80" \
+      name="fedora/$NAME-$MYSQL_SHORT_VERSION" \
       version="$MYSQL_VERSION" \
-      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/fedora/$NAME-80" \
+      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/fedora/$NAME-$MYSQL_SHORT_VERSION" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
@@ -43,9 +44,9 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base community-mysql-server policycoreutils" && \
-    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
+    dnf install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    yum -y clean all --enablerepo='*' && \
+    dnf -y clean all --enablerepo='*' && \
     mkdir -p /var/lib/mysql/data && chown -R mysql.0 /var/lib/mysql && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
