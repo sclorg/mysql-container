@@ -1,0 +1,4 @@
+[mysqld]
+ssl-key=${APP_DATA}/mysql-certs/server-key.pem
+ssl-cert=${APP_DATA}/mysql-certs/server-cert-selfsigned.pem
+
