@@ -7,6 +7,7 @@ upstream_upgrade_info() {
     5.6) echo "https://dev.mysql.com/doc/refman/5.6/en/upgrading-from-previous-series.html" ;;
     5.7) echo "https://dev.mysql.com/doc/refman/5.7/en/upgrading-from-previous-series.html" ;;
     8.0) echo "https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html" ;;
+    8.4) echo "https://dev.mysql.com/doc/refman/8.4/en/upgrading-from-previous-series.html" ;;
     *) echo "Non expected version '${MYSQL_VERSION}'" ; return 1 ;;
   esac
 }
@@ -58,7 +59,7 @@ check_datadir_version() {
         fi
 
         if [ $(( ${datadir_version} + 1 )) -eq "${mysqld_version}" -o "${datadir_version}" -eq 505 -a "${mysqld_version}" -eq 1000 \
-                   -o "${datadir_version}" -eq 507 -a "${mysqld_version}" -eq 800 ]; then
+                   -o "${datadir_version}" -eq 507 -a "${mysqld_version}" -eq 800 -o "${datadir_version}" -eq 800 -a "${mysqld_version}" -eq 804 ]; then
           log_warn "MySQL server is version ${mysqld_version_dot} and datadir is version"\
                    "${datadir_version_dot}, which is a compatible combination."
           if [ "${MYSQL_DATADIR_ACTION}" == 'upgrade-auto' ] ; then
