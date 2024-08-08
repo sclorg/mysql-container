@@ -1,4 +1,4 @@
-FROM ubi8/s2i-core
+FROM quay.io/sclorg/s2i-core-c10s:c10s
 
 # MySQL image for OpenShift.
 #
@@ -10,9 +10,11 @@ FROM ubi8/s2i-core
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
-ENV MYSQL_VERSION=8.0 \
+ENV MYSQL_VERSION=8.4 \
+    MYSQL_SHORT_VERSION=84 \
     APP_DATA=/opt/app-root/src \
-    HOME=/var/lib/mysql
+    HOME=/var/lib/mysql \
+    NAME=mysql
 
 ENV SUMMARY="MySQL 8.0 SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
@@ -23,14 +25,14 @@ MySQL databases on behalf of the clients."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="MySQL 8.0" \
+      io.k8s.display-name="MySQL $MYSQL_VERSION" \
       io.openshift.expose-services="3306:mysql" \
-      io.openshift.tags="database,mysql,mysql80,mysql-80" \
-      com.redhat.component="mysql-80-container" \
-      name="rhel8/mysql-80" \
+      io.openshift.tags="database,mysql,mysql$MYSQL_SHORT_VERSION,mysql-$MYSQL_SHORT_VERSION" \
+      com.redhat.component="$NAME-$MYSQL_SHORT_VERSION-container" \
+      name="sclorg/$NAME-$MYSQL_SHORT_VERSION-c10s" \
       version="1" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
-      usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel8/mysql-80" \
+      usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/sclorg/$NAME-$MYSQL_SHORT_VERSION-c10s:c10s" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
@@ -38,11 +40,10 @@ EXPOSE 3306
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN yum -y module enable mysql:$MYSQL_VERSION && \
-    INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind-utils groff-base mysql-server" && \
-    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
+RUN INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind-utils groff-base mysql-server" && \
+    dnf install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    yum -y clean all --enablerepo='*' && \
+    dnf -y clean all --enablerepo='*' && \
     mkdir -p /var/lib/mysql/data && chown -R mysql.0 /var/lib/mysql && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
@@ -50,9 +51,9 @@ RUN yum -y module enable mysql:$MYSQL_VERSION && \
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/mysql \
     MYSQL_PREFIX=/usr
 
-COPY 8.0/root-common /
-COPY 8.0/s2i-common/bin/ $STI_SCRIPTS_PATH
-COPY 8.0/root /
+COPY 8.4/root-common /
+COPY 8.4/s2i-common/bin/ $STI_SCRIPTS_PATH
+COPY 8.4/root /
 
 # Hard links are not supported in Testing Farm approach during sync to guest
 # operation system. Therefore tests are failing on error
