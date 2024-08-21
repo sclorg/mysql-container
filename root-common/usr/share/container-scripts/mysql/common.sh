@@ -44,6 +44,7 @@ function export_setting_variables() {
   fi
   export MYSQL_DATADIR_ACTION=${MYSQL_DATADIR_ACTION:-upgrade-warn}
   export MYSQL_DEFAULT_AUTHENTICATION_PLUGIN=${MYSQL_DEFAULT_AUTHENTICATION_PLUGIN:-caching_sha2_password}
+  export MYSQL_AUTHENTICATION_POLICY=${MYSQL_AUTHENTICATION_POLICY:-$MYSQL_DEFAULT_AUTHENTICATION_PLUGIN,,}
 }
 
 # this stores whether the database was initialized from empty datadir
