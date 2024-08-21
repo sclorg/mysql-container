@@ -291,7 +291,7 @@ function test_config_option() {
   local option_name="$3"
   local option_value="$4"
 
-  if ! echo "$configuration" | grep -qx "$option_name[[:space:]]*=[[:space:]]*$option_value"; then
+  if ! echo "$configuration" | grep -qx "$option_name[[:space:]]*=[[:space:]]*\('\?\)$option_value\('\?\)"; then
     local configs="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; echo /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/* | paste -s')"
     echo >&2 "FAIL: option '$option_name' should have value '$option_value', but it wasn't found in any of the configuration files ($configs):"
     echo >&2
@@ -327,7 +327,7 @@ function run_configuration_tests() {
     --env MYSQL_INNODB_BUFFER_POOL_SIZE=16M \
     --env MYSQL_INNODB_LOG_FILE_SIZE=4M \
     --env MYSQL_INNODB_LOG_BUFFER_SIZE=4M \
-    --env MYSQL_DEFAULT_AUTHENTICATION_PLUGIN=mysql_native_password \
+    --env MYSQL_AUTHENTICATION_POLICY='mysql_native_password,,' \
     --env WORKAROUND_DOCKER_BUG_14203=
     #
 
@@ -352,7 +352,7 @@ function run_configuration_tests() {
   test_config_option "$container_name" "$configuration" innodb_buffer_pool_size 16M
   test_config_option "$container_name" "$configuration" innodb_log_file_size 4M
   test_config_option "$container_name" "$configuration" innodb_log_buffer_size 4M
-  test_config_option "$container_name" "$configuration" default_authentication_plugin mysql_native_password
+  test_config_option "$container_name" "$configuration" authentication_policy 'mysql_native_password,,'
 
   docker stop "$(ct_get_cid $container_name)" >/dev/null
 
@@ -380,7 +380,7 @@ function run_configuration_tests() {
   test_config_option "$container_name" "$configuration" innodb_log_buffer_size 76M
 
   # here we test the default value for default_authentication_plugin
-  test_config_option "$container_name" "$configuration" default_authentication_plugin caching_sha2_password
+  test_config_option "$container_name" "$configuration" authentication_policy 'caching_sha2_password,,'
 
   # check character set and collation
   container_ip=$(ct_get_cip $container_name)

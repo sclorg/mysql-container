@@ -120,8 +120,11 @@ The following environment variables influence the MySQL configuration file. They
 **`MYSQL_LOG_QUERIES_ENABLED (default: 0)`**  
        To enable query logging set this to `1`
 
-**`MYSQL_DEFAULT_AUTHENTICATION_PLUGIN (default: caching_sha2_password)`**  
-       Set default authentication plugin. Accepts values `mysql_native_password` or `caching_sha2_password`.
+**`MYSQL_AUTHENTICATION_POLICY (default: 'caching_sha2_password,,')`**  
+       Set authentication_policy. See https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_default_authentication_plugin for more information. This option replaces deprecated MYSQL_DEFAULT_AUTHENTICATION_PLUGIN.
+
+**`MYSQL_DEFAULT_AUTHENTICATION_PLUGIN (deprecated; default: caching_sha2_password)`**  
+       Set default authentication plugin. Accepts values `mysql_native_password` or `caching_sha2_password`. This option is deprecated, use `MYSQL_AUTHENTICATION_POLICY` instead.
 
 You can also set the following mount points by passing the `-v /host:/container` flag to Docker.
 
