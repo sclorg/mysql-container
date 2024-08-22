@@ -59,7 +59,7 @@ function test_connection() {
       break;
     fi
     echo -n "."
-    if mysql_cmd "$ip" "$login" "$password" &>/dev/null <<< 'SELECT 1;'; then
+    if mysql_cmd "$ip" "$login" "$password" &>/dev/null -e 'SELECT 1;'; then
       echo " OK"
       echo "  Success!"
       return 0
@@ -86,12 +86,13 @@ function test_mysql() {
   local password="$3"
 
   echo "  Testing MySQL"
-  mysql_cmd "$container_ip" "$login" "$password" <<< 'CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));'
-  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo1", "bar1");'
-  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo2", "bar2");'
-  mysql_cmd "$container_ip" "$login" "$password" <<< 'INSERT INTO tbl VALUES ("foo3", "bar3");'
-  mysql_cmd "$container_ip" "$login" "$password" <<< 'SELECT * FROM tbl;'
-  mysql_cmd "$container_ip" "$login" "$password" <<< 'DROP TABLE tbl;'
+  mysql_cmd "$container_ip" "$login" "$password" -e 'CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));'
+  mysql_cmd "$container_ip" "$login" "$password" -e 'INSERT INTO tbl VALUES ("foo1", "bar1");'
+  mysql_cmd "$container_ip" "$login" "$password" -e 'INSERT INTO tbl VALUES ("foo2", "bar2");'
+  mysql_cmd "$container_ip" "$login" "$password" -e 'INSERT INTO tbl VALUES ("foo3", "bar3");'
+  mysql_cmd "$container_ip" "$login" "$password" -e 'SELECT * FROM tbl;' | grep -q -e bar3
+  ct_check_testcase_result $?
+  mysql_cmd "$container_ip" "$login" "$password" -e 'DROP TABLE tbl;'
   echo "  Success!"
 }
 
@@ -120,7 +121,8 @@ function run_change_password_test() {
   test_connection testpass2 user bar
 
   # The old password should not work anymore
-  if mysql_cmd "$(ct_get_cip testpass2)" user foo -e 'SELECT 1;'; then
+  if mysql_cmd "$(ct_get_cip testpass2)" user foo -e 'SELECT 1;'| grep -q -e 1; then
+    ct_check_testcase_result 1
     return 1
   fi
 }
@@ -141,14 +143,16 @@ function run_change_password_new_user_test() {
   test_connection testpassnewuser2 user foo
 
   # See whether there is an error message in the log
-  if ! docker logs $(ct_get_cid testpassnewuser2) | grep 'User user2 does not exist in database' ; then
+  if ! docker logs $(ct_get_cid testpassnewuser2) | grep -q 'User user2 does not exist in database' ; then
     echo "ERROR: Container did not end with expected error message: 'User user2 does not exist in database'."
+    ct_check_testcase_result 1
     return 1
   fi
 
   # The new password should not work
-  if mysql_cmd "$(ct_get_cip testpassnewuser2)" user bar -e 'SELECT 1;'; then
+  if mysql_cmd "$(ct_get_cip testpassnewuser2)" user bar -e 'SELECT 1;'| grep -q -e 1; then
     echo "ERROR: The new password should not work, but it does."
+    ct_check_testcase_result 1
     return 1
   fi
 }
@@ -184,6 +188,7 @@ function run_replication_test() {
       echo "The ${replica_ip} failed to register in SOURCE"
       echo "Dumping logs for $(ct_get_cid replica.cid)"
       docker logs $(ct_get_cid replica.cid)
+      ct_check_testcase_result 1
       return 1
     fi
     sleep 3
@@ -205,6 +210,7 @@ function run_replication_test() {
       echo "The ${replica_ip} failed to see value added on SOURCE"
       echo "Dumping logs for $(ct_get_cid replica.cid)"
       docker logs $(ct_get_cid replica.cid)
+      ct_check_testcase_result 1
       return 1
     fi
     sleep 3
@@ -217,7 +223,7 @@ function assert_login_access() {
   local PASS=$1 ; shift
   local success=$1 ; shift
 
-  if mysql_cmd "$container_ip" "$USER" "$PASS" <<< 'SELECT 1;' ; then
+  if mysql_cmd "$container_ip" "$USER" "$PASS" -e 'SELECT 1;'| grep -q -e 1 ; then
     if $success ; then
       echo "    $USER($PASS) access granted as expected"
       return
@@ -235,7 +241,7 @@ function assert_login_access() {
 
 function assert_local_access() {
   local id="$1" ; shift
-  if docker exec $(ct_get_cid "$id") bash -c 'mysql -uroot <<< "SELECT 1;"' ; then
+  if docker exec $(ct_get_cid "$id") bash -c 'mysql -uroot <<< "SELECT 1;"'| grep -q -e 1 ; then
     echo "    local access granted as expected"
     return
   fi
@@ -337,7 +343,7 @@ function run_configuration_tests() {
   # - we should look for an option in the desired config, not in all of them
   # - we should respect section of the config (now we have duplicated options from a different sections)
   local configuration
-  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
   test_config_option "$container_name" "$configuration" lower_case_table_names 1
   test_config_option "$container_name" "$configuration" general_log 1
@@ -371,7 +377,7 @@ function run_configuration_tests() {
 
   test_connection "$container_name" config_test_user config_test
 
-  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
   test_config_option "$container_name" "$configuration" key_buffer_size 51M
   test_config_option "$container_name" "$configuration" read_buffer_size 25M
@@ -386,8 +392,10 @@ function run_configuration_tests() {
   container_ip=$(ct_get_cip $container_name)
   mysql_cmd "$container_ip" config_test_user config_test -e 'CREATE TABLE tbl (col1 VARCHAR(20));'
   tbl_def=$(mysql_cmd "$container_ip" config_test_user config_test -e 'SHOW CREATE TABLE tbl;')
-  echo "$tbl_def" | grep -e 'CHARSET=latin2'
-  echo "$tbl_def" | grep -e 'COLLATE=latin2_czech_cs'
+  echo "$tbl_def" | grep -qe 'CHARSET=latin2'
+  ct_check_testcase_result $?
+  echo "$tbl_def" | grep -qe 'COLLATE=latin2_czech_cs'
+  ct_check_testcase_result $?
 
   docker stop "$(ct_get_cid $container_name)" >/dev/null
 
@@ -447,15 +455,16 @@ _s2i_test_image() {
 
   test_connection "$container_name" operations_user operations_pass
 
-  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; egrep -hv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
   docker stop "$(ct_get_cid $container_name)" >/dev/null
 }
 
 run_s2i_test() {
-  echo "  Testing s2i usage"
-  ct_s2i_usage ${IMAGE_NAME} ${s2i_args} &>/dev/null
-  ct_check_testcase_result $?
+  # There is no /usr/libexec/s2i/usage, so not worth teseting
+  #echo "  Testing s2i usage"
+  #ct_s2i_usage ${IMAGE_NAME} ${s2i_args} &>/dev/null
+  #ct_check_testcase_result $?
 
   echo "  Testing s2i build"
   ct_s2i_build_as_df file://${test_dir}/test-app ${IMAGE_NAME} ${IMAGE_NAME}-testapp
@@ -515,12 +524,13 @@ ssl-cert=\${APP_DATA}/mysql-certs/server-cert-selfsigned.pem
     5*) ssl_mode_opt='--ssl-mode=REQUIRED'
   esac
 
-  if mysql_cmd "$ip" "ssl_test_user" "ssl_test" ${ssl_mode_opt:-} --ssl-ca=${ca_cert_path} -e 'show status like "Ssl_cipher" \G' | grep 'Value: [A-Z][A-Z0-9-]*' ; then
+  if mysql_cmd "$ip" "ssl_test_user" "ssl_test" ${ssl_mode_opt:-} --ssl-ca=${ca_cert_path} -e 'show status like "Ssl_cipher" \G' | grep -q 'Value: [A-Z][A-Z0-9-]*' ; then
     echo "  Success!"
     rm -rf ${test_app_dir}
   else
     echo "  FAIL!"
     mysql_cmd "$ip" "ssl_test_user" "ssl_test" --ssl-ca=${ca_cert_path} -e 'show status like "%ssl%" \G'
+    ct_check_testcase_result 1
     return 1
   fi
   # Clear the global variable content after we are done using it
@@ -573,8 +583,9 @@ function run_datadir_actions_test() {
   test_connection testupg5 user foo
   docker stop $(ct_get_cid testupg5) >/dev/null
   # Check whether analyze happened
-  if ! docker logs $(ct_get_cid testupg5) 2>&1 | grep -e '--analyze --all-databases' &>/dev/null ; then
+  if ! docker logs $(ct_get_cid testupg5) 2>&1 | grep -qe '--analyze --all-databases' &>/dev/null ; then
     echo "Analyze did not happen but it should"
+    ct_check_testcase_result 1
     return 1
   fi
 
@@ -585,8 +596,9 @@ function run_datadir_actions_test() {
   test_connection testupg6 user foo
   docker stop $(ct_get_cid testupg6) >/dev/null
   # Check whether optimize happened
-  if ! docker logs $(ct_get_cid testupg6) 2>&1 | grep -e '--optimize --all-databases' &>/dev/null ; then
+  if ! docker logs $(ct_get_cid testupg6) 2>&1 | grep -qe '--optimize --all-databases' &>/dev/null ; then
     echo "Optimize did not happen but it should"
+    ct_check_testcase_result 1
     return 1
   fi
 
