@@ -294,12 +294,11 @@ Upgrading and data directory version checking
 
 MySQL and MariaDB use versions that consist of three numbers X.Y.Z (e.g. 5.6.23).
 For version changes in Z part, the server's binary data format stays compatible and thus no
-special upgrade procedure is needed. For upgrades from X.Y to X.Y+1, consider doing manual
+special upgrade procedure is needed. For upgrades from X.Y to X.Y+z, consider doing manual
 steps as described at
-https://dev.mysql.com/doc/refman/8.4/en/upgrading-from-previous-series.html.
+https://dev.mysql.com/doc/refman/8.4/en/mysql-nutshell.html.
 
-Skipping versions like from X.Y to X.Y+2 or downgrading to lower version is not supported;
-the only exception is ugrading from MariaDB 5.5 to MariaDB 10.0.
+Skipping LTS versions like 5.7 to 8.4 or downgrading to lower version is not supported.
 
 **Important**: Upgrading to a new version is always risky and users are expected to make a full
 back-up of all data before.
@@ -307,38 +306,20 @@ back-up of all data before.
 A safer solution to upgrade is to dump all data using `mysqldump` or `mysqldbexport` and then
 load the data using `mysql` or `mysqldbimport` into an empty (freshly initialized) database.
 
-Another way of proceeding with the upgrade is starting the new version of the `mysqld` daemon
-and run `mysql_upgrade` right after the start. This so called in-place upgrade is generally
-faster for large data directory, but only possible if upgrading from the very previous version,
-so skipping versions is not supported.
+Another way of proceeding with the upgrade is starting the new version of the `mysqld` daemon.
+This so called in-place upgrade is generally faster for large data directory, but only possible
+if upgrading from the very previous LTS version, so skipping LTS versions is not supported.
 
-This container detects whether the data needs to be upgraded using `mysql_upgrade` and
-we can control it by setting `MYSQL_DATADIR_ACTION` variable, which can have one or more of the following values:
-
- * `upgrade-warn` -- If the data version can be determined and the data come from a different version
-   of the daemon, a warning is printed but the container starts. This is the default value.
-   Since historically the version file `mysql_upgrade_info` was not created, when using this option,
-   the version file is created if not exist, but no `mysql_upgrade` will be called.
-   However, this automatic creation will be removed after few months, since the version should be
-   created on most deployments at that point.
- * `upgrade-auto` -- `mysql_upgrade` is run at the beginning of the container start, when the local
-   daemon is running, but only if the data version can be determined and the data come
-   with the very previous version. A warning is printed if the data come from even older
-   or newer version. This value effectively enables automatic upgrades,
-   but it is always risky and users should still back-up all the data before starting the newer container.
-   Set this option only if you have very good back-ups at any moment and you are fine to fail-over
-   from the back-up.
- * `upgrade-force` -- `mysql_upgrade --force` is run at the beginning of the container start, when the local
-   daemon is running, no matter what version of the daemon the data come from.
-   This is also the way to create the missing version file `mysql_upgrade_info` if not present
-   in the root of the data directory; this file holds information about the version of the data.
+Starting 8.0.16, `mysql_upgrade` functionality was moved to the MySQL server itself and executes
+all datadir actions automatically when necessary. After `mysql_upgrade` being labeled as deprecated
+since this version, it is missing in MySQL 8.4.x entirely. Therefore, several values previously
+used for the `MYSQL_DATADIR_ACTION` variable are No-op and server starts as usually.
 
 There are also some other actions that you may want to run at the beginning of the container start,
 when the local daemon is running, no matter what version of the data is detected:
 
  * `optimize` -- runs `mysqlcheck --optimize`. It optimizes all the tables.
  * `analyze` -- runs `mysqlcheck --analyze`. It analyzes all the tables.
- * `disable` -- nothing is done regarding data directory version.
 
 Multiple values are separated by comma and run in-order, e.g. `MYSQL_DATADIR_ACTION="optimize,analyze"`.
 
