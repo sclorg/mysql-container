@@ -11,18 +11,18 @@
   },
   "parameters": [
     {
-      "name": "MYSQL_MASTER_SERVICE_NAME",
-      "description": "Service name for MySQL master service",
-      "value": "mysql-master"
+      "name": "MYSQL_SOURCE_SERVICE_NAME",
+      "description": "Service name for MySQL source service",
+      "value": "mysql-source"
     },
     {
-      "name": "MYSQL_MASTER_USER",
-      "description": "The username used for master-slave replication",
-      "value": "master"
+      "name": "MYSQL_SOURCE_USER",
+      "description": "The username used for source-replica replication",
+      "value": "source"
     },
     {
-      "name": "MYSQL_MASTER_PASSWORD",
-      "description": "The password used for the MYSQL_MASTER_USER",
+      "name": "MYSQL_SOURCE_PASSWORD",
+      "description": "The password used for the MYSQL_SOURCE_USER",
       "generate": "expression",
       "from": "[a-zA-Z0-9]{12}"
     },
@@ -61,7 +61,7 @@
       "kind": "PersistentVolumeClaim",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mysql-master"
+        "name": "mysql-source"
       },
       "spec": {
         "accessModes": [
@@ -78,7 +78,7 @@
       "kind": "PersistentVolumeClaim",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mysql-slave"
+        "name": "mysql-replica"
       },
       "spec": {
         "accessModes": [
@@ -95,9 +95,9 @@
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "${MYSQL_MASTER_SERVICE_NAME}",
+        "name": "${MYSQL_SOURCE_SERVICE_NAME}",
         "labels": {
-          "name": "mysql-master"
+          "name": "mysql-source"
         }
       },
       "spec": {
@@ -107,7 +107,7 @@
           }
         ],
         "selector": {
-          "name": "mysql-master"
+          "name": "mysql-source"
         },
         "clusterIP": "None"
       }
@@ -116,9 +116,9 @@
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mysql-slave",
+        "name": "mysql-replica",
         "labels": {
-          "name": "mysql-slave"
+          "name": "mysql-replica"
         }
       },
       "spec": {
@@ -128,7 +128,7 @@
           }
         ],
         "selector": {
-          "name": "mysql-slave"
+          "name": "mysql-replica"
         },
         "clusterIP": "None"
       }
@@ -137,7 +137,7 @@
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mysql-master"
+        "name": "mysql-source"
       },
       "spec": {
         "strategy": {
@@ -150,20 +150,20 @@
         ],
         "replicas": 1,
         "selector": {
-          "name": "mysql-master"
+          "name": "mysql-source"
         },
         "template": {
           "metadata": {
             "labels": {
-              "name": "mysql-master"
+              "name": "mysql-source"
             }
           },
           "spec": {
             "volumes": [
               {
-                "name": "mysql-master-data",
+                "name": "mysql-source-data",
                 "persistentVolumeClaim": {
-                  "claimName": "mysql-master"
+                  "claimName": "mysql-source"
                 }
               }
             ],
@@ -172,7 +172,7 @@
                 "name": "server",
                 "image": "quay.io/sclorg/mysql-80-c9s",
                 "args": [
-                  "run-mysqld-master"
+                  "run-mysqld-source"
                 ],
                 "ports": [
                   {
@@ -181,12 +181,12 @@
                 ],
                 "env": [
                   {
-                    "name": "MYSQL_MASTER_USER",
-                    "value": "${MYSQL_MASTER_USER}"
+                    "name": "MYSQL_SOURCE_USER",
+                    "value": "${MYSQL_SOURCE_USER}"
                   },
                   {
-                    "name": "MYSQL_MASTER_PASSWORD",
-                    "value": "${MYSQL_MASTER_PASSWORD}"
+                    "name": "MYSQL_SOURCE_PASSWORD",
+                    "value": "${MYSQL_SOURCE_PASSWORD}"
                   },
                   {
                     "name": "MYSQL_USER",
@@ -207,7 +207,7 @@
                 ],
                 "volumeMounts": [
                   {
-                    "name": "mysql-master-data",
+                    "name": "mysql-source-data",
                     "mountPath": "/var/lib/mysql/data"
                   }
                 ],
@@ -222,7 +222,7 @@
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "mysql-slave"
+        "name": "mysql-replica"
       },
       "spec": {
         "strategy": {
@@ -235,20 +235,20 @@
         ],
         "replicas": 1,
         "selector": {
-          "name": "mysql-slave"
+          "name": "mysql-replica"
         },
         "template": {
           "metadata": {
             "labels": {
-              "name": "mysql-slave"
+              "name": "mysql-replica"
             }
           },
           "spec": {
             "volumes": [
               {
-                "name": "mysql-slave-data",
+                "name": "mysql-replica-data",
                 "persistentVolumeClaim": {
-                  "claimName": "mysql-slave"
+                  "claimName": "mysql-replica"
                 }
               }
             ],
@@ -257,7 +257,7 @@
                 "name": "server",
                 "image": "quay.io/sclorg/mysql-80-c9s",
                 "args": [
-                  "run-mysqld-slave"
+                  "run-mysqld-replica"
                 ],
                 "ports": [
                   {
@@ -266,16 +266,16 @@
                 ],
                 "env": [
                   {
-                    "name": "MYSQL_MASTER_SERVICE_NAME",
-                    "value": "${MYSQL_MASTER_SERVICE_NAME}"
+                    "name": "MYSQL_SOURCE_SERVICE_NAME",
+                    "value": "${MYSQL_SOURCE_SERVICE_NAME}"
                   },
                   {
-                    "name": "MYSQL_MASTER_USER",
-                    "value": "${MYSQL_MASTER_USER}"
+                    "name": "MYSQL_SOURCE_USER",
+                    "value": "${MYSQL_SOURCE_USER}"
                   },
                   {
-                    "name": "MYSQL_MASTER_PASSWORD",
-                    "value": "${MYSQL_MASTER_PASSWORD}"
+                    "name": "MYSQL_SOURCE_PASSWORD",
+                    "value": "${MYSQL_SOURCE_PASSWORD}"
                   },
                   {
                     "name": "MYSQL_DATABASE",
@@ -284,7 +284,7 @@
                 ],
                 "volumeMounts": [
                   {
-                    "name": "mysql-slave-data",
+                    "name": "mysql-replica-data",
                     "mountPath": "/var/lib/mysql/data"
                   }
                 ],

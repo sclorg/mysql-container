@@ -45,6 +45,14 @@ function export_setting_variables() {
   export MYSQL_DATADIR_ACTION=${MYSQL_DATADIR_ACTION:-}
   export MYSQL_DEFAULT_AUTHENTICATION_PLUGIN=${MYSQL_DEFAULT_AUTHENTICATION_PLUGIN:-caching_sha2_password}
   export MYSQL_AUTHENTICATION_POLICY=${MYSQL_AUTHENTICATION_POLICY:-$MYSQL_DEFAULT_AUTHENTICATION_PLUGIN,,}
+
+  # keep old names working for compatibility
+  MYSQL_MASTER_SERVICE_NAME=${MYSQL_MASTER_SERVICE_NAME:-}
+  MYSQL_MASTER_USER=${MYSQL_MASTER_USER:-}
+  MYSQL_MASTER_PASSWORD=${MYSQL_MASTER_PASSWORD:-}
+  export MYSQL_SOURCE_SERVICE_NAME=${MYSQL_SOURCE_SERVICE_NAME:-$MYSQL_MASTER_SERVICE_NAME}
+  export MYSQL_SOURCE_USER=${MYSQL_SOURCE_USER:-MYSQL_MASTER_USER}
+  export MYSQL_SOURCE_PASSWORD=${MYSQL_SOURCE_PASSWORD:-MYSQL_MASTER_PASSWORD}
 }
 
 # this stores whether the database was initialized from empty datadir
@@ -155,7 +163,7 @@ EOSQL
   # and all necessary data files transformation are done automatically.
   # mysql_upgrade ${admin_flags}
 
-  if [ -v MYSQL_RUNNING_AS_SLAVE ]; then
+  if [ -v MYSQL_RUNNING_AS_REPLICA ]; then
     log_info 'Initialization finished'
     return 0
   fi
@@ -199,7 +207,7 @@ EOSQL
   export MYSQL_DATADIR_FIRST_INIT=true
 }
 
-# The 'server_id' number for slave needs to be within 1-4294967295 range.
+# The 'server_id' number for replica needs to be within 1-4294967295 range.
 # This function will take the 'hostname' if the container, hash it and turn it
 # into the number.
 # See: https://dev.mysql.com/doc/refman/en/replication-options.html#option_mysqld_server-id
@@ -209,11 +217,11 @@ function server_id() {
   echo -n $((0x${checksum}%4294967295))
 }
 
-function wait_for_mysql_master() {
+function wait_for_mysql_source() {
   while true; do
-    log_info "Waiting for MySQL master (${MYSQL_MASTER_SERVICE_NAME}) to accept connections ..."
-    mysqladmin --host=${MYSQL_MASTER_SERVICE_NAME} --user="${MYSQL_MASTER_USER}" \
-      --password="${MYSQL_MASTER_PASSWORD}" ping &>/dev/null && log_info "MySQL source is ready" && return 0
+    log_info "Waiting for MySQL source (${MYSQL_SOURCE_SERVICE_NAME}) to accept connections ..."
+    mysqladmin --host=${MYSQL_SOURCE_SERVICE_NAME} --user="${MYSQL_SOURCE_USER}" \
+      --password="${MYSQL_SOURCE_PASSWORD}" ping &>/dev/null && log_info "MySQL source is ready" && return 0
     sleep 1
   done
 }

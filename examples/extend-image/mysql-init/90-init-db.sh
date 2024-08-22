@@ -7,6 +7,6 @@ init_arbitrary_database() {
   mysql $mysql_flags ${MYSQL_DATABASE} < ${init_data_file}
 }
 
-if ! [ -v MYSQL_RUNNING_AS_SLAVE ] && $MYSQL_DATADIR_FIRST_INIT ; then
+if ! [ -v MYSQL_RUNNING_AS_REPLICA ] && $MYSQL_DATADIR_FIRST_INIT ; then
   init_arbitrary_database
 fi

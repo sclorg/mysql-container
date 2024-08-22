@@ -12,6 +12,6 @@ mysql $mysql_flags <<EOSQL
 EOSQL
 }
 
-if ! [ -v MYSQL_RUNNING_AS_SLAVE ]; then
+if ! [ -v MYSQL_RUNNING_AS_REPLICA ]; then
   create_arbitrary_users
 fi

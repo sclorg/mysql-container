@@ -247,11 +247,11 @@ Variables that can be used in the scripts provided to s2i:
 `$mysql_flags`
     arguments for the `mysql` tool that will connect to the locally running `mysqld` during initialization
 
-`$MYSQL_RUNNING_AS_MASTER`
-    variable defined when the container is run with `run-mysqld-master` command
+`$MYSQL_RUNNING_AS_SOURCE`
+    variable defined when the container is run with `run-mysqld-source` command
 
-`$MYSQL_RUNNING_AS_SLAVE`
-    variable defined when the container is run with `run-mysqld-slave` command
+`$MYSQL_RUNNING_AS_REPLICA`
+    variable defined when the container is run with `run-mysqld-replica` command
 
 `$MYSQL_DATADIR_FIRST_INIT`
     variable defined when the container was initialized from the empty data dir
@@ -330,14 +330,14 @@ Some applications may wish to use `row` binlog_formats (for example, those built
   with change-data-capture in mind). The default replication/binlog format is
   `statement` but to change it you can set the `MYSQL_BINLOG_FORMAT` environment
   variable. For example `MYSQL_BINLOG_FORMAT=row`. Now when you run the database
-  with `master` replication turned on (ie, set the Docker/container `cmd` to be
-`run-mysqld-master`) the binlog will emit the actual data for the rows that change
+  with `source/replica` replication turned on (ie, set the Docker/container `cmd` to be
+`run-mysqld-source`) the binlog will emit the actual data for the rows that change
 as opposed to the statements (ie, DML like insert...) that caused the change.
 
 
 Changing the authentication plugin
 ----------------------------------
-MySQL 8.4 introduced 'caching_sha2_password' as its default authentication plugin.
+MySQL 8.0 introduced 'caching_sha2_password' as its default authentication plugin.
 It is faster and provides better security then the previous default authentication plugin.
 However, not all software implements this algorithm, and client applications might report
 issue like "The server requested authentication method".

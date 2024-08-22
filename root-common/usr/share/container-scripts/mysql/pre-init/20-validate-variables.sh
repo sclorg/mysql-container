@@ -76,6 +76,6 @@ function validate_variables() {
   fi
 }
 
-if ! [ -v MYSQL_RUNNING_AS_SLAVE ] ; then
+if ! [ -v MYSQL_RUNNING_AS_REPLICA ] ; then
   validate_variables
 fi

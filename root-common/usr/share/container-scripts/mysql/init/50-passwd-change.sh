@@ -30,7 +30,7 @@ EOSQL
   fi
 }
 
-if ! [ -v MYSQL_RUNNING_AS_SLAVE ] ; then
+if ! [ -v MYSQL_RUNNING_AS_REPLICA ] ; then
   password_change
 fi
 

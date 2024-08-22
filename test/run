@@ -154,57 +154,57 @@ function run_change_password_new_user_test() {
 }
 
 function run_replication_test() {
-  local cluster_args="-e MYSQL_MASTER_USER=master -e MYSQL_MASTER_PASSWORD=master -e MYSQL_DATABASE=db"
+  local cluster_args="-e MYSQL_SOURCE_USER=source -e MYSQL_SOURCE_PASSWORD=source -e MYSQL_DATABASE=db"
   local max_attempts=120
 
-  # Run the MySQL master
+  # Run the MySQL source
   docker run $cluster_args -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_ROOT_PASSWORD=root \
     -e MYSQL_INNODB_BUFFER_POOL_SIZE=5M \
-    -d --cidfile ${CID_FILE_DIR}/master.cid $IMAGE_NAME mysqld-master >/dev/null
-  local master_ip
-  master_ip=$(ct_get_cip master.cid)
+    -d --cidfile ${CID_FILE_DIR}/source.cid $IMAGE_NAME run-mysqld-source >/dev/null
+  local source_ip
+  source_ip=$(ct_get_cip source.cid)
 
-  # Run the MySQL slave
-  docker run $cluster_args -e MYSQL_MASTER_SERVICE_NAME=${master_ip} \
+  # Run the MySQL replica
+  docker run $cluster_args -e MYSQL_SOURCE_SERVICE_NAME=${source_ip} \
     -e MYSQL_INNODB_BUFFER_POOL_SIZE=5M \
-    -d --cidfile ${CID_FILE_DIR}/slave.cid $IMAGE_NAME mysqld-slave >/dev/null
-  local slave_ip
-  slave_ip=$(ct_get_cip slave.cid)
+    -d --cidfile ${CID_FILE_DIR}/replica.cid $IMAGE_NAME run-mysqld-replica >/dev/null
+  local replica_ip
+  replica_ip=$(ct_get_cip replica.cid)
 
-  # Now wait till the MASTER will see the SLAVE
+  # Now wait till the SOURCE will see the REPLICA
   local i
   for i in $(seq $max_attempts); do
-    result="$(mysql_cmd "$master_ip" root root -e 'SHOW SLAVE HOSTS;' | grep "$slave_ip" || true)"
+    result="$(mysql_cmd "$source_ip" root root -e 'SHOW REPLICAS;' | grep "$replica_ip" || true)"
     if [[ -n "${result}" ]]; then
-      echo "${slave_ip} successfully registered as SLAVE for ${master_ip}"
+      echo "${replica_ip} successfully registered as REPLICA for ${source_ip}"
       break
     fi
     if [[ "${i}" == "${max_attempts}" ]]; then
-      echo "The ${slave_ip} failed to register in MASTER"
-      echo "Dumping logs for $(ct_get_cid slave.cid)"
-      docker logs $(ct_get_cid slave.cid)
+      echo "The ${replica_ip} failed to register in SOURCE"
+      echo "Dumping logs for $(ct_get_cid replica.cid)"
+      docker logs $(ct_get_cid replica.cid)
       return 1
     fi
     sleep 3
   done
 
   # do some real work to test replication in practice
-  mysql_cmd "$master_ip" root root -e "CREATE TABLE t1 (a INT); INSERT INTO t1 VALUES (24);"
+  mysql_cmd "$source_ip" root root -e "CREATE TABLE t1 (a INT); INSERT INTO t1 VALUES (24);"
 
-  # read value from slave and check whether it is expectd
+  # read value from replica and check whether it is expectd
   for i in $(seq $max_attempts); do
     set +e
-    result="$(mysql_cmd "${slave_ip}" root root -e "select * from t1 \G" | grep -e ^a | grep 24)"
+    result="$(mysql_cmd "${replica_ip}" root root -e "select * from t1 \G" | grep -e ^a | grep 24)"
     set -e
     if [[ ! -z "${result}" ]]; then
-      echo "${slave_ip} successfully got value from MASTER ${master_ip}"
+      echo "${replica_ip} successfully got value from SOURCE ${source_ip}"
       break
     fi
     if [[ "${i}" == "${max_attempts}" ]]; then
-      echo "The ${slave_ip} failed to see value added on MASTER"
-      echo "Dumping logs for $(ct_get_cid slave.cid)"
-      docker logs $(ct_get_cid slave.cid)
+      echo "The ${replica_ip} failed to see value added on SOURCE"
+      echo "Dumping logs for $(ct_get_cid replica.cid)"
+      docker logs $(ct_get_cid replica.cid)
       return 1
     fi
     sleep 3
