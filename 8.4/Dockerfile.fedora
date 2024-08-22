@@ -1,4 +1,4 @@
-FROM quay.io/fedora/s2i-core:40
+FROM quay.io/fedora/s2i-core:41
 
 # MySQL image for OpenShift.
 #
@@ -54,9 +54,9 @@ RUN INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base community-mys
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/mysql \
     MYSQL_PREFIX=/usr
 
-COPY 8.0/root-common /
-COPY 8.0/s2i-common/bin/ $STI_SCRIPTS_PATH
-COPY 8.0/root /
+COPY 8.4/root-common /
+COPY 8.4/s2i-common/bin/ $STI_SCRIPTS_PATH
+COPY 8.4/root /
 
 # Hard links are not supported in Testing Farm approach during sync to guest
 # operation system. Therefore tests are failing on error
