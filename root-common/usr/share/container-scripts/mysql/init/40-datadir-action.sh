@@ -14,15 +14,17 @@ upstream_upgrade_info() {
 
 check_datadir_version() {
   local datadir="$1"
-  local datadir_version=$(get_datadir_version "$datadir")
-  local mysqld_version=$(mysqld_compat_version)
-  local datadir_version_dot=$(number2version "${datadir_version}")
-  local mysqld_version_dot=$(number2version "${mysqld_version}")
+  #local datadir_version=$(get_datadir_version "$datadir")
+  #local mysqld_version=$(mysqld_compat_version)
+  #local datadir_version_dot=$(number2version "${datadir_version}")
+  #local mysqld_version_dot=$(number2version "${mysqld_version}")
 
   for datadir_action in ${MYSQL_DATADIR_ACTION//,/ } ; do
     log_info "Running datadir action: ${datadir_action}"
     case ${datadir_action} in
-      upgrade-auto|upgrade-warn)
+      upgrade-force|upgrade-auto|upgrade-warn)
+	log_warn "mysql_upgrade does nothing since MySQL 8.0.16, see more at https://dev.mysql.com/doc/refman/8.0/en/mysql-upgrade.html"
+	continue
         if [ -z "${datadir_version}" ] || [ "${datadir_version}" -eq 0 ] ; then
           # Writing the info file, since historically it was not written
           log_warn "Version of the data could not be determined."\
@@ -85,9 +87,9 @@ check_datadir_version() {
         fi
         ;;
 
-      upgrade-force)
-        log_and_run mysql_upgrade ${mysql_flags} --force
-        ;;
+      #upgrade-force)
+      #  log_and_run mysql_upgrade ${mysql_flags} --force
+      #  ;;
 
       optimize)
         log_and_run mysqlcheck ${mysql_flags} --optimize --all-databases --force

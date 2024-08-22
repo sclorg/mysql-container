@@ -42,7 +42,7 @@ function export_setting_variables() {
     export MYSQL_INNODB_LOG_FILE_SIZE=${MYSQL_INNODB_LOG_FILE_SIZE:-$((MEMORY_LIMIT_IN_BYTES*15/1024/1024/100))M}
     export MYSQL_INNODB_LOG_BUFFER_SIZE=${MYSQL_INNODB_LOG_BUFFER_SIZE:-$((MEMORY_LIMIT_IN_BYTES*15/1024/1024/100))M}
   fi
-  export MYSQL_DATADIR_ACTION=${MYSQL_DATADIR_ACTION:-upgrade-warn}
+  export MYSQL_DATADIR_ACTION=${MYSQL_DATADIR_ACTION:-}
   export MYSQL_DEFAULT_AUTHENTICATION_PLUGIN=${MYSQL_DEFAULT_AUTHENTICATION_PLUGIN:-caching_sha2_password}
   export MYSQL_AUTHENTICATION_POLICY=${MYSQL_AUTHENTICATION_POLICY:-$MYSQL_DEFAULT_AUTHENTICATION_PLUGIN,,}
 }
@@ -151,10 +151,9 @@ EOSQL
   fi
   admin_flags="--defaults-file=$MYSQL_DEFAULTS_FILE $mysql_flags"
 
-  # Running mysql_upgrade creates the mysql_upgrade_info file in the data dir,
-  # which is necessary to detect which version of the mysqld daemon created the data.
-  # Checking empty file should not take longer than a second and one extra check should not harm.
-  mysql_upgrade ${admin_flags}
+  # Running mysql_upgrade no longer needed, mysql_upgrade is effectively NOOP
+  # and all necessary data files transformation are done automatically.
+  # mysql_upgrade ${admin_flags}
 
   if [ -v MYSQL_RUNNING_AS_SLAVE ]; then
     log_info 'Initialization finished'
@@ -214,7 +213,7 @@ function wait_for_mysql_master() {
   while true; do
     log_info "Waiting for MySQL master (${MYSQL_MASTER_SERVICE_NAME}) to accept connections ..."
     mysqladmin --host=${MYSQL_MASTER_SERVICE_NAME} --user="${MYSQL_MASTER_USER}" \
-      --password="${MYSQL_MASTER_PASSWORD}" ping &>/dev/null && log_info "MySQL master is ready" && return 0
+      --password="${MYSQL_MASTER_PASSWORD}" ping &>/dev/null && log_info "MySQL source is ready" && return 0
     sleep 1
   done
 }
@@ -286,41 +285,41 @@ function mysqld_version() {
 }
 
 # Returns version from the daemon in integer format
-function mysqld_compat_version() {
-  version2number $(mysqld_version)
-}
+#function mysqld_compat_version() {
+#  version2number $(mysqld_version)
+#}
 
 # Returns version from the datadir in the integer format
-function get_datadir_version() {
-  local datadir="$1"
-  local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
-  [ -r "$upgrade_info_file" ] || return
-  local version_text=$(cat "$upgrade_info_file" | head -n 1)
-  version2number "${version_text}"
-}
+#function get_datadir_version() {
+#  local datadir="$1"
+#  local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
+#  [ -r "$upgrade_info_file" ] || return
+#  local version_text=$(cat "$upgrade_info_file" | head -n 1)
+#  version2number "${version_text}"
+#}
 
 # Returns name of the file in the datadir that holds version information about the data
-function get_mysql_upgrade_info_file() {
-  local datadir="$1"
-  echo "$datadir/mysql_upgrade_info"
-}
+#function get_mysql_upgrade_info_file() {
+#  local datadir="$1"
+#  echo "$datadir/mysql_upgrade_info"
+#}
 
 # Writes version string of the daemon into mysql_upgrade_info file
 # (should be only used when the file is missing and only during limited time;
 # once most deployments include this version file, we should leave it on
 # scripts to generate the file right after initialization or when upgrading)
-function write_mysql_upgrade_info_file() {
-  local datadir="$1"
-  local version=$(mysqld_version)
-  local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
-  if [ -f "$datadir/mysql_upgrade_info" ] ; then
-    echo "File ${upgrade_info_file} exists, nothing is done."
-  else
-    log_info "Storing version '${version}' information into the data dir '${upgrade_info_file}'"
-    echo "${version}" > "${upgrade_info_file}"
-    mysqld_version >"$datadir/mysql_upgrade_info"
-  fi
-}
+#function write_mysql_upgrade_info_file() {
+#  local datadir="$1"
+#  local version=$(mysqld_version)
+#  local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
+#  if [ -f "$datadir/mysql_upgrade_info" ] ; then
+#    echo "File ${upgrade_info_file} exists, nothing is done."
+#  else
+#    log_info "Storing version '${version}' information into the data dir '${upgrade_info_file}'"
+#    echo "${version}" > "${upgrade_info_file}"
+#    mysqld_version >"$datadir/mysql_upgrade_info"
+#  fi
+#}
 
 # Checks if mysql server is allowing connection for 'root'@'localhost' without password
 function is_allowing_connection_with_empty_password() {

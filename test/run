@@ -22,7 +22,7 @@ run_replication_test
 run_doc_test
 run_s2i_test
 run_ssl_test
-run_upgrade_test
+run_datadir_actions_test
 "
 
 if [ -e "${IMAGE_NAME:-}" ] ; then
@@ -545,6 +545,7 @@ function get_previous_major_version() {
     5.6) echo "5.5" ;;
     5.7) echo "5.6" ;;
     8.0) echo "5.7" ;;
+    8.4) echo "8.0" ;;
     10.0) echo "5.5" ;;
     10.1) echo "10.0" ;;
     10.2) echo "10.1" ;;
@@ -553,74 +554,19 @@ function get_previous_major_version() {
   esac
 }
 
-function run_upgrade_test() {
+function run_datadir_actions_test() {
   local tmpdir=$(mktemp -d)
   echo "  Testing upgrade of the container image"
   mkdir "${tmpdir}/data" && chmod -R a+rwx "${tmpdir}"
 
-  # Create MySQL container with persistent volume and set the version from too old version
+  # Create MySQL container with persistent volume
   local datadir=${tmpdir}/data
   create_container "testupg1" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z
   test_connection testupg1 user foo
   docker stop $(ct_get_cid testupg1) >/dev/null
 
-  # Simulate datadir without version information
-  rm -f ${datadir}/mysql_upgrade_info
-  echo "  Testing upgrade from data without version"
-  # This should work, but warning should be printed
-  create_container "testupg2" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z
-  test_connection testupg2 user foo
-  docker stop $(ct_get_cid testupg2) >/dev/null
-  # Check whether some information is provided
-  if ! docker logs $(ct_get_cid testupg2) 2>&1 | grep -e 'Version of the data could not be determined' &>/dev/null ; then
-    echo "Information about missing version file is not available in the logs"
-    return 1
-  fi
-  # Check whether upgrade did not happen
-  if docker logs $(ct_get_cid testupg2) 2>&1 | grep -e 'Running mysql_upgrade' &>/dev/null ; then
-    echo "Upgrade should not be run when information about version is missing"
-    return 1
-  fi
-
-  # Create version file that is too old
-  echo "  Testing upgrade from too old data"
-  echo "5.0.12" >${datadir}/mysql_upgrade_info
-  # Create another container with same data and upgrade set to 'upgrade-auto'
-  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto 2>/dev/null
-
-  # Create version file that we can upgrade from
-  echo "  Testing upgrade from previous version"
-  echo "$(get_previous_major_version ${VERSION}).12" >${datadir}/mysql_upgrade_info
-  # Create another container with same data and upgrade set to 'upgrade-aauto'
-  create_container "testupg3" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto
-  test_connection testupg3 user foo
-  docker stop $(ct_get_cid testupg3) >/dev/null
-  # Check whether some upgrade happened
-  if ! docker logs $(ct_get_cid testupg3) 2>&1 | grep -qe 'Running mysql_upgrade' ; then
-    echo "Upgrade did not happen but it should when upgrading from previous version"
-    docker logs $(ct_get_cid testupg3)
-    return 1
-  fi
-
-  # Create version file that we don't need to upgrade from
-  echo "  Testing upgrade from the same version"
-  echo "${VERSION}.12" >${datadir}/mysql_upgrade_info
-  # Create another container with same data and upgrade set to 'upgrade-aauto'
-  create_container "testupg4" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto
-  test_connection testupg4 user foo
-  docker stop $(ct_get_cid testupg4) >/dev/null
-  # Check whether some upgrade happened
-  if docker logs $(ct_get_cid testupg4) 2>&1 | grep -e 'Running mysql_upgrade' &>/dev/null ; then
-    echo "Upgrade happened but it should not when upgrading from current version"
-    return 1
-  fi
-
-  # Create second container with same data and upgrade set to 'analyze'
+  # Create another container with same data and upgrade set to 'analyze'
   echo "  Testing running --analyze"
   create_container "testupg5" -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
     -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=analyze
@@ -644,13 +590,7 @@ function run_upgrade_test() {
     return 1
   fi
 
-  # Create version file that we cannot upgrade from
-  echo "  Testing upgrade from the future version"
-  echo "20.1.12" >${datadir}/mysql_upgrade_info
-  assert_container_creation_fails -e MYSQL_USER=user -e MYSQL_PASSWORD=foo \
-    -e MYSQL_DATABASE=db -v ${datadir}:/var/lib/mysql/data:Z -e MYSQL_DATADIR_ACTION=upgrade-auto 2>/dev/null
-
-  echo "  Upgrade tests succeeded!"
+  echo "  Datadir actions tests succeeded!"
   echo
 }
 
