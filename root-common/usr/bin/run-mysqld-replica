@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This is an entrypoint that runs the MySQL server in the 'slave' mode.
+# This is an entrypoint that runs the MySQL server in the 'replica' mode.
 #
 
 export_vars=$(cgroup-limits); export $export_vars
@@ -14,23 +14,25 @@ export_setting_variables
 
 log_volume_info $MYSQL_DATADIR
 
+export MYSQL_RUNNING_AS_REPLICA=1
+# use previously used value for compatibility
 export MYSQL_RUNNING_AS_SLAVE=1
 
-# Generate the unique 'server-id' for this master
+# Generate the unique 'server-id' for this source
 export MYSQL_SERVER_ID=$(server_id)
-log_info "The 'slave' server-id is ${MYSQL_SERVER_ID}"
+log_info "The 'replica' server-id is ${MYSQL_SERVER_ID}"
 
 # pre-init files
 process_extending_files ${APP_DATA}/mysql-pre-init/ ${CONTAINER_SCRIPTS_PATH}/pre-init/
 
 if [ ! -e "${MYSQL_DATADIR}/mysql" ]; then
-  # Initialize MySQL database and wait for the MySQL master to accept
+  # Initialize MySQL database and wait for the MySQL source to accept
   # connections.
   initialize_database "$@"
-  wait_for_mysql_master
+  wait_for_mysql_source
 
   mysql $mysql_flags <<EOSQL
-CHANGE MASTER TO MASTER_HOST='${MYSQL_MASTER_SERVICE_NAME}',MASTER_USER='${MYSQL_MASTER_USER}', MASTER_PASSWORD='${MYSQL_MASTER_PASSWORD}', MASTER_AUTO_POSITION = 1;
+CHANGE REPLICATION SOURCE TO SOURCE_HOST='${MYSQL_SOURCE_SERVICE_NAME}',SOURCE_USER='${MYSQL_SOURCE_USER}', SOURCE_PASSWORD='${MYSQL_SOURCE_PASSWORD}', SOURCE_AUTO_POSITION = 1;
 EOSQL
 
   # init files
