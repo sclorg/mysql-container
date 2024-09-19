@@ -524,7 +524,7 @@ ssl-cert=\${APP_DATA}/mysql-certs/server-cert-selfsigned.pem
     5*) ssl_mode_opt='--ssl-mode=REQUIRED'
   esac
 
-  if mysql_cmd "$ip" "ssl_test_user" "ssl_test" ${ssl_mode_opt:-} --ssl-ca=${ca_cert_path} -e 'show status like "Ssl_cipher" \G' | grep -q 'Value: [A-Z][A-Z0-9-]*' ; then
+  if mysql_cmd "$ip" "ssl_test_user" "ssl_test" ${ssl_mode_opt:-} --ssl-ca=${ca_cert_path} -e 'show status like "Ssl_cipher" \G' | grep 'Value: [A-Z][A-Z0-9-]*' ; then
     echo "  Success!"
     rm -rf ${test_app_dir}
   else
@@ -583,7 +583,7 @@ function run_datadir_actions_test() {
   test_connection testupg5 user foo
   docker stop $(ct_get_cid testupg5) >/dev/null
   # Check whether analyze happened
-  if ! docker logs $(ct_get_cid testupg5) 2>&1 | grep -qe '--analyze --all-databases' &>/dev/null ; then
+  if ! docker logs $(ct_get_cid testupg5) 2>&1 | grep -e '--analyze --all-databases' &>/dev/null ; then
     echo "Analyze did not happen but it should"
     ct_check_testcase_result 1
     return 1
@@ -596,7 +596,7 @@ function run_datadir_actions_test() {
   test_connection testupg6 user foo
   docker stop $(ct_get_cid testupg6) >/dev/null
   # Check whether optimize happened
-  if ! docker logs $(ct_get_cid testupg6) 2>&1 | grep -qe '--optimize --all-databases' &>/dev/null ; then
+  if ! docker logs $(ct_get_cid testupg6) 2>&1 | grep -e '--optimize --all-databases' &>/dev/null ; then
     echo "Optimize did not happen but it should"
     ct_check_testcase_result 1
     return 1
