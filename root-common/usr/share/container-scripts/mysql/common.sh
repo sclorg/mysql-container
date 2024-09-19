@@ -292,43 +292,6 @@ function mysqld_version() {
   ${MYSQL_PREFIX}/libexec/mysqld -V | awk '{print $3}'
 }
 
-# Returns version from the daemon in integer format
-#function mysqld_compat_version() {
-#  version2number $(mysqld_version)
-#}
-
-# Returns version from the datadir in the integer format
-#function get_datadir_version() {
-#  local datadir="$1"
-#  local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
-#  [ -r "$upgrade_info_file" ] || return
-#  local version_text=$(cat "$upgrade_info_file" | head -n 1)
-#  version2number "${version_text}"
-#}
-
-# Returns name of the file in the datadir that holds version information about the data
-#function get_mysql_upgrade_info_file() {
-#  local datadir="$1"
-#  echo "$datadir/mysql_upgrade_info"
-#}
-
-# Writes version string of the daemon into mysql_upgrade_info file
-# (should be only used when the file is missing and only during limited time;
-# once most deployments include this version file, we should leave it on
-# scripts to generate the file right after initialization or when upgrading)
-#function write_mysql_upgrade_info_file() {
-#  local datadir="$1"
-#  local version=$(mysqld_version)
-#  local upgrade_info_file=$(get_mysql_upgrade_info_file "$datadir")
-#  if [ -f "$datadir/mysql_upgrade_info" ] ; then
-#    echo "File ${upgrade_info_file} exists, nothing is done."
-#  else
-#    log_info "Storing version '${version}' information into the data dir '${upgrade_info_file}'"
-#    echo "${version}" > "${upgrade_info_file}"
-#    mysqld_version >"$datadir/mysql_upgrade_info"
-#  fi
-#}
-
 # Checks if mysql server is allowing connection for 'root'@'localhost' without password
 function is_allowing_connection_with_empty_password() {
   set +e
