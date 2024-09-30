@@ -22,6 +22,14 @@ jobs:
             quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
             image_name: "mysql-80-c9s"
 
+          - dockerfile: "8.4/Dockerfile.c10s"
+            docker_context: "8.4"
+            registry_namespace: "sclorg"
+            tag: "c10s"
+            quayio_username: "QUAY_IMAGE_SCLORG_BUILDER_USERNAME"
+            quayio_token: "QUAY_IMAGE_SCLORG_BUILDER_TOKEN"
+            image_name: "mysql-84-c10s"
+
           - dockerfile: "8.0/Dockerfile.fedora"
             docker_context: "8.0"
             registry_namespace: "fedora"
