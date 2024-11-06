@@ -15,11 +15,18 @@ VERSION = os.getenv("VERSION")
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 OS = os.getenv("TARGET")
 
+TAGS = {
+    "rhel8": "-el8",
+    "rhel9": "-el9"
+}
+TAG = TAGS.get(OS, None)
+
 
 class TestMySQLDeployTemplate:
 
     def setup_method(self):
         self.oc_api = OpenShiftAPI(pod_name_prefix="mysql-testing", version=VERSION)
+        self.oc_api.import_is("imagestreams/mysql-rhel.json", "", skip_check=True)
 
     def teardown_method(self):
         self.oc_api.delete_project()
@@ -38,7 +45,7 @@ class TestMySQLDeployTemplate:
             template=template,
             name_in_template="mysql",
             openshift_args=[
-                f"MYSQL_VERSION={VERSION}",
+                f"MYSQL_VERSION={VERSION}{TAG}",
                 f"DATABASE_SERVICE_NAME={self.oc_api.pod_name_prefix}",
                 f"MYSQL_USER=testu",
                 f"MYSQL_PASSWORD=testp",
