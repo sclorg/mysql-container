@@ -24,10 +24,12 @@ Versions
 --------
 MySQL versions currently provided are:
 * [MySQL 8.0](8.0)
+* [MySQL 8.4](8.4)
 
 RHEL versions currently supported are:
 * RHEL8
 * RHEL9
+* RHEL10
 
 CentOS versions currently supported are:
 * CentOS Stream 9
