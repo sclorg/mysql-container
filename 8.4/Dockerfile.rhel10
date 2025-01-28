@@ -1,4 +1,4 @@
-FROM quay.io/sclorg/s2i-core-c9s:c9s
+FROM ubi10/s2i-core:latest
 
 # MySQL image for OpenShift.
 #
@@ -29,10 +29,10 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,mysql,mysql$MYSQL_SHORT_VERSION,mysql-$MYSQL_SHORT_VERSION" \
       com.redhat.component="$NAME-$MYSQL_SHORT_VERSION-container" \
-      name="sclorg/$NAME-$MYSQL_SHORT_VERSION-c9s" \
+      name="rhel10/$NAME-$MYSQL_SHORT_VERSION" \
       version="1" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
-      usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/sclorg/$NAME-$MYSQL_SHORT_VERSION-c9s:c9s" \
+      usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel10/$NAME-$MYSQL_SHORT_VERSION" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
@@ -40,8 +40,7 @@ EXPOSE 3306
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN yum -y module enable mysql:$MYSQL_VERSION && \
-    INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind-utils groff-base mysql-server" && \
+RUN INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind-utils groff-base mysql-server procps-ng" && \
     dnf install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     dnf -y clean all --enablerepo='*' && \
