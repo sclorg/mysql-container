@@ -47,7 +47,7 @@ RUN INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base community-mys
     dnf install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     dnf -y clean all --enablerepo='*' && \
-    mkdir -p /var/lib/mysql/data && chown -R mysql.0 /var/lib/mysql && \
+    mkdir -p /var/lib/mysql/data && chown -R mysql:root /var/lib/mysql && \
     test "$(id mysql)" = "uid=27(mysql) gid=27(mysql) groups=27(mysql)"
 
 # Get prefix path and path to scripts rather than hard-code them in scripts
