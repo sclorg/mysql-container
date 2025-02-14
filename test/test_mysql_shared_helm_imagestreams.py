@@ -11,7 +11,7 @@ test_dir = Path(os.path.abspath(os.path.dirname(__file__)))
 class TestHelmRHELMySQLImageStreams:
 
     def setup_method(self):
-        package_name = "mysql-imagestreams"
+        package_name = "redhat-mysql-imagestreams"
         path = test_dir
         self.hc_api = HelmChartsAPI(path=path, package_name=package_name, tarball_dir=test_dir)
         self.hc_api.clone_helm_chart_repo(
