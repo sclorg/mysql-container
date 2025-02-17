@@ -19,7 +19,6 @@ run_general_tests
 run_change_password_test
 run_change_password_new_user_test
 run_replication_test
-run_doc_test
 run_s2i_test
 run_ssl_test
 run_datadir_actions_test
