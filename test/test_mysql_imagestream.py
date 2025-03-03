@@ -37,8 +37,10 @@ class TestMySQLImagestreamTemplate:
         ]
     )
     def test_imagestream_template(self, template):
+        if VERSION == "8.4":
+            # It is not shipped yet
+            pytest.skip("Skipping test for 8.4")
         os_name = ''.join(i for i in OS if not i.isdigit())
-        print(os.getcwd())
         assert self.oc_api.deploy_image_stream_template(
             imagestream_file=f"imagestreams/mysql-{os_name}.json",
             template_file=f"examples/{template}",
