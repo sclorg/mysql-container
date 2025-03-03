@@ -25,7 +25,7 @@ TAG = TAGS.get(OS, None)
 class TestMySQLDeployTemplate:
 
     def setup_method(self):
-        self.oc_api = OpenShiftAPI(pod_name_prefix="mysql-testing", version=VERSION)
+        self.oc_api = OpenShiftAPI(pod_name_prefix="mysql-testing", version=VERSION, shared_cluster=True)
         self.oc_api.import_is("imagestreams/mysql-rhel.json", "", skip_check=True)
 
     def teardown_method(self):
