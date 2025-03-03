@@ -24,7 +24,7 @@ TAG = TAGS.get(OS, None)
 class TestMySQLImagestreamTemplate:
 
     def setup_method(self):
-        self.oc_api = OpenShiftAPI(pod_name_prefix="mysql", version=VERSION)
+        self.oc_api = OpenShiftAPI(pod_name_prefix="mysql", version=VERSION, shared_cluster=True)
 
     def teardown_method(self):
         self.oc_api.delete_project()
