@@ -1,5 +1,7 @@
 #!/bin/bash
 
+init_only=false && [ "$1" == "init" ] && init_only=true && shift
+
 export_vars=$(cgroup-limits); export $export_vars
 source ${CONTAINER_SCRIPTS_PATH}/common.sh
 set -eu
@@ -18,6 +20,10 @@ if [ ! -d "$MYSQL_DATADIR/mysql" ]; then
   initialize_database "$@"
 else
   start_local_mysql "$@"
+fi
+
+if $init_only; then
+  exit 0
 fi
 
 # set mysql_flags and admin_flagsadmin_flags properly
