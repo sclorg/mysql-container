@@ -12,7 +12,8 @@ FROM ubi9/s2i-core
 
 ENV MYSQL_VERSION=8.0 \
     APP_DATA=/opt/app-root/src \
-    HOME=/var/lib/mysql
+    HOME=/var/lib/mysql \
+    NAME=mysql
 
 ENV SUMMARY="MySQL 8.0 SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
@@ -25,12 +26,12 @@ LABEL summary="${SUMMARY}" \
       io.k8s.description="${DESCRIPTION}" \
       io.k8s.display-name="MySQL 8.0" \
       io.openshift.expose-services="3306:mysql" \
-      io.openshift.tags="database,mysql,mysql80,mysql-80" \
-      com.redhat.component="mysql-80-container" \
-      name="rhel9/mysql-80" \
+      io.openshift.tags="database,${NAME},${NAME}80,${NAME}-80" \
+      com.redhat.component="${NAME}-80-container" \
+      name="rhel9/${NAME}-80" \
       version="1" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
-      usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel9/mysql-80" \
+      usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel9/${NAME}-80" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
@@ -38,7 +39,7 @@ EXPOSE 3306
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind9.18-utils groff-base mysql-server" && \
+RUN INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind9.18-utils groff-base ${NAME}-server" && \
     yum install -y --setopt=tsflags=nodocs ${INSTALL_PKGS} && \
     rpm -V ${INSTALL_PKGS} && \
     yum -y clean all --enablerepo='*' && \

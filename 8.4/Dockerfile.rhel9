@@ -27,7 +27,7 @@ LABEL summary="${SUMMARY}" \
       io.k8s.description="${DESCRIPTION}" \
       io.k8s.display-name="MySQL ${MYSQL_VERSION}" \
       io.openshift.expose-services="3306:mysql" \
-      io.openshift.tags="database,mysql,mysql${MYSQL_SHORT_VERSION},mysql-${MYSQL_SHORT_VERSION}" \
+      io.openshift.tags="database,${NAME},${NAME}${MYSQL_SHORT_VERSION},${NAME}-${MYSQL_SHORT_VERSION}" \
       com.redhat.component="${NAME}-${MYSQL_SHORT_VERSION}-container" \
       name="rhel9/${NAME}-${MYSQL_SHORT_VERSION}" \
       version="1" \
@@ -40,8 +40,8 @@ EXPOSE 3306
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN yum -y module enable mysql:${MYSQL_VERSION} && \
-    INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind9.18-utils groff-base mysql-server" && \
+RUN yum -y module enable ${NAME}:${MYSQL_VERSION} && \
+    INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind9.18-utils groff-base ${NAME}-server" && \
     dnf install -y --setopt=tsflags=nodocs ${INSTALL_PKGS} && \
     rpm -V ${INSTALL_PKGS} && \
     dnf -y clean all --enablerepo='*' && \
