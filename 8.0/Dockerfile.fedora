@@ -38,10 +38,6 @@ LABEL summary="${SUMMARY}" \
 
 EXPOSE 3306
 
-# On Fedora, we fake missing python binary. In case user installs the python2
-# in the container, this hack will be removed by installing /usr/bin/python from RPM.
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
 # This image must forever use UID 27 for mysql user so our volumes are safe in the future. This should *never* change.
 # Instead of relying on the DB server package, we will do the setup ourselves before any package is installed
 RUN /usr/sbin/groupadd -g 27 -o -r mysql && \
