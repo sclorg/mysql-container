@@ -13,21 +13,21 @@ FROM quay.io/fedora/s2i-core:41
 ENV MYSQL_VERSION=8.4 \
     MYSQL_SHORT_VERSION=84 \
     APP_DATA=/opt/app-root/src \
-    HOME=/var/lib/mysql
+    HOME=/var/lib/mysql \
+    NAME=mysql
 
 ENV SUMMARY="MySQL ${MYSQL_VERSION} SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
 image provides a containerized packaging of the MySQL mysqld daemon and client application. \
 The mysqld server daemon accepts connections from clients and provides access to content from \
-MySQL databases on behalf of the clients." \
-    NAME=mysql
+MySQL databases on behalf of the clients."
 
 LABEL summary="${SUMMARY}" \
       description="${DESCRIPTION}" \
       io.k8s.description="${DESCRIPTION}" \
       io.k8s.display-name="MySQL ${MYSQL_VERSION}" \
       io.openshift.expose-services="3306:mysql" \
-      io.openshift.tags="database,mysql,mysql${MYSQL_SHORT_VERSION}" \
+      io.openshift.tags="database,${NAME},${NAME}${MYSQL_SHORT_VERSION}" \
       com.redhat.component="${NAME}" \
       name="fedora/${NAME}-${MYSQL_SHORT_VERSION}" \
       version="${MYSQL_VERSION}" \
@@ -43,7 +43,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 # This image must forever use UID 27 for mysql user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base community-mysql-server policycoreutils" && \
+RUN INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base community-${NAME}-server policycoreutils" && \
     dnf install -y --setopt=tsflags=nodocs ${INSTALL_PKGS} && \
     rpm -V ${INSTALL_PKGS} && \
     dnf -y clean all --enablerepo='*' && \
