@@ -10,13 +10,15 @@ FROM quay.io/sclorg/s2i-core-c9s:c9s
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
-ENV MYSQL_VERSION=8.4 \
-    MYSQL_SHORT_VERSION=84 \
+# Standalone ENV call so this value can be re-used in the other ENVs
+ENV MYSQL_VERSION=8.4
+
+ENV MYSQL_SHORT_VERSION=${MYSQL_VERSION//./} \
     APP_DATA=/opt/app-root/src \
     HOME=/var/lib/mysql \
     NAME=mysql
 
-ENV SUMMARY="MySQL 8.4 SQL database server" \
+ENV SUMMARY="MySQL ${MYSQL_VERSION} SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
 image provides a containerized packaging of the MySQL mysqld daemon and client application. \
 The mysqld server daemon accepts connections from clients and provides access to content from \
@@ -52,9 +54,9 @@ RUN yum -y module enable ${NAME}:${MYSQL_VERSION} && \
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/mysql \
     MYSQL_PREFIX=/usr
 
-COPY 8.4/root-common /
-COPY 8.4/s2i-common/bin/ ${STI_SCRIPTS_PATH}
-COPY 8.4/root /
+COPY ${MYSQL_VERSION}/root-common /
+COPY ${MYSQL_VERSION}/s2i-common/bin/ ${STI_SCRIPTS_PATH}
+COPY ${MYSQL_VERSION}/root /
 
 # Hard links are not supported in Testing Farm approach during sync to guest
 # operation system. Therefore tests are failing on error

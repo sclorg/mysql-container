@@ -10,7 +10,10 @@ FROM quay.io/fedora/s2i-core:38
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
-ENV MYSQL_VERSION=8.0 \
+# Standalone ENV call so this value can be re-used in the other ENVs
+ENV MYSQL_VERSION=8.0
+
+ENV MYSQL_SHORT_VERSION=${MYSQL_VERSION//./} \
     APP_DATA=/opt/app-root/src \
     HOME=/var/lib/mysql \
     NAME=mysql
@@ -26,11 +29,11 @@ LABEL summary="${SUMMARY}" \
       io.k8s.description="${DESCRIPTION}" \
       io.k8s.display-name="MySQL ${MYSQL_VERSION}" \
       io.openshift.expose-services="3306:mysql" \
-      io.openshift.tags="database,${NAME},${NAME}80,rh-${NAME}80" \
+      io.openshift.tags="database,${NAME},${NAME}${MYSQL_SHORT_VERSION},rh-${NAME}${MYSQL_SHORT_VERSION}" \
       com.redhat.component="${NAME}" \
-      name="fedora/${NAME}-80" \
+      name="fedora/${NAME}-${MYSQL_SHORT_VERSION}" \
       version="${MYSQL_VERSION}" \
-      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/fedora/${NAME}-80" \
+      usage="docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/fedora/${NAME}-${MYSQL_SHORT_VERSION}" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
@@ -53,9 +56,9 @@ RUN INSTALL_PKGS="rsync tar gettext hostname bind-utils groff-base community-${N
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/mysql \
     MYSQL_PREFIX=/usr
 
-COPY 8.0/root-common /
-COPY 8.0/s2i-common/bin/ ${STI_SCRIPTS_PATH}
-COPY 8.0/root /
+COPY ${MYSQL_VERSION}/root-common /
+COPY ${MYSQL_VERSION}/s2i-common/bin/ ${STI_SCRIPTS_PATH}
+COPY ${MYSQL_VERSION}/root /
 
 # Hard links are not supported in Testing Farm approach during sync to guest
 # operation system. Therefore tests are failing on error
