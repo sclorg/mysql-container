@@ -135,6 +135,8 @@ function test_mysql_imagestream() {
   tag="-el8"
   if [ "${OS}" == "rhel9" ]; then
     tag="-el9"
+  elif [ "${OS}" == "rhel10" ]; then
+    tag="-el10"
   fi
   TEMPLATES="mysql-ephemeral-template.json
   mysql-persistent-template.json"

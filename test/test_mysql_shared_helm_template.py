@@ -5,17 +5,15 @@ from pathlib import Path
 
 from container_ci_suite.helm import HelmChartsAPI
 
+from constants import TAGS
 test_dir = Path(os.path.abspath(os.path.dirname(__file__)))
 
 VERSION = os.getenv("VERSION")
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 OS = os.getenv("TARGET")
 
-TAGS = {
-    "rhel8": "-el8",
-    "rhel9": "-el9"
-}
-TAG = TAGS.get(OS, None)
+
+TAG = TAGS.get(OS)
 
 class TestHelmMySQLDBPersistent:
 
@@ -32,9 +30,6 @@ class TestHelmMySQLDBPersistent:
         self.hc_api.delete_project()
 
     def test_package_persistent(self):
-        if VERSION == "8.4":
-            # It is not shipped yet
-            pytest.skip("Skipping test for 8.4")
         self.hc_api.package_name = "redhat-mysql-imagestreams"
         assert self.hc_api.helm_package()
         assert self.hc_api.helm_installation()
