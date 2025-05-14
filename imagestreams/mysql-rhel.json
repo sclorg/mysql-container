@@ -46,6 +46,42 @@
         }
       },
       {
+        "name": "8.4-el9",
+        "annotations": {
+          "openshift.io/display-name": "MySQL 8.4 (RHEL 9)",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a MySQL 8.4 database on RHEL 9. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/mysql-container/blob/master/8.4/README.md.",
+          "iconClass": "icon-mysql",
+          "tags": "database,mysql",
+          "version": "8.4"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "registry.redhat.io/rhel9/mysql-84:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
+        "name": "8.4-el10",
+        "annotations": {
+          "openshift.io/display-name": "MySQL 8.4 (RHEL 10)",
+          "openshift.io/provider-display-name": "Red Hat, Inc.",
+          "description": "Provides a MySQL 8.4 database on RHEL 10. For more information about using this database image, including OpenShift considerations, see https://github.com/sclorg/mysql-container/blob/master/8.4/README.md.",
+          "iconClass": "icon-mysql",
+          "tags": "database,mysql",
+          "version": "8.4"
+        },
+        "from": {
+          "kind": "DockerImage",
+          "name": "registry.redhat.io/rhel10/mysql-84:latest"
+        },
+        "referencePolicy": {
+          "type": "Local"
+        }
+      },
+      {
         "name": "latest",
         "annotations": {
           "openshift.io/display-name": "MySQL 8.0 (Latest)",

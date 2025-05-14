@@ -9,25 +9,34 @@
     https://github.com/sclorg/mysql-container/blob/master/APP_VERSION/README.md.
   imagestream_files:
   - filename: mysql-centos.json
-    latest: "8.0-el9"
+    latest: "8.4-el9"
     distros:
       - name: CentOS Stream 9
-        app_versions: ["8.0"]
+        app_versions: ["8.0", "8.4" ]
+
+      - name: CentOS Stream 10
+        app_versions: ["8.4"]
 
   - filename: mysql-rhel.json
-    latest: "8.0-el9"
+    latest: "8.4-el9"
     distros:
       - name: RHEL 8
         app_versions: ["8.0"]
 
       - name: RHEL 9
-        app_versions: ["8.0"]
+        app_versions: ["8.0", "8.4"]
+
+      - name: RHEL 10
+        app_versions: ["8.4"]
 
   - filename: mysql-rhel-aarch64.json
-    latest: "8.0-el9"
+    latest: "8.4-el9"
     distros:
       - name: RHEL 8
         app_versions: ["8.0"]
 
       - name: RHEL 9
-        app_versions: ["8.0"]
+        app_versions: ["8.0", "8.4"]
+
+      - name: RHEL 10
+        app_versions: ["8.4"]
