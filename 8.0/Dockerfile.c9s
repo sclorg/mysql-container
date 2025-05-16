@@ -10,10 +10,8 @@ FROM quay.io/sclorg/s2i-core-c9s:c9s
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
-# Standalone ENV call so this value can be re-used in the other ENVs
-ENV MYSQL_VERSION=8.0
-
-ENV MYSQL_SHORT_VERSION=${MYSQL_VERSION//./} \
+ENV MYSQL_VERSION=8.0 \
+    MYSQL_SHORT_VERSION=80 \
     APP_DATA=/opt/app-root/src \
     HOME=/var/lib/mysql \
     NAME=mysql
