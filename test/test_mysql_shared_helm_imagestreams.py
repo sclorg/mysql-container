@@ -25,6 +25,8 @@ class TestHelmRHELMySQLImageStreams:
     @pytest.mark.parametrize(
         "version,registry",
         [
+            ("8.4-el10", "registry.redhat.io/rhel10/mysql-84:latest"),
+            ("8.4-el9", "registry.redhat.io/rhel9/mysql-84:latest"),
             ("8.0-el9", "registry.redhat.io/rhel9/mysql-80:latest"),
             ("8.0-el8", "registry.redhat.io/rhel8/mysql-80:latest"),
         ],
