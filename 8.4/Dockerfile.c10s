@@ -10,13 +10,14 @@ FROM quay.io/sclorg/s2i-core-c10s:c10s
 #  * $MYSQL_DATABASE - Name of the database to create
 #  * $MYSQL_ROOT_PASSWORD (Optional) - Password for the 'root' MySQL account
 
+# Standalone ENV call so these values can be re-used in the other ENV calls
 ENV MYSQL_VERSION=8.4 \
-    MYSQL_SHORT_VERSION=84 \
-    APP_DATA=/opt/app-root/src \
-    HOME=/var/lib/mysql \
-    NAME=mysql
+    MYSQL_SHORT_VERSION=84
 
-ENV SUMMARY="MySQL ${MYSQL_VERSION} SQL database server" \
+ENV APP_DATA=/opt/app-root/src \
+    HOME=/var/lib/mysql \
+    NAME=mysql \
+    SUMMARY="MySQL ${MYSQL_VERSION} SQL database server" \
     DESCRIPTION="MySQL is a multi-user, multi-threaded SQL database server. The container \
 image provides a containerized packaging of the MySQL mysqld daemon and client application. \
 The mysqld server daemon accepts connections from clients and provides access to content from \
