@@ -116,7 +116,9 @@ function test_mysql_integration() {
   local service_name=mysql
   TEMPLATES="mysql-ephemeral-template.json
   mysql-persistent-template.json"
-  namespace_image="${OS}/mysql-80"
+  # MySQL-80 exists only for RHEL8 and MySQL-84 exists only for RHEL9 and RHEL10
+  # Let's use this for testing connectivity
+  namespace_image="${OS}/mysql-84"
   for template in $TEMPLATES; do
     ct_os_test_template_app_func "${IMAGE_NAME}" \
                                  "${THISDIR}/${template}" \
@@ -141,7 +143,7 @@ function test_mysql_imagestream() {
   TEMPLATES="mysql-ephemeral-template.json
   mysql-persistent-template.json"
   for template in $TEMPLATES; do
-    ct_os_test_image_stream_template "${THISDIR}/imagestreams/mysql-${OS%[0-9]*}.json" "${THISDIR}/examples/${template}" mysql "-p MYSQL_VERSION=${VERSION}${tag}"
+    ct_os_test_image_stream_template "${THISDIR}/imagestreams/mysql-${OS//[0-9]/}.json" "${THISDIR}/examples/${template}" mysql "-p MYSQL_VERSION=${VERSION}${tag}"
   done
 }
 
