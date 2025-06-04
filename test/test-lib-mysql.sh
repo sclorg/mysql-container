@@ -118,7 +118,11 @@ function test_mysql_integration() {
   mysql-persistent-template.json"
   # MySQL-80 exists only for RHEL8 and MySQL-84 exists only for RHEL9 and RHEL10
   # Let's use this for testing connectivity
-  namespace_image="${OS}/mysql-84"
+  if [[ "${OS}" == "rhel8" ]]; then
+    namespace_image="rhel8/mysql-80"
+  else
+    namespace_image="rhel9/mysql-84"
+  fi
   for template in $TEMPLATES; do
     ct_os_test_template_app_func "${IMAGE_NAME}" \
                                  "${THISDIR}/${template}" \
