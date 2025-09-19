@@ -2,7 +2,7 @@ MySQL 8.4 SQL Database Server container image
 =============================================
 
 This container image includes MySQL 8.4 SQL database server for OpenShift and general usage.
-Users can choose between RHEL, CentOS and Fedora based images.
+Users can choose between RHEL, CentOS Stream and Fedora based images.
 The RHEL images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/),
 the CentOS Stream images are available on [Quay.io/sclorg](https://quay.io/organization/sclorg),
 and the Fedora images are available in [Fedora Registry](https://quay.io/organization/fedora).

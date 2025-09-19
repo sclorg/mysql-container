@@ -31,7 +31,7 @@ RHEL versions currently supported are:
 * RHEL9
 * RHEL10
 
-CentOS versions currently supported are:
+CentOS Stream versions currently supported are:
 * CentOS Stream 9
 * CentOS Stream 10
 
@@ -102,7 +102,7 @@ Test
 This repository also provides a test framework, which checks basic functionality
 of the MySQL image.
 
-Users can choose between testing MySQL based on a RHEL or CentOS image.
+Users can choose between testing MySQL based on a RHEL or CentOS Stream image.
 
 *  **RHEL based image**
 
