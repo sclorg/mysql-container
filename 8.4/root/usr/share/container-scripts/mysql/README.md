@@ -24,12 +24,12 @@ Usage
 -----
 
 For this, we will assume that you are using the MySQL 8.4 container image from the
-Red Hat Container Catalog called `rhel8/mysql-84`.
+Red Hat Container Catalog called `rhel9/mysql-84`.
 If you want to set only the mandatory environment variables and not store
 the database in a host directory, execute the following command:
 
 ```
-$ podman run -d --name mysql_database -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel8/mysql-84
+$ podman run -d --name mysql_database -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 rhel10/mysql-84
 ```
 
 This will create a container named `mysql_database` running MySQL with database
@@ -201,16 +201,16 @@ Extending image
 ---------------
 This image can be extended in Openshift using the `Source` build strategy or via the standalone
 [source-to-image](https://docs.openshift.com/container-platform/4.14/openshift_images/create-images.html#images-create-s2i_create-images) application (where available).
-For this, we will assume that you are using the `rhel8/mysql-84` image,
+For this, we will assume that you are using the `rhel10/mysql-84` image,
 available via `mysql:8.4` imagestream tag in Openshift.
 
 
-For example, to build a customized MySQL database image `my-mysql-rhel8`
+For example, to build a customized MySQL database image `my-mysql-rhel10`
 with a configuration from `https://github.com/sclorg/mysql-container/tree/master/examples/extend-image` run:
 
 ```
 $ oc new-app mysql:8.4~https://github.com/sclorg/mysql-container.git \
-	--name my-mysql-rhel8 \
+	--name my-mysql-rhel10 \
 	--context-dir=examples/extend-image \
 	--env MYSQL_OPERATIONS_USER=opuser \
 	--env MYSQL_OPERATIONS_PASSWORD=oppass \
@@ -222,7 +222,7 @@ $ oc new-app mysql:8.4~https://github.com/sclorg/mysql-container.git \
 or via s2i:
 
 ```
-$ s2i build --context-dir=examples/extend-image https://github.com/sclorg/mysql-container.git rhel8/mysql-84 my-mysql-rhel8
+$ s2i build --context-dir=examples/extend-image https://github.com/sclorg/mysql-container.git rhel10/mysql-84 my-mysql-rhel10
 ```
 
 The directory passed to Openshift can contain these directories:

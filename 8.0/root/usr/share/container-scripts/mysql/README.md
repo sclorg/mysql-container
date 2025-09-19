@@ -201,16 +201,16 @@ Extending image
 ---------------
 This image can be extended in Openshift using the `Source` build strategy or via the standalone
 [source-to-image](https://docs.openshift.com/container-platform/4.14/openshift_images/create-images.html#images-create-s2i_create-images) application (where available).
-For this, we will assume that you are using the `rhel8/mysql-80` image,
+For this, we will assume that you are using the `rhel9/mysql-80` image,
 available via `mysql:8.0` imagestream tag in Openshift.
 
 
-For example, to build a customized MySQL database image `my-mysql-rhel8`
+For example, to build a customized MySQL database image `my-mysql-rhel9`
 with a configuration from `https://github.com/sclorg/mysql-container/tree/master/examples/extend-image` run:
 
 ```
 $ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git \
-	--name my-mysql-rhel8 \
+	--name my-mysql-rhel9 \
 	--context-dir=examples/extend-image \
 	--env MYSQL_OPERATIONS_USER=opuser \
 	--env MYSQL_OPERATIONS_PASSWORD=oppass \
@@ -222,7 +222,7 @@ $ oc new-app mysql:8.0~https://github.com/sclorg/mysql-container.git \
 or via s2i:
 
 ```
-$ s2i build --context-dir=examples/extend-image https://github.com/sclorg/mysql-container.git rhel8/mysql-80 my-mysql-rhel8
+$ s2i build --context-dir=examples/extend-image https://github.com/sclorg/mysql-container.git rhel9/mysql-80 my-mysql-rhel9
 ```
 
 The directory passed to Openshift can contain these directories:
