@@ -2,27 +2,7 @@
 
 source ${CONTAINER_SCRIPTS_PATH}/common.sh
 
-# This function returns all config files that daemon uses and their path
-# includes /opt. It is used to get correct path to the config file.
-mysql_get_config_files_scl() {
-    scl enable ${ENABLED_COLLECTIONS} -- my_print_defaults --help --verbose | \
-        grep --after=1 '^Default options' | \
-        tail -n 1 | \
-        grep -o '[^ ]*opt[^ ]*my.cnf'
-}
-
-# This function picks the main config file that deamon uses and we ship in rpm
-mysql_get_correct_config() {
-    # we use the same config in non-SCL packages, not necessary to guess
-    [ -z "${ENABLED_COLLECTIONS}" ] && echo -n "/etc/my.cnf" && return
-
-    # from all config files read by daemon, pick the first that exists
-    for f in `mysql_get_config_files_scl` ; do
-        [ -f "$f" ] && echo "$f"
-    done | head -n 1
-}
-
-export MYSQL_CONFIG_FILE=$(mysql_get_correct_config)
+export MYSQL_CONFIG_FILE="/etc/my.cnf"
 
 [ -z "$MYSQL_CONFIG_FILE" ] && echo "MYSQL_CONFIG_FILE is empty" && exit 1
 
