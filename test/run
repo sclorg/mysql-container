@@ -297,7 +297,7 @@ function test_config_option() {
   local option_value="$4"
 
   if ! echo "$configuration" | grep -qx "$option_name[[:space:]]*=[[:space:]]*\('\?\)$option_value\('\?\)"; then
-    local configs="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; echo /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/* | paste -s')"
+    local configs="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; echo /etc/my.cnf /etc/my.cnf.d/* | paste -s')"
     echo >&2 "FAIL: option '$option_name' should have value '$option_value', but it wasn't found in any of the configuration files ($configs):"
     echo >&2
     echo >&2 "$configuration"
@@ -342,7 +342,7 @@ function run_configuration_tests() {
   # - we should look for an option in the desired config, not in all of them
   # - we should respect section of the config (now we have duplicated options from a different sections)
   local configuration
-  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
   test_config_option "$container_name" "$configuration" lower_case_table_names 1
   test_config_option "$container_name" "$configuration" general_log 1
@@ -376,7 +376,7 @@ function run_configuration_tests() {
 
   test_connection "$container_name" config_test_user config_test
 
-  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
   test_config_option "$container_name" "$configuration" key_buffer_size 51M
   test_config_option "$container_name" "$configuration" read_buffer_size 25M
@@ -454,7 +454,7 @@ _s2i_test_image() {
 
   test_connection "$container_name" operations_user operations_pass
 
-  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/* /opt/rh/mysql*/root/etc/my.cnf /opt/rh/mysql*/root/etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
+  configuration="$(docker exec "$(ct_get_cid $container_name)" bash -c 'set +f; shopt -s nullglob; grep -Ehv "^(#|\!|\[|$)" /etc/my.cnf /etc/my.cnf.d/*' | sed 's,\(^[[:space:]]\+\|[[:space:]]\+$\),,' | sort -u)"
 
   docker stop "$(ct_get_cid $container_name)" >/dev/null
 }
@@ -550,15 +550,8 @@ function run_general_tests() {
 
 function get_previous_major_version() {
   case "${1}" in
-    5.5) echo "5.1" ;;
-    5.6) echo "5.5" ;;
-    5.7) echo "5.6" ;;
     8.0) echo "5.7" ;;
     8.4) echo "8.0" ;;
-    10.0) echo "5.5" ;;
-    10.1) echo "10.0" ;;
-    10.2) echo "10.1" ;;
-    10.3) echo "10.2" ;;
     *) echo "Non expected version '${1}'" ; return 1 ;;
   esac
 }
