@@ -552,10 +552,6 @@ function get_previous_major_version() {
   case "${1}" in
     8.0) echo "5.7" ;;
     8.4) echo "8.0" ;;
-    10.0) echo "5.5" ;;
-    10.1) echo "10.0" ;;
-    10.2) echo "10.1" ;;
-    10.3) echo "10.2" ;;
     *) echo "Non expected version '${1}'" ; return 1 ;;
   esac
 }

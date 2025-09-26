@@ -42,7 +42,7 @@ Choose either the CentOS Stream or RHEL based image:
 
 *  **RHEL10 based image**
 
-    These images are available in the [Red Hat Container Catalog](https://access.redhat.com/containers/#/registry.access.redhat.com/rhel8/mysql-80).
+    These images are available in the [Red Hat Container Catalog](https://catalog.redhat.com/en/search?searchType=containers).
     To download it run:
 
     ```
