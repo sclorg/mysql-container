@@ -42,7 +42,7 @@ EXPOSE 3306
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
 RUN yum -y module enable ${NAME}:${MYSQL_VERSION} && \
-    INSTALL_PKGS="policycoreutils rsync tar gettext hostname bind-utils groff-base ${NAME}-server" && \
+    INSTALL_PKGS="policycoreutils rsync tar gettext hostname groff-base ${NAME}-server" && \
     dnf install -y --setopt=tsflags=nodocs ${INSTALL_PKGS} && \
     rpm -V ${INSTALL_PKGS} && \
     dnf -y clean all --enablerepo='*' && \
