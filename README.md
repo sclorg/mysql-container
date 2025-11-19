@@ -3,11 +3,6 @@ MySQL SQL Database Server Container Image
 
 [![Build and push images to Quay.io registry](https://github.com/sclorg/mysql-container/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/sclorg/mysql-container/actions/workflows/build-and-push.yml)
 
-Images available on Quay are:
-* CentOS Stream 9 [mysql-80](https://quay.io/repository/sclorg/mysql-80-c9s)
-* CentOS Stream 10 [mysql-84](https://quay.io/repository/sclorg/mysql-84-c9s)
-* Fedora [mysql-80](https://quay.io/repository/fedora/mysql-80)
-
 This repository contains Dockerfiles for MySQL images for OpenShift and general usage.
 Users can choose between RHEL, Fedora and CentOS Stream based images.
 
@@ -22,18 +17,17 @@ For more information about concepts used in these container images, see the
 
 Versions
 --------
-MySQL versions currently provided are:
-* [MySQL 8.0](8.0)
-* [MySQL 8.4](8.4)
-
-RHEL versions currently supported are:
-* RHEL8
-* RHEL9
-* RHEL10
-
-CentOS Stream versions currently supported are:
-* CentOS Stream 9
-* CentOS Stream 10
+Currently supported versions are visible in the following table, expand an entry to see its container registry address.
+<!--
+Table start
+-->
+||CentOS Stream 9|CentOS Stream 10|Fedora|RHEL 8|RHEL 9|RHEL 10|
+|:--|:--:|:--:|:--:|:--:|:--:|:--:|
+|8.0|<details><summary>✓</summary>`quay.io/sclorg/mysql-80-c9s`</details>||<details><summary>✓</summary>`quay.io/fedora/mysql-80`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel8/mysql-80`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/mysql-80`</details>||
+|8.4|<details><summary>✓</summary>`quay.io/sclorg/mysql-84-c9s`</details>|<details><summary>✓</summary>`quay.io/sclorg/mysql-84-c10s`</details>|<details><summary>✓</summary>`quay.io/fedora/mysql-84`</details>||<details><summary>✓</summary>`registry.redhat.io/rhel9/mysql-84`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel10/mysql-84`</details>|
+<!--
+Table end
+-->
 
 
 Installation
