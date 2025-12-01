@@ -32,16 +32,17 @@ class TestMySqlGeneralContainer:
                 "ssl-cert=${APP_DATA}/mysql-certs/server-cert-selfsigned.pem",
             ]
             f.write("\n".join(lines))
-        server_key_pem = f"{ssl_dir}/server-key.pem"
-        server_req_pem = f"{ssl_dir}/server-req.pem"
-        server_cert_selfsigned_pem = f"{ssl_dir}/server-cert-selfsigned.pem"
+        srv_key_pem = f"{ssl_dir}/server-key.pem"
+        srv_req_pem = f"{ssl_dir}/server-req.pem"
+        srv_self_pem = f"{ssl_dir}/server-cert-selfsigned.pem"
+        openssl_cmd = "openssl req -newkey rsa:2048 -nodes"
+        openssl_cmd_new = "openssl req -new -x509 -nodes"
+        subj = "/C=GB/ST=Berkshire/L=Newbury/O=My Server Company"
         ContainerTestLibUtils.run_command(
-            cmd=f"openssl req -newkey rsa:2048 -nodes -keyout {server_key_pem} -subj "
-            + f"/C=GB/ST=Berkshire/L=Newbury/O=My Server Company' > {server_req_pem}"
+            cmd=f"{openssl_cmd} -keyout {srv_key_pem} -subj '{subj}' > {srv_req_pem}"
         )
         ContainerTestLibUtils.run_command(
-            cmd=f"openssl req -new -x509 -nodes -key {server_key_pem} -batch > "
-            + f"{server_cert_selfsigned_pem}"
+            cmd=f"{openssl_cmd_new} -key {srv_key_pem} -batch > {srv_self_pem}"
         )
         assert ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
@@ -74,7 +75,7 @@ class TestMySqlGeneralContainer:
 
         mysql_cmd = (
             f"mysql --host {cip} -u{username} -p{password} --ssl-ca={ca_cert_path}"
-            + "-e 'show status like \"Ssl_cipher\" \\G' db"
+            + " -e 'show status like \"Ssl_cipher\" \\G' db"
         )
         ssl_output = PodmanCLIWrapper.podman_run_command(
             cmd=f"--rm -v {ssl_dir}:/opt/app-root/src/:z {VARS.IMAGE_NAME} {mysql_cmd}",
