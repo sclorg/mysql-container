@@ -1,7 +1,8 @@
 import tempfile
 
-from container_ci_suite.container_lib import ContainerTestLib, DatabaseWrapper
+from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.container_lib import ContainerTestLibUtils
+from container_ci_suite.engines.database import DatabaseWrapper
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 
 from conftest import VARS
@@ -13,14 +14,23 @@ class TestMySqlPasswordContainer:
     """
 
     def setup_method(self):
+        """
+        Setup the test environment.
+        """
         self.pwd_change = ContainerTestLib(image_name=VARS.IMAGE_NAME)
         self.pwd_change.set_new_db_type(db_type="mysql")
+        self.dw_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME)
 
     def teardown_method(self):
+        """
+        Teardown the test environment.
+        """
         self.pwd_change.cleanup()
 
     def test_password_change(self):
-        """ """
+        """
+        Test password change.
+        """
         cid_file_name1 = "test_password_change"
         pwd_dir = tempfile.mkdtemp(prefix="/tmp/mysql-pwd")
         username = "user"
@@ -63,20 +73,21 @@ class TestMySqlPasswordContainer:
         assert self.pwd_change.test_db_connection(
             container_ip=cip2, username=username, password=new_password
         )
-        podman_cmd = (
-            f"--rm {VARS.IMAGE_NAME} mysql --host {cip2} -u{username} -p{password}"
-        )
-        output = PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e 'SELECT 1;' db",
+        output = self.dw_api.run_sql_command(
+            container_ip=cip2,
+            username=username,
+            password=password,
+            container_id=VARS.IMAGE_NAME,
             ignore_error=True,
         )
-        print(output)
         assert f"Access denied for user '{username}'@" in output, (
             f"The old password {password} should not work, but it does"
         )
 
     def test_password_change_new_user_test(self):
-        """ """
+        """
+        Test password change for new user.
+        """
         cid_file_name = "test_password_change1"
         pwd_dir = tempfile.mkdtemp(prefix="/tmp/mysql-pwd")
         username1 = "user"
@@ -126,11 +137,11 @@ class TestMySqlPasswordContainer:
             container_id=cid2,
         )
         assert "User user2 does not exist in database" in mysql_logs
-        podman_cmd = (
-            f"--rm {VARS.IMAGE_NAME} mysql --host {cip2} -u{username1} -p{password2}"
-        )
-        output = PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e 'SELECT 1;' db",
+        output = self.dw_api.run_sql_command(
+            container_ip=cip2,
+            username=username1,
+            password=password2,
+            container_id=VARS.IMAGE_NAME,
             ignore_error=True,
         )
         assert f"Access denied for user '{username1}'@" in output, (

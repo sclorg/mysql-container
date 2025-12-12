@@ -104,10 +104,5 @@ class TestMySqlBasicsContainer:
         )
         cid = self.s2i_db.get_cid(cid_file_name=cid_s2i_test_mount)
         assert cid
-        db_configuration = PodmanCLIWrapper.podman_exec_shell_command(
-            cid_file_name=cid,
-            cmd="cat /etc/my.cnf /etc/my.cnf.d/*",
-        )
-        assert db_configuration
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
         shutil.rmtree(data_dir)

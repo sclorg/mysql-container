@@ -4,6 +4,7 @@ import tempfile
 
 from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.container_lib import ContainerTestLibUtils
+from container_ci_suite.engines.database import DatabaseWrapper
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 
 from conftest import VARS
@@ -15,11 +16,12 @@ class TestMySqlGeneralContainer:
     """
 
     def setup_method(self):
-        self.s2i_db = ContainerTestLib(image_name=VARS.IMAGE_NAME)
-        self.s2i_db.set_new_db_type(db_type="mysql")
+        self.db_image = ContainerTestLib(image_name=VARS.IMAGE_NAME)
+        self.db_image.set_new_db_type(db_type="mysql")
+        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME)
 
     def teardown_method(self):
-        self.s2i_db.cleanup()
+        self.db_image.cleanup()
 
     @pytest.mark.parametrize(
         "docker_args, username, password, root_password",
@@ -38,7 +40,7 @@ class TestMySqlGeneralContainer:
             f"-e MYSQL_ROOT_PASSWORD={root_password}" if root_password else ""
         )
         cid_file_name = f"test_{username}_{password}_{root_password}"
-        assert self.s2i_db.create_container(
+        assert self.db_image.create_container(
             cid_file_name=cid_file_name,
             container_args=[
                 f"-e MYSQL_USER={username}",
@@ -49,83 +51,96 @@ class TestMySqlGeneralContainer:
             ],
             command="run-mysqld --innodb_buffer_pool_size=5242880",
         )
-        cip = self.s2i_db.get_cip(cid_file_name=cid_file_name)
+        cip = self.db_image.get_cip(cid_file_name=cid_file_name)
         assert cip
-        assert self.s2i_db.test_db_connection(
+        assert self.db_image.test_db_connection(
             container_ip=cip, username=username, password=password
         )
-        cid = self.s2i_db.get_cid(cid_file_name=cid_file_name)
+        cid = self.db_image.get_cid(cid_file_name=cid_file_name)
         output = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
             cmd="mysql --version",
         )
         assert VARS.VERSION in output
-        self.s2i_db.db_lib.assert_login_access(
+        self.db_image.db_lib.assert_login_access(
             container_ip=cip,
             username=username,
             password=password,
             expected_success=True,
         )
-        self.s2i_db.db_lib.assert_login_access(
+        self.db_image.db_lib.assert_login_access(
             container_ip=cip,
             username=username,
             password=f"{password}_foo",
             expected_success=False,
         )
         if root_password:
-            self.s2i_db.db_lib.assert_login_access(
+            self.db_image.db_lib.assert_login_access(
                 container_ip=cip,
                 username="root",
                 password=root_password,
                 expected_success=True,
             )
-            self.s2i_db.db_lib.assert_login_access(
+            self.db_image.db_lib.assert_login_access(
                 container_ip=cip,
                 username="root",
                 password=f"{root_password}_foo",
                 expected_success=False,
             )
         else:
-            self.s2i_db.db_lib.assert_login_access(
+            self.db_image.db_lib.assert_login_access(
                 container_ip=cip,
                 username="root",
                 password="foo",
                 expected_success=False,
             )
-            self.s2i_db.db_lib.assert_login_access(
+            self.db_image.db_lib.assert_login_access(
                 container_ip=cip,
                 username="root",
                 password="",
                 expected_success=False,
             )
-        output = self.s2i_db.db_lib.assert_local_access(container_id=cid)
-        assert output
-        podman_cmd = (
-            f"--rm {VARS.IMAGE_NAME} mysql --host {cip} -u{username} -p{password}"
+        assert self.db_image.db_lib.assert_local_access(container_id=cid)
+        self.db_api.run_sql_command(
+            container_ip=cip,
+            username=username,
+            password=password,
+            container_id=VARS.IMAGE_NAME,
+            sql_cmd=[
+                "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));",
+            ],
         )
-        assert PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e 'CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));' db",
+        self.db_api.run_sql_command(
+            container_ip=cip,
+            username=username,
+            password=password,
+            container_id=VARS.IMAGE_NAME,
+            sql_cmd=[
+                'INSERT INTO tbl VALUES ("foo1", "bar1");',
+                'INSERT INTO tbl VALUES ("foo2", "bar2");',
+                'INSERT INTO tbl VALUES ("foo3", "bar3");',
+            ],
         )
-        values = 'INSERT INTO tbl VALUES ("foo1", "bar1");'
-        assert PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e '{values}' db",
+        output = self.db_api.run_sql_command(
+            container_ip=cip,
+            username=username,
+            password=password,
+            container_id=VARS.IMAGE_NAME,
+            sql_cmd="SELECT * FROM tbl;",
         )
-        values = 'INSERT INTO tbl VALUES ("foo2", "bar2");'
-        assert PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e '{values}' db",
-        )
-        values = 'INSERT INTO tbl VALUES ("foo3", "bar3");'
-        assert PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e '{values}' db",
-        )
-        output = PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e 'SELECT * FROM tbl;' db",
-        )
-        assert re.search(r"foo1\t*bar1", output)
-        assert re.search(r"foo2\t*bar2", output)
-        assert re.search(r"foo3\t*bar3", output)
-        PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e 'DROP TABLE tbl;' db",
+        words = [
+            "foo1\t*bar1",
+            "foo2\t*bar2",
+            "foo3\t*bar3",
+        ]
+        for word in words:
+            assert re.search(word, output), f"Word {word} not found in {output}"
+        self.db_api.run_sql_command(
+            container_ip=cip,
+            username=username,
+            password=password,
+            container_id=VARS.IMAGE_NAME,
+            sql_cmd="DROP TABLE tbl;",
         )
 
     def test_datadir_actions(self):
@@ -140,41 +155,44 @@ class TestMySqlGeneralContainer:
                 f"chmod -R a+rwx {datadir}",
             ]
         )
-        assert self.s2i_db.create_container(
+        mysql_user = "user"
+        mysql_password = "foo"
+        mysql_database = "db"
+        assert self.db_image.create_container(
             cid_file_name=cid_testupg1,
             container_args=[
-                "-e MYSQL_USER=user",
-                "-e MYSQL_PASSWORD=foo",
-                "-e MYSQL_DATABASE=db",
+                f"-e MYSQL_USER={mysql_user}",
+                f"-e MYSQL_PASSWORD={mysql_password}",
+                f"-e MYSQL_DATABASE={mysql_database}",
                 f"-v {datadir}/data:/var/lib/mysql/data:Z",
             ],
         )
-        cip = self.s2i_db.get_cip(cid_file_name=cid_testupg1)
+        cip = self.db_image.get_cip(cid_file_name=cid_testupg1)
         assert cip
-        assert self.s2i_db.test_db_connection(
+        assert self.db_image.test_db_connection(
             container_ip=cip, username="user", password="foo"
         )
-        cid = self.s2i_db.get_cid(cid_file_name=cid_testupg1)
+        cid = self.db_image.get_cid(cid_file_name=cid_testupg1)
         assert cid
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
 
         cid_testupg5 = "testupg5"
-        assert self.s2i_db.create_container(
+        assert self.db_image.create_container(
             cid_file_name=cid_testupg5,
             container_args=[
-                "-e MYSQL_USER=user",
-                "-e MYSQL_PASSWORD=foo",
-                "-e MYSQL_DATABASE=db",
+                f"-e MYSQL_USER={mysql_user}",
+                f"-e MYSQL_PASSWORD={mysql_password}",
+                f"-e MYSQL_DATABASE={mysql_database}",
                 f"-v {datadir}/data:/var/lib/mysql/data:Z",
                 "-e MYSQL_DATADIR_ACTION=analyze",
             ],
         )
-        cip = self.s2i_db.get_cip(cid_file_name=cid_testupg5)
+        cip = self.db_image.get_cip(cid_file_name=cid_testupg5)
         assert cip
-        assert self.s2i_db.test_db_connection(
-            container_ip=cip, username="user", password="foo"
+        assert self.db_image.test_db_connection(
+            container_ip=cip, username=mysql_user, password=mysql_password
         )
-        cid = self.s2i_db.get_cid(cid_file_name=cid_testupg5)
+        cid = self.db_image.get_cid(cid_file_name=cid_testupg5)
         assert cid
         output = PodmanCLIWrapper.podman_logs(
             container_id=cid,
@@ -183,22 +201,22 @@ class TestMySqlGeneralContainer:
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
 
         cid_testupg6 = "testupg6"
-        assert self.s2i_db.create_container(
+        assert self.db_image.create_container(
             cid_file_name=cid_testupg6,
             container_args=[
-                "-e MYSQL_USER=user",
-                "-e MYSQL_PASSWORD=foo",
-                "-e MYSQL_DATABASE=db",
+                f"-e MYSQL_USER={mysql_user}",
+                f"-e MYSQL_PASSWORD={mysql_password}",
+                f"-e MYSQL_DATABASE={mysql_database}",
                 f"-v {datadir}/data:/var/lib/mysql/data:Z",
                 "-e MYSQL_DATADIR_ACTION=optimize",
             ],
         )
-        cip = self.s2i_db.get_cip(cid_file_name=cid_testupg6)
+        cip = self.db_image.get_cip(cid_file_name=cid_testupg6)
         assert cip
-        assert self.s2i_db.test_db_connection(
-            container_ip=cip, username="user", password="foo"
+        assert self.db_image.test_db_connection(
+            container_ip=cip, username=mysql_user, password=mysql_password
         )
-        cid = self.s2i_db.get_cid(cid_file_name=cid_testupg6)
+        cid = self.db_image.get_cid(cid_file_name=cid_testupg6)
         assert cid
         output = PodmanCLIWrapper.podman_logs(
             container_id=cid,
