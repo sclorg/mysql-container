@@ -3,6 +3,7 @@ import re
 
 from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.container_lib import ContainerTestLibUtils
+from container_ci_suite.engines.database import DatabaseWrapper
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 
 from conftest import VARS
@@ -14,14 +15,23 @@ class TestMySqlGeneralContainer:
     """
 
     def setup_method(self):
+        """
+        Setup the test environment.
+        """
         self.ssl_db = ContainerTestLib(image_name=VARS.IMAGE_NAME)
         self.ssl_db.set_new_db_type(db_type="mysql")
+        self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME)
 
     def teardown_method(self):
+        """
+        Teardown the test environment.
+        """
         self.ssl_db.cleanup()
 
     def test_ssl(self):
-        """ """
+        """
+        Test SSL.
+        """
         ssl_dir = tempfile.mkdtemp(prefix="/tmp/mysql-ssl_data")
         username = "ssl_test_user"
         password = "ssl_test"
