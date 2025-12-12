@@ -2,8 +2,8 @@ import tempfile
 import re
 from time import sleep
 
-from container_ci_suite.container_lib import ContainerTestLib, DatabaseWrapper
-from container_ci_suite.container_lib import ContainerTestLibUtils
+from container_ci_suite.container_lib import ContainerTestLib
+from container_ci_suite.engines.database import DatabaseWrapper
 from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 
 from conftest import VARS
@@ -15,14 +15,23 @@ class TestMySqlReplicationContainer:
     """
 
     def setup_method(self):
+        """
+        Setup the test environment.
+        """
         self.replication_db = ContainerTestLib(image_name=VARS.IMAGE_NAME)
         self.replication_db.set_new_db_type(db_type="mysql")
+        self.db_wrapper_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME)
 
     def teardown_method(self):
+        """
+        Teardown the test environment.
+        """
         self.replication_db.cleanup()
 
     def test_replication(self):
-        """ """
+        """
+        Test replication.
+        """
         cluster_args = "-e MYSQL_SOURCE_USER=source -e MYSQL_SOURCE_PASSWORD=source -e MYSQL_DATABASE=db"
         source_cid = "source.cid"
         username = "user"
@@ -40,7 +49,6 @@ class TestMySqlReplicationContainer:
             command="run-mysqld-source",
         )
         source_cip = self.replication_db.get_cip(cid_file_name=source_cid)
-        print(f"Source IP: {source_cip}")
         source_cid = self.replication_db.get_cid(cid_file_name=source_cid)
         assert source_cid
         # Run the MySQL replica
@@ -58,47 +66,42 @@ class TestMySqlReplicationContainer:
         assert replica_cip
         replica_cid = self.replication_db.get_cid(cid_file_name=replica_cid)
         assert replica_cid
-        print(f"Replica IP: {replica_cip}")
         # Now wait till the SOURCE will see the REPLICA
         result = self.replication_db.test_db_connection(
             container_ip=replica_cip,
-            username=username,
-            password=password,
+            username="root",
+            password="root",
         )
-        result = PodmanCLIWrapper.call_podman_command(
-            cmd=f"exec {source_cid} mysql -e 'SHOW REPLICAS;' db",
-            ignore_error=True,
-            debug=True,
+        result = self.db_wrapper_api.run_sql_command(
+            container_ip=source_cip,
+            username="root",
+            password="root",
+            container_id=source_cid,
+            sql_cmd="SHOW REPLICAS;",
+            podman_run_command="exec",
         )
-        print(f"Showing replicas: {result}")
         assert replica_cip in result, (
             f"Replica {replica_cip} not found in SOURCE {source_cip}"
         )
         # do some real work to test replication in practice
-        result = self.replication_db.test_db_connection(
+        table_output = self.db_wrapper_api.run_sql_command(
             container_ip=source_cip,
-            username=username,
-            password=password,
-            max_attempts=120,
-            sql_cmd="-e 'CREATE TABLE t1 (a INT); INSERT INTO t1 VALUES (24);'",
+            username="root",
+            password="root",
+            container_id=source_cid,
+            sql_cmd="CREATE TABLE t1 (a INT); INSERT INTO t1 VALUES (24);",
+            podman_run_command="exec",
         )
-        print(f"Creating table: {result}")
         # let's wait for the table to be created and available for replication
         sleep(3)
 
-        result = self.replication_db.test_db_connection(
+        table_output = self.db_wrapper_api.run_sql_command(
             container_ip=replica_cip,
-            username=username,
-            password=password,
-            max_attempts=120,
-            sql_cmd="-e 'select * from t1;'",
+            username="root",
+            password="root",
+            container_id=VARS.IMAGE_NAME,
+            sql_cmd="select * from t1;",
         )
-        assert result
-        podman_cmd = f"--rm {VARS.IMAGE_NAME} mysql --host {replica_cip} -u{username} -p{password}"
-        table_output = PodmanCLIWrapper.podman_run_command(
-            cmd=f"{podman_cmd} -e 'select * from t1;' db",
-        )
-        print(f"Selecting from table: {table_output}")
         assert re.search(r"^a\n^24", table_output.strip(), re.MULTILINE), (
             f"Replica {replica_cip} did not get value from SOURCE {source_cip}"
         )
