@@ -8,7 +8,6 @@
 
 set -o nounset
 shopt -s nullglob
-
 THISDIR=$(dirname ${BASH_SOURCE[0]})
 source ${THISDIR}/test-lib.sh
 
