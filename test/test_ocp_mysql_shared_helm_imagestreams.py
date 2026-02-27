@@ -1,22 +1,23 @@
-import os
-
 import pytest
-from pathlib import Path
 
 from container_ci_suite.helm import HelmChartsAPI
 
-test_dir = Path(os.path.abspath(os.path.dirname(__file__)))
+from conftest import VARS
 
 
 class TestHelmRHELMySQLImageStreams:
-
     def setup_method(self):
         package_name = "redhat-mysql-imagestreams"
-        path = test_dir
-        self.hc_api = HelmChartsAPI(path=path, package_name=package_name, tarball_dir=test_dir, shared_cluster=True)
+        self.hc_api = HelmChartsAPI(
+            path=VARS.TEST_DIR,
+            package_name=package_name,
+            tarball_dir=VARS.TEST_DIR,
+            shared_cluster=True,
+        )
         self.hc_api.clone_helm_chart_repo(
-            repo_url="https://github.com/sclorg/helm-charts", repo_name="helm-charts",
-            subdir="charts/redhat"
+            repo_url="https://github.com/sclorg/helm-charts",
+            repo_name="helm-charts",
+            subdir="charts/redhat",
         )
 
     def teardown_method(self):
