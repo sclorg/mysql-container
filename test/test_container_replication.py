@@ -1,10 +1,9 @@
-import tempfile
 import re
+
 from time import sleep
 
 from container_ci_suite.container_lib import ContainerTestLib
 from container_ci_suite.engines.database import DatabaseWrapper
-from container_ci_suite.engines.podman_wrapper import PodmanCLIWrapper
 
 from conftest import VARS
 
