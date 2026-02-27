@@ -52,60 +52,81 @@ class TestMySqlConfigurationContainer:
         )
 
     @pytest.mark.parametrize(
-        "container_args",
+        "mysql_user, mysql_password, mysql_database, mysql_root_password",
         [
-            ["-e", "MYSQL_USER=user", "-e", "MYSQL_PASSWORD=pass"],
+            ["user", "pass", "", ""],
             [
-                "-e MYSQL_USER=$invalid",
-                "-e MYSQL_PASSWORD=pass",
-                "-e MYSQL_DATABASE=db",
-                "-e MYSQL_ROOT_PASSWORD=root_pass",
+                "$invalid",
+                "pass",
+                "db",
+                "root_pass",
             ],
             [
-                f"-e MYSQL_USER={VARS.VERY_LONG_USER_NAME}",
-                "-e MYSQL_PASSWORD=pass",
-                "-e MYSQL_DATABASE=db",
-                "-e MYSQL_ROOT_PASSWORD=root_pass",
+                VARS.VERY_LONG_USER_NAME,
+                "pass",
+                "db",
+                "root_pass",
             ],
             [
-                "-e MYSQL_USER=user",
-                "-e MYSQL_PASSWORD=",
-                "-e MYSQL_DATABASE=db",
-                "-e MYSQL_ROOT_PASSWORD=root_pass",
+                "user",
+                "",
+                "db",
+                "root_pass",
             ],
             [
-                "-e MYSQL_USER=user",
-                "-e MYSQL_PASSWORD=pass",
-                "-e MYSQL_DATABASE=$invalid",
-                "-e MYSQL_ROOT_PASSWORD=root_pass",
+                "user",
+                "pass",
+                "$invalid",
+                "root_pass",
             ],
             [
-                "-e MYSQL_USER=user",
-                "-e MYSQL_PASSWORD=pass",
-                f"-e MYSQL_DATABASE={VARS.VERY_LONG_DB_NAME}",
-                "-e MYSQL_ROOT_PASSWORD=root_pass",
+                "user",
+                "pass",
+                VARS.VERY_LONG_DB_NAME,
+                "root_pass",
             ],
             [
-                "-e MYSQL_USER=user",
-                "-e MYSQL_PASSWORD=pass",
-                "-e MYSQL_DATABASE=db",
-                "-e MYSQL_ROOT_PASSWORD=",
+                "user",
+                "pass",
+                "db",
+                "",
             ],
             [
-                "-e MYSQL_USER=root",
-                "-e MYSQL_PASSWORD=pass",
-                "-e MYSQL_DATABASE=db",
-                "-e MYSQL_ROOT_PASSWORD=pass",
+                "root",
+                "pass",
+                "db",
+                "pass",
             ],
         ],
     )
-    def test_invalid_configuration_tests(self, container_args):
+    def test_invalid_configuration_tests(
+        self, mysql_user, mysql_password, mysql_database, mysql_root_password
+    ):
         """
         Test invalid configuration combinations for MySQL container.
         """
         cid_config_test = "invalid_configuration_tests"
+        mysql_user_arg = f"-e MYSQL_USER={mysql_user}" if mysql_user else ""
+        mysql_password_arg = (
+            f"-e MYSQL_PASSWORD={mysql_password}" if mysql_password else ""
+        )
+        mysql_database_arg = (
+            f"-e MYSQL_DATABASE={mysql_database}" if mysql_database else ""
+        )
+        mysql_root_password_arg = (
+            f"-e MYSQL_ROOT_PASSWORD={mysql_root_password}"
+            if mysql_root_password
+            else ""
+        )
         assert self.db.assert_container_creation_fails(
-            cid_file_name=cid_config_test, container_args=container_args, command=""
+            cid_file_name=cid_config_test,
+            container_args=[
+                mysql_user_arg,
+                mysql_password_arg,
+                mysql_database_arg,
+                mysql_root_password_arg,
+            ],
+            command="",
         )
 
 
@@ -119,7 +140,6 @@ class TestMySqlConfigurationTests:
         Setup the test environment.
         """
         self.db_config = ContainerTestLib(image_name=VARS.IMAGE_NAME)
-        self.db_config.set_new_db_type(db_type="mysql")
         self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME)
 
     def teardown_method(self):
@@ -131,6 +151,12 @@ class TestMySqlConfigurationTests:
     def test_configuration_auto_calculated_settings(self):
         """
         Test MySQL container configuration auto-calculated settings.
+        Steps are:
+        1. Create a container with the given arguments
+        2. Check if the container is created successfully
+        3. Check if the database connection works
+        4. Check if the database configurations are correct
+        5. Stop the container
         """
         cid_config_test = "auto-config_test"
         username = "config_test_user"
@@ -146,30 +172,29 @@ class TestMySqlConfigurationTests:
             ],
             docker_args="--memory=512m",
         )
-        cip = self.db_config.get_cip(cid_file_name=cid_config_test)
-        assert cip
+        cip, cid = self.db_config.get_cip_cid(cid_file_name=cid_config_test)
+        assert cip, cid
         assert self.db_config.test_db_connection(
             container_ip=cip,
             username=username,
             password=password,
             max_attempts=10,
         )
-        cid = self.db_config.get_cid(cid_file_name=cid_config_test)
         db_configuration = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
             cmd="cat /etc/my.cnf /etc/my.cnf.d/*",
         )
-        words = [
-            "key_buffer_size\\s*=\\s*51M",
-            "read_buffer_size\\s*=\\s*25M",
-            "innodb_buffer_pool_size\\s*=\\s*256M",
-            "innodb_log_file_size\\s*=\\s*76M",
-            "innodb_log_buffer_size\\s*=\\s*76M",
-            "authentication_policy\\s*=\\s*'caching_sha2_password,,'",
+        expected_values = [
+            r"key_buffer_size\s*=\s*51M",
+            r"read_buffer_size\s*=\s*25M",
+            r"innodb_buffer_pool_size\s*=\s*256M",
+            r"innodb_log_file_size\s*=\s*76M",
+            r"innodb_log_buffer_size\s*=\s*76M",
+            r"authentication_policy\s*=\s*'caching_sha2_password,,'",
         ]
-        for word in words:
-            assert re.search(word, db_configuration), (
-                f"Word {word} not found in {db_configuration}"
+        for value in expected_values:
+            assert re.search(value, db_configuration), (
+                f"Expected value {value} not found in {db_configuration}"
             )
         # do some real work to test replication in practice
         self.db_api.run_sql_command(
@@ -192,6 +217,7 @@ class TestMySqlConfigurationTests:
         assert "COLLATE=latin2_czech_cs" in show_table_output
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
 
+    # FIX
     def test_configuration_options_settings(self):
         """
         Test MySQL container configuration options.
@@ -218,44 +244,39 @@ class TestMySqlConfigurationTests:
                 "--env MYSQL_INNODB_BUFFER_POOL_SIZE=16M",
                 "--env MYSQL_INNODB_LOG_FILE_SIZE=4M",
                 "--env MYSQL_INNODB_LOG_BUFFER_SIZE=4M",
-                "--env MYSQL_AUTHENTICATION_POLICY=sha256_password",
+                "--env MYSQL_AUTHENTICATION_POLICY=sha256_password,,",
+                "--env WORKAROUND_DOCKER_BUG_14203=",
             ],
         )
-        cip = self.db_config.get_cip(cid_file_name=cid_config_test)
-        assert cip
-        assert self.db_config.test_db_connection(
-            container_ip=cip, username=username, password=password
-        )
-        cip = self.db_config.get_cip(cid_file_name=cid_config_test)
-        assert cip
+        cip, cid = self.db_config.get_cip_cid(cid_file_name=cid_config_test)
+        assert cip, cid
         assert self.db_config.test_db_connection(
             container_ip=cip,
             username=username,
             password=password,
             max_attempts=10,
         )
-        cid = self.db_config.get_cid(cid_file_name=cid_config_test)
         db_configuration = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
             cmd="cat /etc/my.cnf /etc/my.cnf.d/*",
         )
-        words = [
-            "lower_case_table_names\\s*=\\s*1",
-            "general_log\\s*=\\s*1",
-            "max_connections\\s*=\\s*1337",
-            "ft_min_word_len\\s*=\\s*8",
-            "ft_max_word_len\\s*=\\s*15",
-            "max_allowed_packet\\s*=\\s*10M",
-            "table_open_cache\\s*=\\s*100",
-            "sort_buffer_size\\s*=\\s*256K",
-            "key_buffer_size\\s*=\\s*16M",
-            "read_buffer_size\\s*=\\s*16M",
-            "innodb_log_file_size\\s*=\\s*4M",
-            "innodb_log_buffer_size\\s*=\\s*4M",
-            "authentication_policy\\s*=\\s*'sha256_password'",
+        expected_values = [
+            r"lower_case_table_names\s*=\s*1",
+            r"general_log\s*=\s*1",
+            r"max_connections\s*=\s*1337",
+            r"ft_min_word_len\s*=\s*8",
+            r"ft_max_word_len\s*=\s*15",
+            r"max_allowed_packet\s*=\s*10M",
+            r"table_open_cache\s*=\s*100",
+            r"sort_buffer_size\s*=\s*256K",
+            r"key_buffer_size\s*=\s*16M",
+            r"read_buffer_size\s*=\s*16M",
+            r"innodb_log_file_size\s*=\s*4M",
+            r"innodb_log_buffer_size\s*=\s*4M",
+            r"authentication_policy\s*=\s*'sha256_password,,'",
         ]
-        for word in words:
-            assert re.search(word, db_configuration), (
-                f"Word {word} not found in {db_configuration}"
+        for value in expected_values:
+            assert re.search(value, db_configuration), (
+                f"Expected value {value} not found in {db_configuration}"
             )
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
