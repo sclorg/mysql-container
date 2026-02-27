@@ -16,11 +16,17 @@ class TestMySqlGeneralContainer:
     """
 
     def setup_method(self):
+        """
+        Setup the test environment.
+        """
         self.db_image = ContainerTestLib(image_name=VARS.IMAGE_NAME)
         self.db_image.set_new_db_type(db_type="mysql")
         self.db_api = DatabaseWrapper(image_name=VARS.IMAGE_NAME)
 
     def teardown_method(self):
+        """
+        Teardown the test environment.
+        """
         self.db_image.cleanup()
 
     @pytest.mark.parametrize(
@@ -34,7 +40,16 @@ class TestMySqlGeneralContainer:
     )
     def test_run(self, docker_args, username, password, root_password):
         """
-        Test container creation fails with invalid combinations of arguments.
+        Test if the MySQL container works properly with the different arguments
+        like docker_args, username, password, and root_password.
+        Steps are:
+        1. Create a container with the given arguments
+        2. Check if the container is created successfully
+        3. Check if the database connection works
+        4. Check if mariadb version is correct
+        5. Check if the login access works
+        6. Check if the local access works
+        7. Test the database creation
         """
         root_password_arg = (
             f"-e MYSQL_ROOT_PASSWORD={root_password}" if root_password else ""
@@ -51,63 +66,68 @@ class TestMySqlGeneralContainer:
             ],
             command="run-mysqld --innodb_buffer_pool_size=5242880",
         )
-        cip = self.db_image.get_cip(cid_file_name=cid_file_name)
-        assert cip
+        cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_file_name)
+        assert cip, cid
         assert self.db_image.test_db_connection(
             container_ip=cip, username=username, password=password
         )
-        cid = self.db_image.get_cid(cid_file_name=cid_file_name)
         output = PodmanCLIWrapper.podman_exec_shell_command(
             cid_file_name=cid,
             cmd="mysql --version",
         )
         assert VARS.VERSION in output
-        self.db_image.db_lib.assert_login_access(
-            container_ip=cip,
-            username=username,
-            password=password,
-            expected_success=True,
-        )
-        self.db_image.db_lib.assert_login_access(
-            container_ip=cip,
-            username=username,
-            password=f"{password}_foo",
-            expected_success=False,
-        )
+        login_access = True
+        for user, pwd, ret_value in [
+            (username, password, True),
+            (username, f"{password}_foo", False),
+            ("root", "foo", False),
+            ("root", "", False),
+        ]:
+            test_assert = self.db_image.db_lib.assert_login_access(
+                container_ip=cip,
+                username=user,
+                password=pwd,
+                expected_success=ret_value,
+            )
+            if not test_assert:
+                print(
+                    f"Login access failed for {user}:{pwd} with expected success {ret_value}"
+                )
+                login_access = False
+        assert login_access
         if root_password:
-            self.db_image.db_lib.assert_login_access(
-                container_ip=cip,
-                username="root",
-                password=root_password,
-                expected_success=True,
-            )
-            self.db_image.db_lib.assert_login_access(
-                container_ip=cip,
-                username="root",
-                password=f"{root_password}_foo",
-                expected_success=False,
-            )
-        else:
-            self.db_image.db_lib.assert_login_access(
-                container_ip=cip,
-                username="root",
-                password="foo",
-                expected_success=False,
-            )
-            self.db_image.db_lib.assert_login_access(
-                container_ip=cip,
-                username="root",
-                password="",
-                expected_success=False,
-            )
+            root_login_access = True
+            for user, pwd, ret_value in [
+                ("root", root_password, True),
+                ("root", f"{root_password}_foo", False),
+            ]:
+                test_assert = self.db_image.db_lib.assert_login_access(
+                    container_ip=cip,
+                    username=user,
+                    password=pwd,
+                    expected_success=ret_value,
+                )
+                if not test_assert:
+                    print(
+                        f"Root login access failed for {user}:{pwd} with expected success {ret_value}"
+                    )
+                    root_login_access = False
+                    continue
+            assert root_login_access
         assert self.db_image.db_lib.assert_local_access(container_id=cid)
+        self.database_test(cip, username, password)
+
+    def database_test(self, cip, username, password):
+        """
+        Test MariaDB database table creation and data insertion is valid.
+        """
         self.db_api.run_sql_command(
             container_ip=cip,
             username=username,
             password=password,
             container_id=VARS.IMAGE_NAME,
             sql_cmd=[
-                "CREATE TABLE tbl (col1 VARCHAR(20), col2 VARCHAR(20));",
+                "CREATE TABLE tbl (a integer, b integer);",
             ],
         )
         self.db_api.run_sql_command(
@@ -116,9 +136,9 @@ class TestMySqlGeneralContainer:
             password=password,
             container_id=VARS.IMAGE_NAME,
             sql_cmd=[
-                'INSERT INTO tbl VALUES ("foo1", "bar1");',
-                'INSERT INTO tbl VALUES ("foo2", "bar2");',
-                'INSERT INTO tbl VALUES ("foo3", "bar3");',
+                "INSERT INTO tbl VALUES (1, 2);",
+                "INSERT INTO tbl VALUES (3, 4);",
+                "INSERT INTO tbl VALUES (5, 6);",
             ],
         )
         output = self.db_api.run_sql_command(
@@ -128,13 +148,13 @@ class TestMySqlGeneralContainer:
             container_id=VARS.IMAGE_NAME,
             sql_cmd="SELECT * FROM tbl;",
         )
-        words = [
-            "foo1\t*bar1",
-            "foo2\t*bar2",
-            "foo3\t*bar3",
+        expected_db_output = [
+            r"1\s*\t*2",
+            r"3\s*\t*4",
+            r"5\s*\t*6",
         ]
-        for word in words:
-            assert re.search(word, output), f"Word {word} not found in {output}"
+        for row in expected_db_output:
+            assert re.search(row, output), f"Row {row} not found in {output}"
         self.db_api.run_sql_command(
             container_ip=cip,
             username=username,
@@ -167,13 +187,11 @@ class TestMySqlGeneralContainer:
                 f"-v {datadir}/data:/var/lib/mysql/data:Z",
             ],
         )
-        cip = self.db_image.get_cip(cid_file_name=cid_testupg1)
-        assert cip
+        cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_testupg1)
+        assert cip, cid
         assert self.db_image.test_db_connection(
             container_ip=cip, username="user", password="foo"
         )
-        cid = self.db_image.get_cid(cid_file_name=cid_testupg1)
-        assert cid
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
 
         cid_testupg5 = "testupg5"
@@ -187,13 +205,11 @@ class TestMySqlGeneralContainer:
                 "-e MYSQL_DATADIR_ACTION=analyze",
             ],
         )
-        cip = self.db_image.get_cip(cid_file_name=cid_testupg5)
-        assert cip
+        cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_testupg5)
+        assert cip, cid
         assert self.db_image.test_db_connection(
             container_ip=cip, username=mysql_user, password=mysql_password
         )
-        cid = self.db_image.get_cid(cid_file_name=cid_testupg5)
-        assert cid
         output = PodmanCLIWrapper.podman_logs(
             container_id=cid,
         )
@@ -211,13 +227,11 @@ class TestMySqlGeneralContainer:
                 "-e MYSQL_DATADIR_ACTION=optimize",
             ],
         )
-        cip = self.db_image.get_cip(cid_file_name=cid_testupg6)
-        assert cip
+        cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_testupg6)
+        assert cip, cid
         assert self.db_image.test_db_connection(
             container_ip=cip, username=mysql_user, password=mysql_password
         )
-        cid = self.db_image.get_cid(cid_file_name=cid_testupg6)
-        assert cid
         output = PodmanCLIWrapper.podman_logs(
             container_id=cid,
         )
