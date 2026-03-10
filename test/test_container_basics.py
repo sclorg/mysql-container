@@ -84,7 +84,7 @@ class TestMySqlBasicsContainer:
         3. Test if the database connection works with the operations user
         """
         data_dir = tempfile.mkdtemp(prefix="/tmp/mysql-test_data")
-        shutil.copytree(VARS.TEST_DIR / "test-app", f"{data_dir}/test-app")
+        shutil.copytree(VARS.TEST_APP, f"{data_dir}/test-app")
         assert ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
                 f"chown -R 27:27 {data_dir}/test-app",
