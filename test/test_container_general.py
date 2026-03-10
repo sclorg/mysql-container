@@ -190,7 +190,7 @@ class TestMySqlGeneralContainer:
         cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_testupg1)
         assert cip, cid
         assert self.db_image.test_db_connection(
-            container_ip=cip, username="user", password="foo"
+            container_ip=cip, username=mysql_user, password=mysql_password
         )
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
 
