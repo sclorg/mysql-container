@@ -69,7 +69,7 @@ class TestMySqlBasicsContainer:
             ],
         )
         cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_config_build)
-        assert cip, cid
+        assert cip and cid
         assert self.app_image.test_db_connection(
             container_ip=cip, username="operations_user", password="operations_user"
         )
