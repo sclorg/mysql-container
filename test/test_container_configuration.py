@@ -173,7 +173,7 @@ class TestMySqlConfigurationTests:
             docker_args="--memory=512m",
         )
         cip, cid = self.db_config.get_cip_cid(cid_file_name=cid_config_test)
-        assert cip, cid
+        assert cip and cid
         assert self.db_config.test_db_connection(
             container_ip=cip,
             username=username,
@@ -217,7 +217,6 @@ class TestMySqlConfigurationTests:
         assert "COLLATE=latin2_czech_cs" in show_table_output
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
 
-    # FIX
     def test_configuration_options_settings(self):
         """
         Test MySQL container configuration options.
@@ -249,7 +248,7 @@ class TestMySqlConfigurationTests:
             ],
         )
         cip, cid = self.db_config.get_cip_cid(cid_file_name=cid_config_test)
-        assert cip, cid
+        assert cip and cid
         assert self.db_config.test_db_connection(
             container_ip=cip,
             username=username,
