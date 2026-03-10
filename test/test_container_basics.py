@@ -39,7 +39,7 @@ class TestMySqlBasicsContainer:
         """
         self.app_image.cleanup()
 
-    def test_s2i_usage(self):
+    def test_connection_without_mount(self):
         """
         Test if MySQL container failed in case of invalid combinations.
         Steps are:
@@ -47,9 +47,9 @@ class TestMySqlBasicsContainer:
         2. Test if the container creation succeeds with valid combinations of arguments
         3. Test if the database connection works
         """
-        cid_config_build = "s2i_usage_build"
+        cid_mount = "connection_without_mount"
         self.app_image.assert_container_creation_fails(
-            cid_file_name=cid_config_build,
+            cid_file_name=cid_mount,
             command="",
             container_args=[
                 "-e MYSQL_USER=root",
@@ -58,24 +58,26 @@ class TestMySqlBasicsContainer:
                 "-e MYSQL_ROOT_PASSWORD=pass",
             ],
         )
+        operation_user = "operations_user"
+        operation_pass = "operations_pass"
         assert self.app_image.create_container(
-            cid_file_name=cid_config_build,
+            cid_file_name=cid_mount,
             container_args=[
                 "-e MYSQL_USER=config_test_user",
                 "-e MYSQL_PASSWORD=config_test_user",
                 "-e MYSQL_DATABASE=db",
-                "-e MYSQL_OPERATIONS_USER=operations_user",
-                "-e MYSQL_OPERATIONS_PASSWORD=operations_user",
+                f"-e MYSQL_OPERATIONS_USER={operation_user}",
+                f"-e MYSQL_OPERATIONS_PASSWORD={operation_pass}",
             ],
         )
-        cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_config_build)
-        assert cip, cid
+        cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_mount)
+        assert cip and cid
         assert self.app_image.test_db_connection(
-            container_ip=cip, username="operations_user", password="operations_user"
+            container_ip=cip, username=operation_user, password=operation_pass
         )
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
 
-    def test_s2i_usage_with_mount(self):
+    def test_connection_with_mount(self):
         """
         Test if the MySQL container works properly with mounted application directory.
         Steps are:
@@ -84,30 +86,33 @@ class TestMySqlBasicsContainer:
         3. Test if the database connection works with the operations user
         """
         data_dir = tempfile.mkdtemp(prefix="/tmp/mysql-test_data")
-        shutil.copytree(VARS.TEST_DIR / "test-app", f"{data_dir}/test-app")
+        shutil.copytree(VARS.TEST_APP, f"{data_dir}/test-app")
         assert ContainerTestLibUtils.commands_to_run(
             commands_to_run=[
                 f"chown -R 27:27 {data_dir}/test-app",
             ]
         )
-        cid_s2i_test_mount = "s2i_test_mount"
+        cid_with_mount = "connection_with_mount"
+        operation_user = "operations_user"
+        operation_pass = "operations_pass"
+
         self.app_image.create_container(
-            cid_file_name=cid_s2i_test_mount,
+            cid_file_name=cid_with_mount,
             container_args=[
                 "-e MYSQL_USER=config_test_user",
                 "-e MYSQL_PASSWORD=config_test_user",
                 "-e MYSQL_DATABASE=db",
-                "-e MYSQL_OPERATIONS_USER=operations_user",
-                "-e MYSQL_OPERATIONS_PASSWORD=operations_pass",
+                f"-e MYSQL_OPERATIONS_USER={operation_user}",
+                f"-e MYSQL_OPERATIONS_PASSWORD={operation_pass}",
                 f"-v {data_dir}/test-app:/opt/app-root/src/:z",
             ],
         )
-        cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_s2i_test_mount)
-        assert cip, cid
+        cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_with_mount)
+        assert cip and cid
         assert self.app_image.test_db_connection(
             container_ip=cip,
-            username="operations_user",
-            password="operations_pass",
+            username=operation_user,
+            password=operation_pass,
             max_attempts=10,
         )
         PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
