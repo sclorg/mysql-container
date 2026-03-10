@@ -30,7 +30,7 @@ class TestMySqlBasicsContainer:
         """
         Setup the test environment.
         """
-        self.app_image = build_s2i_app(app_path=VARS.TEST_DIR / "test-app")
+        self.app_image = build_s2i_app(app_path=VARS.TEST_APP)
         self.app_image.set_new_db_type(db_type="mysql")
 
     def teardown_method(self):
