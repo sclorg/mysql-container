@@ -85,35 +85,34 @@ class TestMySqlBasicsContainer:
         2. Create a container with the mounted directory
         3. Test if the database connection works with the operations user
         """
-        data_dir = tempfile.mkdtemp(prefix="/tmp/mysql-test_data")
-        shutil.copytree(VARS.TEST_APP, f"{data_dir}/test-app")
-        assert ContainerTestLibUtils.commands_to_run(
-            commands_to_run=[
-                f"chown -R 27:27 {data_dir}/test-app",
-            ]
-        )
-        cid_with_mount = "connection_with_mount"
-        operation_user = "operations_user"
-        operation_pass = "operations_pass"
+        with tempfile.TemporaryDirectory(prefix="/tmp/mysql-test_data") as data_dir:
+            shutil.copytree(VARS.TEST_APP, f"{data_dir}/test-app")
+            assert ContainerTestLibUtils.commands_to_run(
+                commands_to_run=[
+                    f"chown -R 27:27 {data_dir}/test-app",
+                ]
+            )
+            cid_with_mount = "connection_with_mount"
+            operation_user = "operations_user"
+            operation_pass = "operations_pass"
 
-        self.app_image.create_container(
-            cid_file_name=cid_with_mount,
-            container_args=[
-                "-e MYSQL_USER=config_test_user",
-                "-e MYSQL_PASSWORD=config_test_user",
-                "-e MYSQL_DATABASE=db",
-                f"-e MYSQL_OPERATIONS_USER={operation_user}",
-                f"-e MYSQL_OPERATIONS_PASSWORD={operation_pass}",
-                f"-v {data_dir}/test-app:/opt/app-root/src/:z",
-            ],
-        )
-        cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_with_mount)
-        assert cip and cid
-        assert self.app_image.test_db_connection(
-            container_ip=cip,
-            username=operation_user,
-            password=operation_pass,
-            max_attempts=10,
-        )
-        PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
-        shutil.rmtree(data_dir)
+            self.app_image.create_container(
+                cid_file_name=cid_with_mount,
+                container_args=[
+                    "-e MYSQL_USER=config_test_user",
+                    "-e MYSQL_PASSWORD=config_test_user",
+                    "-e MYSQL_DATABASE=db",
+                    f"-e MYSQL_OPERATIONS_USER={operation_user}",
+                    f"-e MYSQL_OPERATIONS_PASSWORD={operation_pass}",
+                    f"-v {data_dir}/test-app:/opt/app-root/src/:z",
+                ],
+            )
+            cip, cid = self.app_image.get_cip_cid(cid_file_name=cid_with_mount)
+            assert cip and cid
+            assert self.app_image.test_db_connection(
+                container_ip=cip,
+                username=operation_user,
+                password=operation_pass,
+                max_attempts=10,
+            )
+            PodmanCLIWrapper.call_podman_command(cmd=f"stop {cid}")
