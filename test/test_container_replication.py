@@ -47,9 +47,8 @@ class TestMySqlReplicationContainer:
             docker_args=cluster_args,
             command="run-mysqld-source",
         )
-        source_cip = self.replication_db.get_cip(cid_file_name=source_cid)
-        source_cid = self.replication_db.get_cid(cid_file_name=source_cid)
-        assert source_cid
+        source_cip, source_cid = self.replication_db.get_cip_cid(cid_file_name=source_cid)
+        assert source_cip and source_cid
         # Run the MySQL replica
         replica_cid = "replica.cid"
         assert self.replication_db.create_container(
@@ -61,10 +60,8 @@ class TestMySqlReplicationContainer:
             docker_args=cluster_args,
             command="run-mysqld-replica",
         )
-        replica_cip = self.replication_db.get_cip(cid_file_name=replica_cid)
-        assert replica_cip
-        replica_cid = self.replication_db.get_cid(cid_file_name=replica_cid)
-        assert replica_cid
+        replica_cip, replica_cid = self.replication_db.get_cip_cid(cid_file_name=replica_cid)
+        assert replica_cip and replica_cid
         # Now wait till the SOURCE will see the REPLICA
         result = self.replication_db.test_db_connection(
             container_ip=replica_cip,

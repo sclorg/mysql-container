@@ -93,7 +93,7 @@ class TestMySqlPasswordContainer:
             container_args=container_args,
         )
         cip, cid = self.pwd_change.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip, cid
+        assert cip and cid
         if user_change:
             username = "user"
             password = "foo"
