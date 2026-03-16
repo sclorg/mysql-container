@@ -75,13 +75,11 @@ class TestMySqlGeneralContainer:
                 f"-v {ssl_dir}:/opt/app-root/src/:z",
             ],
         )
-        cip = self.ssl_db.get_cip(cid_file_name=cid_file_name)
-        assert cip
+        cip, cid = self.ssl_db.get_cip_cid(cid_file_name=cid_file_name)
+        assert cip and cid
         assert self.ssl_db.test_db_connection(
             container_ip=cip, username=username, password=password
         )
-        cid = self.ssl_db.get_cid(cid_file_name=cid_file_name)
-        assert cid
 
         mysql_cmd = (
             f"mysql --host {cip} -u{username} -p{password} --ssl-ca={ca_cert_path}"

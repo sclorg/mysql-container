@@ -67,7 +67,7 @@ class TestMySqlGeneralContainer:
             command="run-mysqld --innodb_buffer_pool_size=5242880",
         )
         cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_file_name)
-        assert cip, cid
+        assert cip and cid
         assert self.db_image.test_db_connection(
             container_ip=cip, username=username, password=password
         )
@@ -112,7 +112,6 @@ class TestMySqlGeneralContainer:
                         f"Root login access failed for {user}:{pwd} with expected success {ret_value}"
                     )
                     root_login_access = False
-                    continue
             assert root_login_access
         assert self.db_image.db_lib.assert_local_access(container_id=cid)
         self.database_test(cip, username, password)
@@ -165,7 +164,13 @@ class TestMySqlGeneralContainer:
 
     def test_datadir_actions(self):
         """
-        Test container creation fails with invalid combinations of arguments.
+        Test container with specific data directory actions.
+        Steps are:
+        1. Create a container with a mounted data directory and check the connection.
+        2. Create a container with MYSQL_DATADIR_ACTION=analyze and
+            check the logs for the analyze command.
+        3. Create a container with MYSQL_DATADIR_ACTION=optimize and
+            check the logs for the optimize command.
         """
         cid_testupg1 = "testupg1"
         datadir = tempfile.mkdtemp(prefix="/tmp/mysql-datadir-actions")
@@ -206,7 +211,7 @@ class TestMySqlGeneralContainer:
             ],
         )
         cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_testupg5)
-        assert cip, cid
+        assert cip and cid
         assert self.db_image.test_db_connection(
             container_ip=cip, username=mysql_user, password=mysql_password
         )
@@ -228,7 +233,7 @@ class TestMySqlGeneralContainer:
             ],
         )
         cip, cid = self.db_image.get_cip_cid(cid_file_name=cid_testupg6)
-        assert cip, cid
+        assert cip and cid
         assert self.db_image.test_db_connection(
             container_ip=cip, username=mysql_user, password=mysql_password
         )

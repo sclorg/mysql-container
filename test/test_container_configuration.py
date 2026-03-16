@@ -36,24 +36,10 @@ class TestMySqlConfigurationContainer:
         )
 
     @pytest.mark.parametrize(
-        "container_args",
-        [
-            ["-e MYSQL_USER=user", "-e MYSQL_DATABASE=db"],
-            ["-e MYSQL_PASSWORD=pass", "-e MYSQL_DATABASE=db"],
-        ],
-    )
-    def test_try_image_invalid_combinations(self, container_args):
-        """
-        Test container creation fails with invalid combinations of arguments.
-        """
-        cid_file_name = "try_image_invalid_combinations"
-        assert self.db.assert_container_creation_fails(
-            cid_file_name=cid_file_name, container_args=container_args, command=""
-        )
-
-    @pytest.mark.parametrize(
         "mysql_user, mysql_password, mysql_database, mysql_root_password",
         [
+            ["user", "", "db", ""],
+            ["", "pass", "db", ""],
             ["user", "pass", "", ""],
             [
                 "$invalid",
@@ -196,7 +182,8 @@ class TestMySqlConfigurationTests:
             assert re.search(value, db_configuration), (
                 f"Expected value {value} not found in {db_configuration}"
             )
-        # do some real work to test replication in practice
+        # Create table and show its configuration to verify
+        # charset and collation settings
         self.db_api.run_sql_command(
             container_ip=cip,
             username=username,
