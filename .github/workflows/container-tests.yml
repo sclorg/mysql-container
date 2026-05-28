@@ -3,6 +3,8 @@ on:
     types:
       - created
 jobs:
+  distgen-check:
+    uses: "sclorg/ci-actions/.github/workflows/distgen-check.yml@main"
   check-readme:
     uses: "sclorg/ci-actions/.github/workflows/check-readme.yml@main"
   container-tests:
