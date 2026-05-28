@@ -1,5 +1,6 @@
 MySQL SQL Database Server Container Image
 =========================================
+<!-- Testing distgen-check workflow -->
 
 [![Build and push images to Quay.io registry](https://github.com/sclorg/mysql-container/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/sclorg/mysql-container/actions/workflows/build-and-push.yml)
 
