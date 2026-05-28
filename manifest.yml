@@ -1,0 +1,37 @@
+# Manifest for image directories creation
+# every dest path will be prefixed by $DESTDIR/$version
+
+# Files containing distgen directives, which are used for each
+# (distro, version) combination not excluded in multispec
+DISTGEN_MULTI_RULES:
+  - src: src/Dockerfile
+    dest: Dockerfile.fedora
+
+  - src: src/Dockerfile
+    dest: Dockerfile.rhel8
+
+  - src: src/Dockerfile
+    dest: Dockerfile.rhel9
+
+  - src: src/Dockerfile
+    dest: Dockerfile.rhel10
+
+  - src: src/Dockerfile
+    dest: Dockerfile.c9s
+
+  - src: src/Dockerfile
+    dest: Dockerfile.c10s
+
+
+# Symbolic links
+# This section is the last one on purpose because the generator.py
+# does not allow dead symlinks.
+SYMLINK_RULES:
+  - src: ../root-common
+    dest: root-common
+
+  - src: ../s2i-common
+    dest: s2i-common
+
+  - src: ../test
+    dest: test

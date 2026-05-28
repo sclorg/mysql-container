@@ -1,0 +1,107 @@
+version: 1
+
+specs:
+  distroinfo:
+    fedora42:
+      distros:
+        - fedora-42-x86_64
+      s2i_base: quay.io/fedora/s2i-core:42
+      org: "fedora"
+      prod: "fedora"
+      img_name: "fedora/${NAME}-${MYSQL_SHORT_VERSION}"
+      pkgs: "rsync tar gettext hostname groff-base policycoreutils"
+      pkg_manager: "dnf"
+      environment_setup: ""
+      chown_group: "root"
+      license_terms: ""
+
+    rhel8:
+      distros:
+        - rhel-8-x86_64
+      s2i_base: ubi8/s2i-core
+      org: "rhel8"
+      prod: "rhel8"
+      img_name: "rhel8/mysql-{{ spec.short }}"
+      pkgs: "policycoreutils rsync tar gettext hostname groff-base mysql-server"
+      pkg_manager: "yum"
+      environment_setup: ""
+      chown_group: "0"
+      license_terms: "https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel"
+
+    rhel9:
+      distros:
+        - rhel-9-x86_64
+      s2i_base: ubi9/s2i-core
+      org: "rhel9"
+      prod: "rhel9"
+      img_name: "rhel9/${NAME}-${MYSQL_SHORT_VERSION}"
+      pkgs: "policycoreutils rsync tar gettext hostname bind9.18-utils groff-base ${NAME}-server"
+      pkg_manager: "yum"
+      environment_setup: ""
+      chown_group: "root"
+      license_terms: "https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel"
+
+    rhel10:
+      distros:
+        - rhel-10-x86_64
+      s2i_base: ubi10/s2i-core:latest
+      org: "rhel10"
+      prod: "rhel10"
+      img_name: "rhel10/${NAME}-${MYSQL_SHORT_VERSION}"
+      pkgs: "policycoreutils rsync tar gettext hostname groff-base procps-ng"
+      pkg_manager: "dnf"
+      environment_setup: ""
+      chown_group: "root"
+      license_terms: "https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel"
+
+    c9s:
+      distros:
+        - centos-stream-9-x86_64
+      s2i_base: quay.io/sclorg/s2i-core-c9s:c9s
+      org: "sclorg"
+      prod: "c9s"
+      img_name: "sclorg/${NAME}-${MYSQL_SHORT_VERSION}-c9s"
+      pkgs: "policycoreutils rsync tar gettext hostname groff-base ${NAME}-server"
+      pkg_manager: "yum"
+      environment_setup: ""
+      chown_group: "root"
+      license_terms: "https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel"
+
+    c10s:
+      distros:
+        - centos-stream-10-x86_64
+      s2i_base: quay.io/sclorg/s2i-core-c10s:c10s
+      org: "sclorg"
+      prod: "c10s"
+      img_name: "sclorg/${NAME}-${MYSQL_SHORT_VERSION}-c10s"
+      pkgs: "policycoreutils rsync tar gettext hostname groff-base procps-ng"
+      pkg_manager: "dnf"
+      environment_setup: ""
+      chown_group: "root"
+      license_terms: "https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel"
+
+  version:
+    "8.0":
+      version: "8.0"
+      short: "80"
+
+    "8.4":
+      version: "8.4"
+      short: "84"
+
+matrix:
+  include:
+    - version: "8.0"
+      distros:
+        - fedora-42-x86_64
+        - rhel-8-x86_64
+        - rhel-9-x86_64
+        - centos-stream-9-x86_64
+
+    - version: "8.4"
+      distros:
+        - fedora-42-x86_64
+        - rhel-9-x86_64
+        - rhel-10-x86_64
+        - centos-stream-9-x86_64
+        - centos-stream-10-x86_64
