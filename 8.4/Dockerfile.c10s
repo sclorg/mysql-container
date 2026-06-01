@@ -31,16 +31,15 @@ LABEL summary="${SUMMARY}" \
       io.openshift.tags="database,${NAME},${NAME}${MYSQL_SHORT_VERSION},${NAME}-${MYSQL_SHORT_VERSION}" \
       com.redhat.component="${NAME}-${MYSQL_SHORT_VERSION}-container" \
       name="sclorg/${NAME}-${MYSQL_SHORT_VERSION}-c10s" \
-      version="1" \
+      version="${MYSQL_VERSION}" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
       usage="podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/sclorg/${NAME}-${MYSQL_SHORT_VERSION}-c10s:c10s" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 3306
 
-# This image must forever use UID 27 for mysql user so our volumes are
-# safe in the future. This should *never* change, the last test is there
-# to make sure of that.
+# This image must forever use UID 27 for mysql user so our volumes are safe in the future. This should *never* change.
+# Instead of relying on the DB server package, we will do the setup ourselves before any package is installed
 RUN INSTALL_PKGS="policycoreutils rsync tar gettext hostname groff-base procps-ng" && \
     dnf install -y --setopt=tsflags=nodocs ${INSTALL_PKGS} ${NAME}${MYSQL_VERSION}-server && \
     dnf -y clean all --enablerepo='*' && \
@@ -51,9 +50,9 @@ RUN INSTALL_PKGS="policycoreutils rsync tar gettext hostname groff-base procps-n
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/mysql \
     MYSQL_PREFIX=/usr
 
-COPY ${MYSQL_VERSION}/root-common /
-COPY ${MYSQL_VERSION}/s2i-common/bin/ ${STI_SCRIPTS_PATH}
-COPY ${MYSQL_VERSION}/root /
+COPY 8.4/root-common /
+COPY 8.4/s2i-common/bin/ ${STI_SCRIPTS_PATH}
+COPY 8.4/root /
 
 # Hard links are not supported in Testing Farm approach during sync to guest
 # operation system. Therefore tests are failing on error
