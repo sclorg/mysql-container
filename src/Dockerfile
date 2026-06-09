@@ -29,10 +29,11 @@ LABEL summary="${SUMMARY}" \
       io.k8s.display-name="MySQL ${MYSQL_VERSION}" \
       io.openshift.expose-services="3306:mysql" \
       io.openshift.tags="database,${NAME},${NAME}${MYSQL_SHORT_VERSION}{% if spec.prod == 'fedora' and spec.version == '8.0' %},rh-${NAME}${MYSQL_SHORT_VERSION}{% elif spec.prod != 'fedora' %},${NAME}-${MYSQL_SHORT_VERSION}{% endif %}" \
-      com.redhat.component="{% if spec.prod == 'rhel8' or spec.prod == 'rhel9' or spec.prod == 'rhel10' or spec.prod == 'c9s' or spec.prod == 'c10s' %}${NAME}-${MYSQL_SHORT_VERSION}-container{% else %}${NAME}{% endif %}" \
+      com.redhat.component="{% if spec.prod != 'fedora' %}${NAME}-${MYSQL_SHORT_VERSION}-container{% else %}${NAME}{% endif %}" \
       name="{{ spec.img_name }}" \
-      version="${MYSQL_VERSION}" \
-{% if spec.license_terms %}      com.redhat.license_terms="{{ spec.license_terms }}" \
+{% if spec.prod == 'fedora' %}      version="${MYSQL_VERSION}" \
+{% elif spec.prod != 'rhel10' %}      version="1" \
+{% endif %}{% if spec.license_terms %}      com.redhat.license_terms="{{ spec.license_terms }}" \
 {% endif %}      usage="{% if spec.prod == 'c9s' or spec.prod == 'c10s' %}podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/{{ spec.img_name }}:{{ spec.prod }}{% elif spec.prod == 'fedora' %}docker run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 quay.io/{{ spec.img_name }}{% else %}podman run -d -e MYSQL_USER=user -e MYSQL_PASSWORD=pass -e MYSQL_DATABASE=db -p 3306:3306 {{ spec.img_name }}{% endif %}" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
