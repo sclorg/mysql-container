@@ -21,10 +21,9 @@ Currently supported versions are visible in the following table, expand an entry
 <!--
 Table start
 -->
-||CentOS Stream 9|CentOS Stream 10|Fedora|RHEL 8|RHEL 9|RHEL 10|
-|:--|:--:|:--:|:--:|:--:|:--:|:--:|
-|8.0|<details><summary>✓</summary>`quay.io/sclorg/mysql-80-c9s`</details>||<details><summary>✓</summary>`quay.io/fedora/mysql-80`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel8/mysql-80`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/mysql-80`</details>||
-|8.4|<details><summary>✓</summary>`quay.io/sclorg/mysql-84-c9s`</details>|<details><summary>✓</summary>`quay.io/sclorg/mysql-84-c10s`</details>|<details><summary>✓</summary>`quay.io/fedora/mysql-84`</details>||<details><summary>✓</summary>`registry.redhat.io/rhel9/mysql-84`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel10/mysql-84`</details>|
+||CentOS Stream 9|CentOS Stream 10|Fedora|RHEL 9|RHEL 10|
+|:--|:--:|:--:|:--:|:--:|:--:|
+|8.4|<details><summary>✓</summary>`quay.io/sclorg/mysql-84-c9s`</details>|<details><summary>✓</summary>`quay.io/sclorg/mysql-84-c10s`</details>|<details><summary>✓</summary>`quay.io/fedora/mysql-84`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel9/mysql-84`</details>|<details><summary>✓</summary>`registry.redhat.io/rhel10/mysql-84`</details>|
 <!--
 Table end
 -->
